@@ -165,6 +165,58 @@ def _pruefen(datei: str) -> int:
     return 0
 
 
+def _messungen_zeigen(welches: str | None) -> int:
+    """Die Läufe eines Spiels auflisten und die letzten beiden vergleichen."""
+    from . import messen, stellschrauben
+
+    wurzel = stellschrauben.messordner()
+    if not wurzel.is_dir():
+        print(f"Noch nichts gemessen. Messungen entstehen unter {wurzel},")
+        print("sobald ein Spiel über »spielraum starten« läuft.")
+        return 0
+
+    ordner = sorted(p for p in wurzel.iterdir() if p.is_dir())
+    if welches:
+        ordner = [p for p in ordner if welches.casefold() in p.name.casefold()]
+    if not ordner:
+        print("Keine Messungen gefunden.")
+        return 0
+
+    for spielordner in ordner:
+        laeufe = messen.laeufe(spielordner)
+        if not laeufe:
+            continue
+
+        name = spielordner.name
+        if name.isdigit():
+            gefunden = profil.finden(steam_app_id=int(name))
+            if gefunden:
+                name = f"{gefunden.name} ({name})"
+        print(f"\n{name}")
+        print("-" * len(name))
+
+        ausgewertet = []
+        for lauf in laeufe:
+            kennzahlen = messen.auswerten(lauf)
+            if kennzahlen is None:
+                print(f"  {lauf.name}: zu kurz für eine Aussage")
+                continue
+            regler = f", Taktregler {lauf.taktregler}" if lauf.taktregler else ""
+            print(f"  {lauf.name}{regler}")
+            print(f"      {kennzahlen}")
+            ausgewertet.append((lauf, kennzahlen))
+
+        if len(ausgewertet) >= 2:
+            (alt_lauf, alt), (neu_lauf, neu) = ausgewertet[-2], ausgewertet[-1]
+            print(f"\n  Vergleich {alt_lauf.name}  ->  {neu_lauf.name}")
+            for zeile in messen.vergleichen(alt, neu):
+                print(zeile)
+            if alt_lauf.taktregler != neu_lauf.taktregler:
+                print(f"  Achtung: verschiedene Taktregler "
+                      f"({alt_lauf.taktregler} / {neu_lauf.taktregler})")
+    return 0
+
+
 def _starten(args) -> int:
     """Ein Spiel mit seinem Profil starten.
 
@@ -236,6 +288,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     pruefen = unterbefehle.add_parser("pruefen", help="Eine Profildatei auf Fehler prüfen")
     pruefen.add_argument("datei", help="Pfad oder Dateiname im Profilverzeichnis")
+    messungen = unterbefehle.add_parser(
+        "messungen", help="Was bisher gemessen wurde – und was es gebracht hat"
+    )
+    messungen.add_argument(
+        "spiel", nargs="?", help="auf ein Spiel einschränken (Teil des Namens genügt)"
+    )
+
     aufraeumen = unterbefehle.add_parser(
         "aufraeumen", help="Nach einem Absturz Liegengebliebenes zurücksetzen"
     )
@@ -270,6 +329,8 @@ def main(argv: list[str] | None = None) -> int:
         return _spiele_zeigen(alle=args.alle)
     if args.aktion == "pruefen":
         return _pruefen(args.datei)
+    if args.aktion == "messungen":
+        return _messungen_zeigen(args.spiel)
     if args.aktion == "aufraeumen":
         return _aufraeumen(nur_zeigen=args.zeigen)
     if args.aktion == "starten":

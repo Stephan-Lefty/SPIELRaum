@@ -8,8 +8,13 @@
   SPIELRaum die Grafikkarte nicht anfasst, und ab wann sich das ändern
   sollte. Mit der Messung, die die Frage entschieden hat.
 
+## Benutzen
+
+- [Was SPIELRaum misst und wie man es liest](messen.md) – die drei
+  Zahlen, warum die ersten zehn Sekunden nicht zählen und wann ein
+  Unterschied einer ist.
+
 ## Noch zu schreiben
 
 - Ein Profil von Hand anlegen
-- Was SPIELRaum misst und wie man es liest
 - SPIELRaum in die Steam-Startoptionen eintragen

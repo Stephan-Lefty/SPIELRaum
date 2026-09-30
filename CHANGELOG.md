@@ -7,6 +7,53 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.3.0] – 2026-09-30
+
+Gemessen wird jetzt. Damit ist SPIELRaum kein Programm mehr, das Einstellungen
+verstellt und behauptet, es sei besser geworden.
+
+### Hinzugefügt
+
+- **`spielraum messungen`** (`spielraum/messen.py`). Wertet die
+  MangoHud-Protokolle aus und stellt die letzten beiden Läufe gegenüber.
+
+- **Die ersten zehn Sekunden zählen nicht.** Das ist die wichtigste
+  Entscheidung in diesem Modul, und sie ist nachgemessen. An einem
+  zwanzigsekündigen Lauf:
+
+      Mittel ab 10 s:        102,3 Bilder/s
+      Mittel ganzer Lauf:     50,8 Bilder/s
+
+  Der Mittelwert **verdoppelt sich**, sobald die Aufwärmphase draußen ist.
+  Dort übersetzt das Spiel Shader und lädt nach; wer das mitrechnet, misst
+  die Ladezeit. Die Tiefstwerte bleiben dagegen fast gleich – die Ruckler
+  verteilen sich über den ganzen Lauf.
+
+- **MangoHuds eigene Zusammenfassung wird nicht verwendet.** Sie rundet auf
+  eine Nachkommastelle und rechnet immer über den ganzen Lauf. Sie diente
+  aber als Gegenprobe: 1-%-Tief 28,6 gegen 29,3, 0,1-%-Tief 10,4 gegen 10,4.
+
+- **Der Taktregler steht im Protokoll.** MangoHud schreibt ihn in die
+  Kopfzeile; SPIELRaum zeigt ihn mit an. Damit lässt sich nachprüfen, ob
+  GameMode gegriffen hat, statt es zu glauben. Stehen zwei verglichene Läufe
+  auf verschiedenen Reglern, gibt es einen Hinweis – sonst misst man den
+  Regler statt der Änderung.
+
+- **Unterschiede unter drei Prozent gelten als keine.** Zwei Läufe desselben
+  Spiels schwanken auch ohne Zutun. Ein Programm, das jede Schwankung als
+  Erfolg verkauft, ist ein schlechter Ratgeber.
+
+- **Anleitung** in [docs/messen.md](docs/messen.md).
+
+### Behoben
+
+- **Der 1-%-Tiefstwert war um eine Stelle daneben.** Bei 200 Stichproben ist
+  das unterste Prozent an Stelle 0 und 1; gerechnet wurde aber mit Stelle 2 –
+  dem ersten Wert, der *nicht* mehr dazugehört. Ein Protokoll mit zwei
+  Rucklern unter zweihundert Stichproben meldete damit die volle Bildrate als
+  Tiefstwert, also genau das Gegenteil des Gesuchten. Gefunden hat es
+  `test_tiefstwerte`, nicht das Auge.
+
 ## [0.2.0] – 2026-09-30
 
 Der Befehl, um den es geht, ist da. SPIELRaum startet Spiele, richtet das

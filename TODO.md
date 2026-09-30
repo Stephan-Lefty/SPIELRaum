@@ -27,12 +27,6 @@ fertig wurde.
   gegen den Flaschenhals. Quelle: die vkd3d-proton-Dokumentation, nicht das
   Gedächtnis.
 
-- [ ] **Messen: MangoHud-Protokolle auswerten.** Pro Lauf eine Datei,
-  daraus Mittelwert und 1-%-Tiefstwerte. Erst damit wird aus »fühlt sich
-  besser an« ein Vorher-Nachher. Die Protokolle gehören nach
-  `~/.local/share/spielraum/messungen` und nicht ins Repository – steht so
-  schon in `.gitignore`.
-
 - [ ] **D3D12 gegen Vulkan messen (Road to Vostok).** Das Spielprotokoll
   meldet `Driver Detected: d3d12`; Godot 4.6.2 hat Vulkan einkompiliert. Der
   Umweg über vkd3d-proton ließe sich womöglich sparen. Ob es mit den sechzehn
@@ -61,6 +55,11 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Messen gebaut** (30.09.2026). `spielraum messungen` wertet die
+  MangoHud-Protokolle aus und vergleicht die letzten beiden Läufe. Die ersten
+  zehn Sekunden werden verworfen - sie verdoppelten im Versuch den
+  Mittelwert, weil dort Shader übersetzt werden. Siehe [docs/messen.md](docs/messen.md).
 
 - [x] **`spielraum starten` gebaut** (30.09.2026). Profil über die
   Steam-App-ID finden, Journal anlegen, Dateien mit Sicherung anpassen,
