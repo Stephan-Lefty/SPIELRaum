@@ -41,6 +41,10 @@ PAKETE: dict[str, dict[str, str]] = {
     "cpupower": {"arch": "cpupower", "debian": "linux-cpupower"},
     "powerprofilesctl": {"arch": "power-profiles-daemon", "debian": "power-profiles-daemon"},
     "nvidia-smi": {"arch": "nvidia-utils", "debian": "nvidia-smi"},
+    # Gehört zu systemd und ist damit auf beiden Zielsystemen ohnehin da.
+    # Steht hier trotzdem, weil »ohnehin da« keine Prüfung ist: In einem
+    # Container oder unter einem anderen Init fehlt es.
+    "systemd-inhibit": {"arch": "systemd", "debian": "systemd"},
 }
 
 

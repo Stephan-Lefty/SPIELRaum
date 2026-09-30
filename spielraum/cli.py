@@ -1,17 +1,23 @@
 """Die Kommandozeile von SPIELRaum.
 
-Hier stehen die Befehle, die bereits etwas Echtes tun. ``starten`` fehlt noch
-und wird bewusst nicht als Platzhalter angeboten: Ein Befehl, der so aussieht,
-als würde er das System herrichten, es aber nicht tut, ist schlimmer als gar
-keiner. Was fehlt, steht in TODO.md.
+Der Befehl, um den es geht, ist ``starten``. Er gehört in die Startoptionen
+eines Steam-Spiels::
+
+    spielraum starten %command%
+
+Die übrigen Befehle sind zum Nachsehen: was auf dem Rechner liegt
+(``umgebung``, ``spiele``), was eingerichtet ist (``profile``, ``pruefen``)
+und was ein Absturz hinterlassen hat (``aufraeumen``).
 """
 
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
 import sys
 
-from . import __version__, profil, umgebung, zustand
+from . import __version__, profil, umgebung
 
 
 def _umgebung_zeigen() -> int:
@@ -159,23 +165,58 @@ def _pruefen(datei: str) -> int:
     return 0
 
 
-def _aufraeumen() -> int:
-    """Nach einem Absturz liegengebliebene Journale finden.
+def _starten(args) -> int:
+    """Ein Spiel mit seinem Profil starten.
 
-    Zurückgesetzt wird hier noch nichts – das kommt mit ``starten``. Melden
-    tut der Befehl aber schon, damit man sieht, dass das Netz gespannt ist.
+    Das Profil wird in dieser Reihenfolge gesucht: was ``--profil`` sagt,
+    sonst die ``SteamAppId`` aus der Umgebung. Letzteres ist der Normalfall –
+    Steam setzt sie, wenn das Spiel über die Bibliothek gestartet wird, und
+    sie stimmt auch dann noch, wenn das Spiel längst auf einer anderen Platte
+    liegt.
     """
-    verwaist = zustand.verwaiste_journale()
-    if not verwaist:
-        print("Nichts aufzuräumen.")
-        return 0
-    for journal in verwaist:
-        print(f"Verwaistes Journal: {journal.spiel} (Prozess {journal.pid} lebt nicht mehr)")
-        for eintrag in journal.eintraege:
-            print(f"    {eintrag.stellschraube} an {eintrag.ziel}: zurück auf {eintrag.vorher}")
-    print()
-    print("Zurückgesetzt wird noch nichts – siehe TODO.md.")
-    return 0
+    from . import starten as start_modul
+
+    # argparse.REMAINDER reicht ein trennendes »--« mit durch. Bliebe es
+    # stehen, bekäme gamemoderun es als erstes Argument und stolperte
+    # darüber. Steam schickt kein »--«, von Hand tippt man es aber.
+    if args.befehl and args.befehl[0] == "--":
+        args.befehl = args.befehl[1:]
+
+    gefunden = None
+    if args.profil:
+        from pathlib import Path
+
+        pfad = Path(args.profil)
+        if not pfad.exists():
+            pfad = profil.profil_verzeichnis() / args.profil
+        try:
+            gefunden = profil.laden(pfad)
+        except profil.ProfilFehler as fehler:
+            print(f"Profil unbrauchbar: {fehler}", file=sys.stderr)
+            return 1
+    else:
+        roh = os.environ.get("SteamAppId") or os.environ.get("SteamGameId")
+        if roh and roh.isdigit():
+            gefunden = profil.finden(steam_app_id=int(roh))
+
+    if gefunden is None:
+        # Kein Profil ist kein Fehler: Das Spiel soll trotzdem starten.
+        # Alles andere wäre eine Falle - wer SPIELRaum in die Startoptionen
+        # einträgt und später das Profil löscht, käme sonst nicht mehr ins
+        # Spiel und suchte den Fehler überall, nur nicht hier.
+        if not args.befehl:
+            print("Weder Profil noch Startbefehl. Nichts zu tun.", file=sys.stderr)
+            return 2
+        print("Kein Profil für dieses Spiel – es startet unverändert.", file=sys.stderr)
+        return subprocess.call(args.befehl)
+
+    return start_modul.starten(gefunden, args.befehl, trocken=args.trocken)
+
+
+def _aufraeumen(nur_zeigen: bool) -> int:
+    from . import starten as start_modul
+
+    return start_modul.aufraeumen(nur_zeigen=nur_zeigen)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -184,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Spiele starten, das System dafür herrichten, hinterher aufräumen.",
     )
     zerleger.add_argument("--version", action="version", version=f"SPIELRaum {__version__}")
-    unterbefehle = zerleger.add_subparsers(dest="befehl")
+    unterbefehle = zerleger.add_subparsers(dest="aktion")
 
     unterbefehle.add_parser("umgebung", help="Was findet SPIELRaum auf diesem Rechner vor?")
     unterbefehle.add_parser("profile", help="Welche Spielprofile sind eingerichtet?")
@@ -195,20 +236,44 @@ def main(argv: list[str] | None = None) -> int:
     )
     pruefen = unterbefehle.add_parser("pruefen", help="Eine Profildatei auf Fehler prüfen")
     pruefen.add_argument("datei", help="Pfad oder Dateiname im Profilverzeichnis")
-    unterbefehle.add_parser("aufraeumen", help="Liegengebliebene Journale suchen")
+    aufraeumen = unterbefehle.add_parser(
+        "aufraeumen", help="Nach einem Absturz Liegengebliebenes zurücksetzen"
+    )
+    aufraeumen.add_argument(
+        "--zeigen", action="store_true",
+        help="nur anzeigen, was zurückgesetzt würde",
+    )
+
+    start = unterbefehle.add_parser(
+        "starten",
+        help="Ein Spiel mit seinem Profil starten",
+        description="In den Steam-Startoptionen eines Spiels: "
+                    "spielraum starten %%command%%",
+    )
+    start.add_argument("--profil", help="Profil erzwingen statt über die Steam-App-ID")
+    start.add_argument(
+        "--trocken", action="store_true",
+        help="nur zeigen, was geschähe – nichts ändern, nichts starten",
+    )
+    start.add_argument(
+        "befehl", nargs=argparse.REMAINDER,
+        help="der Startbefehl des Spiels (bei Steam: %%command%%)",
+    )
 
     args = zerleger.parse_args(argv)
 
-    if args.befehl == "umgebung":
+    if args.aktion == "umgebung":
         return _umgebung_zeigen()
-    if args.befehl == "profile":
+    if args.aktion == "profile":
         return _profile_zeigen()
-    if args.befehl == "spiele":
+    if args.aktion == "spiele":
         return _spiele_zeigen(alle=args.alle)
-    if args.befehl == "pruefen":
+    if args.aktion == "pruefen":
         return _pruefen(args.datei)
-    if args.befehl == "aufraeumen":
-        return _aufraeumen()
+    if args.aktion == "aufraeumen":
+        return _aufraeumen(nur_zeigen=args.zeigen)
+    if args.aktion == "starten":
+        return _starten(args)
 
     zerleger.print_help()
     return 0

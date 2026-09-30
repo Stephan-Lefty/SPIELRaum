@@ -14,19 +14,9 @@ fertig wurde.
   Testlauf mit Messung, Übernehmen oder Verwerfen. Am Ende startet das Spiel
   aus dem Programm heraus, und danach steht das System wieder wie vorher.
 
-  Die Bausteine dafür stehen (`steam.spiele_finden`, `profil`, `zustand`);
-  was fehlt, ist die Führung durch die Schritte und `starten`.
-
-- [ ] **`spielraum starten` bauen.** Der Befehl, um den es eigentlich geht.
-  Ablauf: Profil finden (über `SteamAppId` aus der Umgebung, die setzt Steam
-  beim Start), Journal anlegen, Stellschrauben anwenden, Spiel über
-  `gamemoderun` starten, auf das Ende warten, zurücksetzen. Das Zurücksetzen
-  muss auch dann laufen, wenn SPIELRaum selbst ein Signal bekommt – also
-  `try/finally` plus Signalbehandlung, nicht nur der gute Fall.
-
-- [ ] **Zurücksetzen aus verwaisten Journalen.** `spielraum aufraeumen` findet
-  sie schon und zeigt an, was zurückzusetzen wäre – getan wird es noch nicht.
-  Hängt an `starten`, weil beide dieselbe Anwenden-Funktion brauchen.
+  Die Bausteine stehen inzwischen alle – `steam.spiele_finden`, `profil`,
+  `zustand`, `starten`. Was fehlt, ist die Führung durch die Schritte und
+  der Vergleich zweier Messungen, ohne den Schritt 4 nichts zu zeigen hat.
 
 - [ ] **Die Umgebungsvariable für den vkd3d-proton-Zwischenspeicher
   nachschlagen.** Sie ließ sich am 30.09.2026 im Proton-Bau auf diesem
@@ -61,9 +51,9 @@ fertig wurde.
 - [ ] **Oberfläche mit PySide6.** Erst wenn die Kommandozeile trägt. Farben
   aus [`assets/farben.md`](assets/farben.md), wie in den anderen Programmen.
 
-- [ ] **Icon einsortieren.** Liegt vor (blaues Quadrat, Zahnrad über einem
-  Gamepad, Schriftzug SPIELRaum), gehört nach `assets/` in den üblichen
-  Größen plus SVG.
+- [ ] **Ein `icon.svg` zeichnen.** Alle Fassungen in `assets/` stammen aus
+  einem Pixelbild. Für eine Oberfläche, die beliebig skaliert, wäre eine
+  gezeichnete Form besser.
 
 - [ ] **Prüfen, ob KDE auf Wayland überhaupt etwas zum Abschalten hat.**
   Unter X11 war »Compositor aus« ein echter Hebel. Unter Wayland gibt es das
@@ -71,6 +61,16 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **`spielraum starten` gebaut** (30.09.2026). Profil über die
+  Steam-App-ID finden, Journal anlegen, Dateien mit Sicherung anpassen,
+  Spiel durch `systemd-inhibit` und `gamemoderun` starten, warten,
+  zurücksetzen. Signale werden an das Spiel weitergereicht, damit beim
+  Abmelden nicht zu früh aufgeräumt wird.
+
+- [x] **Zurücksetzen aus verwaisten Journalen** (30.09.2026). `spielraum
+  aufraeumen` setzt jetzt wirklich zurück statt nur anzuzeigen; `--zeigen`
+  behält das alte Verhalten. Der Fall steht als Test.
 
 - [x] **Repository angelegt, Kern geprüft** (30.09.2026). Systemerkennung,
   Profilformat, Zustandsjournal und das Zusammenführen von `override.cfg`

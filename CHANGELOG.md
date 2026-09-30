@@ -7,6 +7,62 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.2.0] – 2026-09-30
+
+Der Befehl, um den es geht, ist da. SPIELRaum startet Spiele, richtet das
+System dafür her und räumt hinterher auf – auch nach einem Absturz.
+
+### Hinzugefügt
+
+- **`spielraum starten`** (`spielraum/starten.py`). Gehört in die
+  Steam-Startoptionen eines Spiels:
+
+      spielraum starten %command%
+
+  Erkannt wird das Spiel an der `SteamAppId` aus der Umgebung. Wo das Spiel
+  liegt, wird bei **jedem** Start neu gesucht, nie aus dem Profil gelesen –
+  ein deinstalliertes und neu geladenes Spiel liegt womöglich in einer
+  anderen Bibliothek.
+
+  Gibt es kein Profil, startet das Spiel unverändert. Alles andere wäre eine
+  Falle: Wer SPIELRaum einträgt und später das Profil löscht, stünde sonst
+  vor einem Spiel, das nicht mehr anspringt, und suchte den Fehler überall,
+  nur nicht in den Startoptionen.
+
+- **Stellschrauben mit Sicherung** (`spielraum/stellschrauben.py`). Vor jeder
+  Änderung an einer Spieldatei wird eine Kopie abgelegt und der Verweis
+  darauf ins Journal geschrieben – in dieser Reihenfolge.
+
+  Zwei der wirksamsten Stellschrauben sind dabei gar keine: GameMode und die
+  Sperre gegen Bildschirmschoner und Ruhezustand sind *Wrapper*. Ihre Wirkung
+  endet mit dem Prozess. Was sich nicht verstellen lässt, kann auch nicht
+  hängenbleiben. Die Befehlskette ist
+
+      systemd-inhibit  gamemoderun  <Spiel>
+
+- **Die Umgebung wird kopiert, nicht verstellt.** Das Spiel bekommt eine
+  eigene Umgebung mit; `os.environ` des laufenden SPIELRaum bleibt unberührt.
+  Auch hier gibt es damit nichts zurückzusetzen.
+
+- **`spielraum aufraeumen` setzt jetzt wirklich zurück** statt nur
+  anzuzeigen. `--zeigen` behält das alte Verhalten, für den, der erst
+  nachsehen will.
+
+- **`--trocken`** zeigt, was geschähe, ohne etwas zu ändern oder zu starten.
+  Wer einem Programm erlaubt, in die Dateien seiner Spiele zu schreiben, soll
+  vorher nachsehen dürfen.
+
+- **Signale werden an das Spiel weitergereicht.** Ohne das gäbe es einen
+  hässlichen Fall: Beim Abmelden schickt systemd SIGTERM, Python bräche sofort
+  ab, das Spiel liefe verwaist weiter und zurückgesetzt würde zu früh.
+
+### Geprüft
+
+Neun Tests zu `stellschrauben`, darunter der Fall, für den das ganze Journal
+existiert: Datei geändert, Prozess tot, niemand da zum Aufräumen – beim
+nächsten Start muss SPIELRaum das allein hinbekommen. Danach ist die Datei
+Byte für Byte wieder die alte.
+
 ## [0.1.0] – 2026-09-30
 
 Der erste Aufschlag. Das Gerüst steht, der Kern ist geprüft, der Befehl, um

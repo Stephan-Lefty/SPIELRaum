@@ -32,21 +32,34 @@ SPIELRaum setzt darauf auf und macht das, was GameMode nicht tut:
 | setzt zurück | setzt zurück, **auch nach einem Absturz** |
 | — | misst nach, ob es etwas gebracht hat |
 
-## Stand
+## Benutzen
 
-Frühe Fassung. Was heute schon geht:
+In den Steam-Startoptionen des Spiels:
 
 ```
+spielraum starten %command%
+```
+
+Das ist alles. SPIELRaum erkennt am `SteamAppId`, welches Spiel gemeint ist,
+wendet dessen Profil an, startet, wartet und räumt hinterher auf. Gibt es kein
+Profil, startet das Spiel unverändert – wer SPIELRaum einträgt und später das
+Profil löscht, soll nicht vor einem Spiel stehen, das nicht mehr anspringt.
+
+Vorher nachsehen, was passieren würde:
+
+```
+spielraum starten --profil road-to-vostok.toml --trocken -- /pfad/zum/spiel
+```
+
+Die übrigen Befehle sind zum Nachsehen:
+
+```
+spielraum spiele       # was ist installiert, und liegt es auf einer SSD?
 spielraum umgebung     # was findet SPIELRaum auf diesem Rechner vor?
 spielraum profile      # welche Spielprofile sind eingerichtet?
 spielraum pruefen DATEI # eine Profildatei auf Fehler prüfen
-spielraum aufraeumen   # liegengebliebene Journale suchen
+spielraum aufraeumen   # nach einem Absturz Liegengebliebenes zurücksetzen
 ```
-
-`spielraum starten` – der Befehl, um den es eigentlich geht – fehlt noch. Er
-wird bewusst nicht als Platzhalter angeboten: Ein Befehl, der so aussieht, als
-würde er das System herrichten, es aber nicht tut, ist schlimmer als keiner.
-Was fehlt, steht in [TODO.md](TODO.md).
 
 ## Ein Profil
 
