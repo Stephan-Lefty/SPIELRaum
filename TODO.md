@@ -27,11 +27,6 @@ fertig wurde.
   gegen den Flaschenhals. Quelle: die vkd3d-proton-Dokumentation, nicht das
   Gedächtnis.
 
-- [ ] **D3D12 gegen Vulkan messen (Road to Vostok).** Das Spielprotokoll
-  meldet `Driver Detected: d3d12`; Godot 4.6.2 hat Vulkan einkompiliert. Der
-  Umweg über vkd3d-proton ließe sich womöglich sparen. Ob es mit den sechzehn
-  Mods gutgeht, ist offen. Die Zeile steht auskommentiert im Profil.
-
 - [ ] **.deb für Debian 13 bauen.** Ausdrücklicher Wunsch. Das Paket darf
   PySide6 später nicht aus PyPI ziehen, sondern muss die Fassung der
   Distribution nehmen. Achtung, Lehre aus MailBurg vom 14.09.2026: Ubuntu,
@@ -55,6 +50,18 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **D3D12 gegen Vulkan gemessen** (30.09.2026). Ergebnis: **kein
+  Unterschied** - 49,0 gegen 49,3 Bilder/s ist Rauschen. Die Vermutung, der
+  Umweg über vkd3d-proton koste Leistung, ist damit für dieses Spiel auf
+  dieser Karte widerlegt. Vulkan bleibt trotzdem eingeschaltet; es kostet
+  auch nichts.
+
+- [x] **Road to Vostok auf die SSD umgezogen** (30.09.2026). Der Befund, der
+  sich in beiden Läufen hielt: 24 bis 25 Sekunden Ladezeit und Aussetzer
+  beim Nachladen. Gemessen wurde dann die Platte selbst - 112 MB/s und
+  7,76 ms je Sprung gegen 509 MB/s und 0,13 ms auf der SSD. Der Nachweis in
+  Form einer neuen Messung steht noch aus.
 
 - [x] **Messen gebaut** (30.09.2026). `spielraum messungen` wertet die
   MangoHud-Protokolle aus und vergleicht die letzten beiden Läufe. Die ersten

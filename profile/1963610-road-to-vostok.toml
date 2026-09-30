@@ -1,23 +1,40 @@
-# Road to Vostok – das erste echte Profil.
+# Road to Vostok – das erste Profil, das durchgemessen wurde.
 #
-# Die Werte hier sind nicht geraten, sondern am 30.09.2026 auf dem Rechner
-# nachgesehen worden, auf dem das Spiel läuft: Godot 4.6.2, Windows-Bau unter
-# GE-Proton11-1, sechzehn Mods, GTX 1070 auf Wayland.
+# Godot 4.6.2, Windows-Bau unter GE-Proton11-1, sechzehn Mods,
+# GTX 1070 auf Wayland.
 #
-# Was dabei herauskam und warum es so dasteht:
+# Gemessen am 30.09.2026, zwei Läufe von je rund zehn Minuten:
 #
-#   * Das Spiel liegt auf einer drehenden Platte (Hitachi HDS721010DLE630).
-#     Das ist der größte Bremsklotz, und er bleibt – die Entscheidung dagegen
-#     ist gefallen. Also umgehen wir ihn, wo es geht: Der Shader-Zwischen-
-#     speicher soll nicht auch noch von dort gelesen werden.
-#   * Das Spiel fährt D3D12. Nachgesehen im Spielprotokoll, dort steht
-#     wörtlich »Driver Detected: d3d12«. Godot 4.6.2 hat aber auch Vulkan
-#     einkompiliert. D3D12 geht unter Proton den Umweg über vkd3d-proton;
-#     Vulkan spart diese Übersetzungsschicht.
+#                      D3D12        Vulkan
+#     Mittel           49,0         49,3    Bilder/s
+#     1-%-Tief         15,8          0,0
+#     Ladezeit           24           25    Sekunden
+#     Aussetzer           5            9    Sekunden
 #
-# Der zweite Punkt ist ausdrücklich **eine Vermutung, keine Messung.** Er
-# steht deshalb auskommentiert da. Erst messen, dann einschalten – und wenn
-# es mit den Mods nicht gutgeht, war es das Messen trotzdem wert.
+# Zwei Erkenntnisse daraus, beide gegen die Erwartung:
+#
+# 1. **Der Renderer ist es nicht.** Die Vermutung war, der Umweg über
+#    vkd3d-proton koste Leistung. Er kostet nichts: 49,0 gegen 49,3 ist
+#    Rauschen. Godot fährt in beiden Fällen "Forward Mobile", und die
+#    GTX 1070 langweilt sich dabei - ihr Power-Limit bremste an 0,014 %
+#    der Laufzeit.
+#
+# 2. **Die Platte war es.** Beide Läufe zeigten 24 bis 25 Sekunden
+#    Ladezeit und Aussetzer beim Nachladen; beim längsten stand das Bild
+#    vier Sekunden still. Das Spiel lag auf einer Hitachi von 2010:
+#
+#        am Stück   112 MB/s      je Sprung   7,76 ms
+#
+#    Auf der SSD, wohin es am 30.09.2026 umgezogen ist:
+#
+#        am Stück   509 MB/s      je Sprung   0,13 ms
+#
+#    Viereinhalbmal so schnell am Stück, sechzigmal beim Springen.
+#
+# Was daraus für den nächsten Lauf erwartet wird - noch ungemessen:
+# Ladezeit auf 6 bis 9 Sekunden (ein Rest bleibt, die sechzehn Mods
+# werden beim Start eingehängt, und das ist Rechenarbeit), Aussetzer
+# verschwinden, Bildrate unverändert bei ~49.
 
 [spiel]
 name         = "Road to Vostok"
@@ -25,36 +42,29 @@ steam_app_id = 1963610
 engine       = "godot"
 
 [system]
-# GameMode übernimmt den Teil, der Systemrechte braucht: Taktregler hoch,
-# GPU auf Leistung, Prozesspriorität. Das ist erprobter Code mit einem
-# geprüften Dienst dahinter – ihn nachzubauen wäre eine schlechtere Fassung
-# desselben Programms.
+# GameMode konnte am 30.09.2026 den Taktregler nicht setzen: Die
+# Polkit-Regel des Manjaro-Pakets steht auf allow_active=no, siehe
+# docs/gamemode.md. Der Eintrag bleibt trotzdem stehen - er schadet
+# nicht und greift, sobald die Berechtigung eingerichtet ist.
 gamemode      = true
 nicht_stoeren = true
 
 [umgebung]
-# Der Shader-Zwischenspeicher von Godots OpenGL-Pfad. Vier Gigabyte, damit
-# er nicht mittendrin überläuft und neu aufgebaut werden muss.
 __GL_SHADER_DISK_CACHE      = "1"
 __GL_SHADER_DISK_CACHE_SIZE = "4294967296"
 __GL_THREADED_OPTIMIZATIONS = "1"
 
-# ACHTUNG, noch offen: Der vkd3d-proton-Zwischenspeicher liegt derzeit als
-# vkd3d-proton.cache im Spielordner – also auf der langsamen Platte. Ihn auf
-# die SSD umzuleiten wäre der zweite Hebel gegen den Flaschenhals. Die dafür
-# zuständige Umgebungsvariable ist noch nicht nachgeschlagen; im Proton-Bau
-# auf diesem Rechner ließ sie sich nicht finden. Steht in TODO.md.
-
 [start]
-# Einstweilen leer. Sobald gemessen ist, kommt hier hinein:
-#   argumente = ["--rendering-driver", "vulkan"]
-argumente = []
+# Bleibt eingeschaltet, obwohl die Messung keinen Gewinn zeigt: Vulkan
+# kostet auch nichts, und der Weg ohne Übersetzungsschicht ist der
+# geradere. Wer das anders sieht, nimmt die Zeile heraus - der
+# Ausgangswert mit D3D12 steht oben.
+argumente = ["--rendering-driver", "vulkan"]
 
 [messen]
 mangohud = true
 
-# Keine [dateien]-Abschnitte, solange nicht feststeht, welche Einstellung
-# etwas bringt. Die override.cfg dieses Spiels führt den Mod-Loader an; sie
-# anzufassen ohne Grund wäre ein Risiko ohne Gegenwert. Wenn es so weit ist,
-# sorgt »zusammenfuehren = true« dafür, dass der Eintrag stehen bleibt –
-# tests/test_godot_cfg.py wacht darüber.
+# Keine [dateien]-Abschnitte. Die override.cfg dieses Spiels führt den
+# Mod-Loader an; sie anzufassen ohne belegten Grund wäre ein Risiko ohne
+# Gegenwert. Wenn es so weit ist, sorgt "zusammenfuehren = true" dafür,
+# dass der Eintrag stehen bleibt - tests/test_godot_cfg.py wacht darüber.
