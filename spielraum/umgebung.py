@@ -132,6 +132,37 @@ def daten_verzeichnis() -> Path:
     return Path(wurzel) / "spielraum"
 
 
+def platte_dreht(pfad: Path) -> bool | None:
+    """Liegt dieser Pfad auf einer drehenden Platte?
+
+    ``None`` heißt: nicht feststellbar. Das ist kein Randfall – bei
+    Netzlaufwerken, im Container und auf manchen RAID-Verbünden gibt es die
+    Auskunft schlicht nicht, und dann ist Schweigen ehrlicher als ein
+    geratenes »nein«.
+
+    Der Weg führt über die Geräte-Nummer aus ``stat``: Sie zeigt auf einen
+    Eintrag unter ``/sys/dev/block``, und dort steht ``queue/rotational``.
+    Bei einer Partition liegt die Angabe eine Ebene höher, beim Gerät selbst –
+    deshalb die zweite Stelle, an der nachgesehen wird.
+
+    Warum das hier steht: Ein Spiel auf einer 7200er-Platte ruckelt beim
+    Nachladen, und keine Einstellung der Welt ändert daran etwas. SPIELRaum
+    soll das sagen können, statt am falschen Ende zu schrauben.
+    """
+    try:
+        angaben = os.stat(pfad)
+    except OSError:
+        return None
+
+    block = Path(f"/sys/dev/block/{os.major(angaben.st_dev)}:{os.minor(angaben.st_dev)}")
+    for kandidat in (block / "queue" / "rotational", block / ".." / "queue" / "rotational"):
+        try:
+            return kandidat.read_text().strip() == "1"
+        except OSError:
+            continue
+    return None
+
+
 def laufzeit_verzeichnis() -> Path:
     """Wo das Journal des laufenden Spiels liegt.
 

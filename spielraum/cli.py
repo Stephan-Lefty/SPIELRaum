@@ -57,6 +57,42 @@ def _profile_zeigen() -> int:
     return 0
 
 
+def _spiele_zeigen(alle: bool = False) -> int:
+    """Was ist auf diesem Rechner installiert?
+
+    Die Spalte »Platte« ist der Grund, warum diese Liste mehr ist als eine
+    Aufzählung: Ein Spiel auf einer drehenden Platte ruckelt beim Nachladen,
+    und dagegen hilft keine Einstellung – nur ein Umzug.
+    """
+    from . import steam
+
+    spiele = steam.spiele_finden(mit_werkzeugen=alle)
+    if not spiele:
+        print("Keine installierten Spiele gefunden.")
+        print("Gesucht wurde in:")
+        for pfad in steam.bibliotheken():
+            print(f"  {pfad}")
+        return 0
+
+    print(f"{'Spiel':30} {'App-ID':>8} {'Größe':>9}  {'Start':7} {'Platte':8} Profil")
+    print("-" * 78)
+    for spiel in spiele:
+        dreht = umgebung.platte_dreht(spiel.ordner)
+        platte = "dreht" if dreht else ("SSD" if dreht is False else "?")
+        art = "Proton" if spiel.laeuft_unter_proton else "nativ"
+        hat_profil = profil.finden(steam_app_id=spiel.app_id) is not None
+        print(
+            f"{spiel.name[:30]:30} {spiel.app_id:>8} {spiel.groesse_lesbar:>9}  "
+            f"{art:7} {platte:8} {'ja' if hat_profil else '–'}"
+        )
+
+    ohne = [s for s in spiele if profil.finden(steam_app_id=s.app_id) is None]
+    if ohne:
+        print()
+        print(f"{len(ohne)} Spiel(e) ohne Profil.")
+    return 0
+
+
 def _pruefen(datei: str) -> int:
     from pathlib import Path
 
@@ -122,6 +158,11 @@ def main(argv: list[str] | None = None) -> int:
 
     unterbefehle.add_parser("umgebung", help="Was findet SPIELRaum auf diesem Rechner vor?")
     unterbefehle.add_parser("profile", help="Welche Spielprofile sind eingerichtet?")
+    spiele = unterbefehle.add_parser("spiele", help="Welche Spiele sind installiert?")
+    spiele.add_argument(
+        "--alle", action="store_true",
+        help="auch Proton und die Steam-Laufzeiten aufführen",
+    )
     pruefen = unterbefehle.add_parser("pruefen", help="Eine Profildatei auf Fehler prüfen")
     pruefen.add_argument("datei", help="Pfad oder Dateiname im Profilverzeichnis")
     unterbefehle.add_parser("aufraeumen", help="Liegengebliebene Journale suchen")
@@ -132,6 +173,8 @@ def main(argv: list[str] | None = None) -> int:
         return _umgebung_zeigen()
     if args.befehl == "profile":
         return _profile_zeigen()
+    if args.befehl == "spiele":
+        return _spiele_zeigen(alle=args.alle)
     if args.befehl == "pruefen":
         return _pruefen(args.datei)
     if args.befehl == "aufraeumen":
