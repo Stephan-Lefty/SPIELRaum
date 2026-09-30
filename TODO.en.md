@@ -7,17 +7,6 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
-- [ ] **Build `spielraum starten`.** The command this is all actually about.
-  Sequence: find the profile (via `SteamAppId` from the environment, which
-  Steam sets on launch), create the journal, apply the knobs, start the game
-  through `gamemoderun`, wait for it to end, restore. The restore must also
-  run when SPIELRaum itself receives a signal — so `try/finally` plus signal
-  handling, not just the happy path.
-
-- [ ] **Restore from orphaned journals.** `spielraum aufraeumen` already finds
-  them and shows what would be restored; it does not yet do it. Depends on
-  `starten`, since both need the same apply function.
-
 - [ ] **Look up the environment variable for the vkd3d-proton cache.** It
   could not be found in the Proton build on this machine on 2026-09-30
   (neither under `/usr/lib` nor in `compatibilitytools.d`). The cache
@@ -25,11 +14,6 @@ deleted but moved down, with the date they were completed.
   to Vostok that directory is on a spinning disk. Redirecting it to the SSD
   would be the second lever against that bottleneck. Source: the vkd3d-proton
   documentation, not memory.
-
-- [ ] **Measuring: evaluate MangoHud logs.** One file per run, mean and 1%
-  lows from it. Only then does "feels better" become a before-and-after. Logs
-  belong in `~/.local/share/spielraum/messungen`, not in the repository —
-  already covered in `.gitignore`.
 
 - [ ] **Measure D3D12 against Vulkan (Road to Vostok).** The game log reports
   `Driver Detected: d3d12`; Godot 4.6.2 has Vulkan compiled in. The detour
@@ -45,12 +29,18 @@ deleted but moved down, with the date they were completed.
   Manjaro. The system detection is built for both families, but built and
   proven are two different things. This is waiting on a machine to test on.
 
+- [ ] **A guided flow instead of separate commands.** Requested on
+  2026-09-30: start the program, it finds the installed games, you click one
+  and are walked through step by step — current state, proposal, test run
+  with measurement, keep or discard. At the end the game launches from
+  within, and afterwards the machine is as it was.
+
 - [ ] **PySide6 interface.** Only once the command line carries its weight.
   Colours from [`assets/farben.md`](assets/farben.md), as in the other
   programs.
 
-- [ ] **File the icon.** It exists (blue square, cog above a gamepad,
-  SPIELRaum wordmark) and belongs in `assets/` in the usual sizes plus SVG.
+- [ ] **Draw an `icon.svg`.** Every version in `assets/` comes from a
+  bitmap. For an interface that scales freely, a drawn shape would be better.
 
 - [ ] **Check whether KDE on Wayland has anything to switch off at all.**
   Under X11, "disable compositing" was a real lever. Under Wayland it no
@@ -58,6 +48,24 @@ deleted but moved down, with the date they were completed.
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **Measuring built** (2026-09-30). `spielraum messungen` evaluates the
+  MangoHud logs and compares the last two runs. The first ten seconds are
+  discarded — in testing they halved the mean, because that is where shaders
+  get compiled.
+
+- [x] **`spielraum starten` built** (2026-09-30). Find the profile by Steam
+  app id, create the journal, apply file changes with a backup, launch the
+  game through `systemd-inhibit` and `gamemoderun`, wait, restore. Signals
+  are passed on to the game so that logging out does not clean up too early.
+
+- [x] **Restore from orphaned journals** (2026-09-30). `spielraum aufraeumen`
+  now actually restores instead of only listing; `--zeigen` keeps the old
+  behaviour.
+
+- [x] **`install.sh`** (2026-09-30). Needed because the Steam launch options
+  require a command Steam can find. The launcher goes to `~/.local/bin` — a
+  direct link into the repository would break on paths containing spaces.
 
 - [x] **Repository created, core verified** (2026-09-30). System detection,
   profile format, state journal and the merging of `override.cfg` are in

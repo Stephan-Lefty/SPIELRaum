@@ -32,21 +32,51 @@ SPIELRaum builds on top and does what GameMode does not:
 | restores on exit | restores on exit, **and after a crash** |
 | — | measures whether it actually helped |
 
-## Status
-
-Early. What already works:
+## Setting it up
 
 ```
+./install.sh
+```
+
+Creates a Python environment inside the repository, installs SPIELRaum into
+it and places a launcher in `~/.local/bin`. None of this needs system
+privileges and nothing lands outside `$HOME`. Bundled profiles are copied to
+`~/.config/spielraum/spiele`; existing ones are left alone.
+
+## Using it
+
+In the game's Steam launch options:
+
+```
+spielraum starten %command%
+```
+
+That is all. SPIELRaum recognises the game by `SteamAppId`, applies its
+profile, launches, waits and cleans up afterwards. With no profile the game
+starts unchanged — whoever adds SPIELRaum and later deletes the profile
+should not end up facing a game that no longer launches.
+
+To see what would happen first:
+
+```
+spielraum starten --profil road-to-vostok.toml --trocken -- /path/to/game
+```
+
+The remaining commands are for looking around:
+
+```
+spielraum spiele        # what is installed, and is it on an SSD?
+spielraum messungen     # what has been measured, and what did it gain?
 spielraum umgebung      # what does SPIELRaum find on this machine?
 spielraum profile       # which game profiles are set up?
 spielraum pruefen FILE  # check a profile file for errors
-spielraum aufraeumen    # look for journals left behind
+spielraum aufraeumen    # restore what a crash left behind
 ```
 
-`spielraum starten` — the command this is all actually about — is not there
-yet. It is deliberately not offered as a placeholder: a command that looks
-like it sets the machine up but does not is worse than no command at all.
-See [TODO.en.md](TODO.en.md).
+The commands are German, as is the rest of the program. Translating them
+would mean two sets of names for the same thing, and the mistake would
+surface at the worst moment — in a launch option that someone typed months
+ago and no longer remembers.
 
 ## A profile
 
@@ -84,6 +114,25 @@ feel rough.
 This will not make it a self-tuner. That would need a reproducible scene,
 which few games offer. What it does give you is a logbook across ordinary play
 sessions — and with it a real before-and-after instead of "feels better".
+
+**The first ten seconds do not count.** Measured on a twenty-second run: the
+mean is 102.3 frames per second once the warm-up is excluded, and 50.8 across
+the whole run. That is where the game compiles shaders and loads — measure it
+and you are measuring the loading time. See [docs/messen.md](docs/messen.md)
+(German).
+
+## What it restores afterwards
+
+The hard part is not the tuning but the promise that afterwards things are as
+they were. Even if the game crashes. Even if the machine loses power. Four
+nets for that:
+
+1. Before any change the old value is read and written to the journal — only
+   then is anything changed.
+2. The journal lives on disk, not in memory.
+3. It is written atomically. A half-written journal is worse than none: it
+   looks valid.
+4. On the next start, orphaned journals are picked up.
 
 ## Licence
 
