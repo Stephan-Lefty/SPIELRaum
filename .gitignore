@@ -10,3 +10,14 @@ dist/
 # Rechner, auf dem sie entstanden sind.
 messungen/
 *.csv
+
+# Zwischenstufen aus der Icon-Aufbereitung. Die Kette von der gelieferten
+# Datei bis zu den fertigen Größen ist in assets/icons.md beschrieben; die
+# Masken und Proben von unterwegs müssen nicht mit ins Repository.
+assets/maske.png
+assets/rundeck.png
+assets/vorschau.png
+assets/zeichnung*.png
+assets/probe*.png
+assets/p??.png
+assets/ChatGPT*
