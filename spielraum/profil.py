@@ -147,8 +147,21 @@ def laden(pfad: Path) -> Profil:
                 f"[dateien.{kennung}]: »{art}« kennt SPIELRaum nicht. "
                 "Bisher gibt es nur »godot-cfg«."
             )
+        dateipfad = _als_str(block["pfad"], f"dateien.{kennung}.pfad")
+        # Absolute Pfade sind hier verboten, und zwar aus einem konkreten
+        # Grund: Wer ein Spiel deinstalliert und später neu lädt, bekommt es
+        # womöglich in eine andere Bibliothek - Steam nimmt die, wo Platz ist.
+        # Ein Profil mit »/mnt/HDD-1.0TB/...« zeigt dann ins Leere, im
+        # schlimmsten Fall auf die Datei eines anderen Spiels. Deshalb nur
+        # Platzhalter, die beim Start aufgelöst werden.
+        if dateipfad.startswith("/") or dateipfad.startswith("~"):
+            raise ProfilFehler(
+                f"[dateien.{kennung}]: »{dateipfad}« ist ein fester Pfad. "
+                "Nach einer Neuinstallation kann das Spiel woanders liegen – "
+                "bitte {spielordner} oder {praefix} verwenden."
+            )
         profil.dateien[kennung] = Dateiaenderung(
-            pfad=_als_str(block["pfad"], f"dateien.{kennung}.pfad"),
+            pfad=dateipfad,
             art=art,
             zusammenfuehren=bool(block.get("zusammenfuehren", True)),
             werte=block.get("werte", {}),

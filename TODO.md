@@ -8,6 +8,15 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Geführter Ablauf statt Einzelbefehle.** Gewünscht am 30.09.2026:
+  Programm starten, es sucht die installierten Spiele, man klickt eines an
+  und wird Schritt für Schritt durchgeführt – Ist-Zustand, Vorschlag,
+  Testlauf mit Messung, Übernehmen oder Verwerfen. Am Ende startet das Spiel
+  aus dem Programm heraus, und danach steht das System wieder wie vorher.
+
+  Die Bausteine dafür stehen (`steam.spiele_finden`, `profil`, `zustand`);
+  was fehlt, ist die Führung durch die Schritte und `starten`.
+
 - [ ] **`spielraum starten` bauen.** Der Befehl, um den es eigentlich geht.
   Ablauf: Profil finden (über `SteamAppId` aus der Umgebung, die setzt Steam
   beim Start), Journal anlegen, Stellschrauben anwenden, Spiel über

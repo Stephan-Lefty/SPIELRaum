@@ -86,11 +86,41 @@ def _spiele_zeigen(alle: bool = False) -> int:
             f"{art:7} {platte:8} {'ja' if hat_profil else '–'}"
         )
 
+    # Profile, deren Spiel gerade nicht installiert ist. Sie gehören in die
+    # Übersicht, nicht in den Papierkorb: Wer ein Spiel deinstalliert, um
+    # Platz zu schaffen, und es in drei Monaten neu lädt, will seine
+    # Einstellungen wiederhaben - nicht noch einmal messen.
+    installiert = {s.app_id for s in spiele}
+    verwaist = [
+        p for p in _alle_profile()
+        if p.steam_app_id is not None and p.steam_app_id not in installiert
+    ]
+    for p in verwaist:
+        print(
+            f"{p.name[:30]:30} {p.steam_app_id:>8} {'–':>9}  "
+            f"{'–':7} {'–':8} ja (nicht installiert)"
+        )
+
     ohne = [s for s in spiele if profil.finden(steam_app_id=s.app_id) is None]
     if ohne:
         print()
         print(f"{len(ohne)} Spiel(e) ohne Profil.")
+    if verwaist:
+        print(f"{len(verwaist)} Profil(e) warten auf ihr Spiel.")
     return 0
+
+
+def _alle_profile() -> list[profil.Profil]:
+    verzeichnis = profil.profil_verzeichnis()
+    if not verzeichnis.is_dir():
+        return []
+    gefunden = []
+    for datei in sorted(verzeichnis.glob("*.toml")):
+        try:
+            gefunden.append(profil.laden(datei))
+        except profil.ProfilFehler:
+            continue
+    return gefunden
 
 
 def _pruefen(datei: str) -> int:
