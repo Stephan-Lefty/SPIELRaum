@@ -85,6 +85,17 @@ def befehl_umhuellen(profil: Profil, befehl: list[str]) -> list[str]:
     umg = umgebung.ermitteln()
     voll = list(befehl)
 
+    # Die Argumente aus dem Profil gehören ans Ende, hinter den Namen des
+    # Programms und alles, was Steam ihm schon mitgibt. Ein Spiel liest
+    # seine Befehlszeile von links nach rechts; was vorn steht, gehört noch
+    # zu Proton und nicht zum Spiel.
+    #
+    # Das hat bis 0.3.0 gefehlt: »start.argumente« wurde gelesen, geprüft
+    # und in »spielraum pruefen« angezeigt - nur nie angewendet. Wer damit
+    # »--rendering-driver vulkan« einschaltete, maß anschließend zweimal
+    # dasselbe und hätte daraus geschlossen, Vulkan bringe nichts.
+    voll.extend(profil.argumente)
+
     if profil.gamemode and umg.hat("gamemoderun"):
         voll = [umg.pfad("gamemoderun"), *voll]
 

@@ -169,3 +169,41 @@ def test_zuruecksetzen_macht_weiter_wenn_einer_fehlschlaegt(eigene_ordner):
 
     assert any("FEHLT" in z for z in bericht)
     assert gut.read_text(encoding="utf-8") == VORHER  # trotzdem erledigt
+
+
+def test_profil_argumente_landen_am_spiel(eigene_ordner):
+    """Der Fehler, der bis 0.3.0 drinsteckte.
+
+    »start.argumente« wurde gelesen, geprüft und angezeigt – nur nie
+    angewendet. Wer damit den Renderer umstellte, maß anschließend zweimal
+    dasselbe und hätte geschlossen, die Umstellung bringe nichts.
+    """
+    profil = Profil(name="X", quelle=eigene_ordner / "x.toml")
+    profil.gamemode = False
+    profil.nicht_stoeren = False
+    profil.argumente = ["--rendering-driver", "vulkan"]
+
+    voll = stellschrauben.befehl_umhuellen(profil, ["/pfad/proton", "run", "RTV.exe"])
+
+    assert voll == ["/pfad/proton", "run", "RTV.exe", "--rendering-driver", "vulkan"]
+
+
+def test_argumente_stehen_hinter_dem_spiel_nicht_davor(eigene_ordner):
+    """Reihenfolge ist hier alles: Was vor dem Programmnamen steht, gehört
+    noch zu Proton und nicht zum Spiel."""
+    profil = Profil(name="X", quelle=eigene_ordner / "x.toml")
+    profil.gamemode = False
+    profil.nicht_stoeren = False
+    profil.argumente = ["--fullscreen"]
+
+    voll = stellschrauben.befehl_umhuellen(profil, ["proton", "run", "spiel.exe"])
+
+    assert voll.index("--fullscreen") > voll.index("spiel.exe")
+
+
+def test_ohne_argumente_bleibt_der_befehl_unveraendert(eigene_ordner):
+    profil = Profil(name="X", quelle=eigene_ordner / "x.toml")
+    profil.gamemode = False
+    profil.nicht_stoeren = False
+
+    assert stellschrauben.befehl_umhuellen(profil, ["a", "b"]) == ["a", "b"]
