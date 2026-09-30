@@ -38,21 +38,39 @@ def test_nanosekunden_werden_zu_sekunden(tmp_path):
     assert m.dauer == 1.0  # 10 Stichproben à 100 ms
 
 
-def test_aufwaermzeit_wird_abgeschnitten(tmp_path):
-    """Der Kern der Sache.
+def test_ladephase_wird_abgeschnitten(tmp_path):
+    """Der Kern der Sache – und der Fehler aus 0.3.0.
 
-    Die ersten hundert Stichproben (zehn Sekunden) stehen auf 10 Bildern –
-    so sieht ein Spiel aus, das noch Shader übersetzt. Danach 100. Wer die
-    Aufwärmphase mitrechnet, kommt auf gut 70 und misst die Ladezeit.
+    Die Werte in der Ladephase sind keine kleinen Bildraten, sondern
+    2,8e-05 – so schreibt MangoHud es wirklich, nachgesehen an Road to
+    Vostok am 30.09.2026. Bei diesem Spiel dauerte das **23,8 Sekunden**,
+    weil es auf einer drehenden Platte liegt.
+
+    Die feste Aufwärmzeit von zehn Sekunden ab Programmstart ließ die halbe
+    Ladephase im Messfenster. Ergebnis: ein 1-%-Tiefstwert von 0,0 für ein
+    Spiel, das durchgehend um die fünfzig Bilder lieferte.
     """
-    pfad = log_schreiben(tmp_path, "lauf", [10.0] * 100 + [100.0] * 200)
-    k = messen.auswerten(messen.lesen(pfad), aufwaermen=10.0)
-    assert k is not None
-    assert k.mittel == 100.0
-    assert k.verworfen == 100
+    # 240 Stichproben à 100 ms = 24 Sekunden Ladezeit, dann 300 mit 50 fps.
+    pfad = log_schreiben(tmp_path, "lauf", [2.81111e-05] * 240 + [50.0] * 300)
+    m = messen.lesen(pfad)
 
-    ohne = messen.auswerten(messen.lesen(pfad), aufwaermen=0.0)
-    assert 65 < ohne.mittel < 75  # das verfälschte Ergebnis
+    assert 23 < messen.ladezeit(m) < 25
+
+    k = messen.auswerten(m, aufwaermen=5.0)
+    assert k is not None
+    assert k.mittel == 50.0
+    assert k.tief_1 == 50.0  # kein einziger Ladewert mehr drin
+    assert 23 < k.ladezeit < 25
+
+
+def test_feste_aufwaermzeit_haette_nicht_gereicht(tmp_path):
+    """Gegenprobe zum Fehler: Von Sekunde zehn an gerechnet, liegen noch
+    vierzehn Sekunden Ladephase im Fenster – und der Tiefstwert kippt."""
+    werte = [2.81111e-05] * 240 + [50.0] * 300
+    bilder = [f for f, s in zip(werte, (i / 10 for i in range(1, len(werte) + 1)))
+              if s > 10.0]
+    sortiert = sorted(bilder)
+    assert sortiert[int(len(sortiert) * 0.01) - 1] < 1  # so kam die 0,0 zustande
 
 
 def test_zu_wenig_stichproben_gibt_keine_zahl(tmp_path):
@@ -109,3 +127,23 @@ def test_leere_datei(tmp_path):
     pfad = tmp_path / "leer.csv"
     pfad.write_text("", encoding="utf-8")
     assert messen.lesen(pfad).bilder == []
+
+
+def test_aussetzer_im_spiel_bleiben_drin(tmp_path):
+    """Hänger *nach* dem Laden sind kein Messfehler, sondern der Befund.
+
+    Bei Road to Vostok stand das Bild zwischen Sekunde 122 und 126 stille.
+    Wer solche Werte herausrechnet, macht die Zahlen schöner und die
+    Aussage wertlos.
+    """
+    werte = [2.81111e-05] * 100 + [50.0] * 200 + [0.034] * 40 + [50.0] * 200
+    k = messen.auswerten(messen.lesen(log_schreiben(tmp_path, "l", werte)))
+    assert k.aussetzer == 40
+    assert k.tief_1 < 1  # der Hänger zeigt sich im Tiefstwert
+
+
+def test_ladezeit_ohne_ladephase(tmp_path):
+    """Ein Spiel, das sofort läuft, hat Ladezeit ~0."""
+    k = messen.auswerten(messen.lesen(log_schreiben(tmp_path, "l", [60.0] * 300)))
+    assert k.ladezeit < 0.2
+    assert k.aussetzer == 0

@@ -47,10 +47,26 @@ import csv
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# Wie viele Sekunden am Anfang verworfen werden. Der Wert ist eine
-# Abwägung: zu kurz, und die Shader-Kompilierung fließt mit ein; zu lang,
-# und von einer kurzen Sitzung bleibt nichts übrig.
-AUFWAERMEN = 10.0
+# Wie viele Sekunden nach dem ersten richtigen Bild noch verworfen werden.
+#
+# Achtung, hier steckte ein Fehler: Bis 0.3.0 waren das zehn Sekunden **ab
+# Programmstart**. Beim ersten Lauf mit einem echten Spiel stellte sich
+# heraus, dass Road to Vostok von einer drehenden Platte **23,8 Sekunden**
+# lädt. Die Ladephase lag damit vollständig im Messfenster, und weil dort
+# Werte wie 0,00003 Bilder/s stehen, fiel der 1-%-Tiefstwert auf null.
+# SPIELRaum meldete also »1-%-Tief 0,0« für ein Spiel, das durchgehend um
+# die fünfzig Bilder lieferte.
+#
+# Eine feste Zeit kann das nicht lösen - Ladezeiten hängen an Spiel,
+# Datenträger und Mods. Deshalb wird jetzt gesucht, wann das Spiel
+# tatsächlich anfängt zu rendern, und von dort aus gezählt.
+AUFWAERMEN = 5.0
+
+# Ab wann gilt ein Bild als gerendert? Während des Ladens schreibt MangoHud
+# Werte in der Größenordnung 0,00003 - das ist kein langsames Spiel, das ist
+# gar keines. Fünf Bilder in der Sekunde ist niedrig genug, um echte
+# Ruckler nicht zu verschlucken, und hoch genug, um Ladebilder zu erkennen.
+LAEUFT_AB = 5.0
 
 
 @dataclass
@@ -86,13 +102,21 @@ class Kennzahlen:
     stichproben: int
     dauer: float
     verworfen: int
+    ladezeit: float = 0.0
+    aussetzer: int = 0  # Stichproben ohne gerendertes Bild *nach* dem Laden
 
     def __str__(self) -> str:
-        return (
+        text = (
             f"{self.mittel:.1f} Bilder/s im Mittel, "
             f"1-%-Tief {self.tief_1:.1f}, 0,1-%-Tief {self.tief_01:.1f} "
             f"({self.stichproben} Stichproben über {self.dauer:.0f} s)"
         )
+        if self.ladezeit >= 1:
+            text += f"\n      Ladezeit {self.ladezeit:.0f} s"
+            if self.aussetzer:
+                # Ein Zehntel Sekunde je Stichprobe - die übliche Schrittweite.
+                text += f", dazu {self.aussetzer / 10:.0f} s Aussetzer im Spiel"
+        return text
 
 
 def lesen(pfad: Path) -> Messung:
@@ -157,6 +181,19 @@ def _perzentil(sortiert: list[float], anteil: float) -> float:
     return sortiert[min(stelle, len(sortiert) - 1)]
 
 
+def ladezeit(messung: Messung) -> float:
+    """Wie lange dauerte es bis zum ersten gerenderten Bild?
+
+    Das ist nicht nur Beiwerk für die Auswertung, sondern eine Zahl, die
+    für sich steht: Sie misst fast ausschließlich den Datenträger. Road to
+    Vostok brauchte am 30.09.2026 von einer drehenden Platte 23,8 Sekunden.
+    """
+    for fps, sekunde in zip(messung.bilder, messung.sekunden):
+        if fps >= LAEUFT_AB:
+            return sekunde
+    return 0.0
+
+
 def auswerten(messung: Messung, aufwaermen: float = AUFWAERMEN) -> Kennzahlen | None:
     """Kennzahlen aus einem Lauf ziehen.
 
@@ -165,17 +202,27 @@ def auswerten(messung: Messung, aufwaermen: float = AUFWAERMEN) -> Kennzahlen | 
     mehr als der Mittelwert: Ruckler spürt man, einen guten Durchschnitt
     nicht.
 
-    ``None``, wenn nach der Aufwärmzeit zu wenig übrig bleibt. Lieber keine
-    Zahl als eine, die auf zwanzig Stichproben beruht.
+    Gemessen wird ab dem ersten gerenderten Bild plus ``aufwaermen``. Eine
+    feste Zeit ab Programmstart taugt nicht – siehe die Anmerkung bei
+    ``AUFWAERMEN``.
+
+    ``None``, wenn danach zu wenig übrig bleibt. Lieber keine Zahl als eine,
+    die auf zwanzig Stichproben beruht.
     """
-    # »>« und nicht »>=«: Die Stichprobe genau auf der Zehn-Sekunden-Marke
-    # gehört noch zur Aufwärmphase. Ein Wert macht den Kohl nicht fett, aber
-    # »die ersten zehn Sekunden« soll heißen, was es sagt.
+    beginn = ladezeit(messung) + aufwaermen
+
     behalten = [
         fps for fps, sekunde in zip(messung.bilder, messung.sekunden)
-        if sekunde > aufwaermen
+        if sekunde > beginn
     ]
     verworfen = len(messung.bilder) - len(behalten)
+
+    # Aussetzer *nach* dem Laden bleiben in der Statistik. Sie sind kein
+    # Messfehler, sondern das Unangenehmste, was ein Spiel tun kann: Bei
+    # Vostok stand das Bild zwischen Sekunde 122 und 126 praktisch still.
+    # Wer sie herausrechnet, macht die Zahlen schöner und die Aussage
+    # wertlos.
+    aussetzer = sum(1 for fps in behalten if fps < LAEUFT_AB)
 
     if len(behalten) < 50:
         # Bei 100 ms Abstand sind das fünf Sekunden. Darunter ist jede
@@ -190,6 +237,8 @@ def auswerten(messung: Messung, aufwaermen: float = AUFWAERMEN) -> Kennzahlen | 
         stichproben=len(behalten),
         dauer=messung.dauer,
         verworfen=verworfen,
+        ladezeit=ladezeit(messung),
+        aussetzer=aussetzer,
     )
 
 
