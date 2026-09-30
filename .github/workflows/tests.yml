@@ -1,0 +1,63 @@
+name: Tests
+
+# Sparsam von Anfang an. GitHub rundet jeden einzelnen Job auf volle Minuten
+# auf; ein Job, der zwanzig Sekunden läuft, zählt als eine Minute. Bei
+# MailBurg summierte sich eine zu breit angelegte Matrix an einem einzigen
+# Arbeitstag auf 1.800 von 2.000 Minuten.
+#
+# SPIELRaum ist ein Linux-Programm - Windows und macOS stellen sich hier gar
+# nicht erst. Geprüft wird stattdessen gegen die Python-Fassungen der beiden
+# Zielsysteme:
+#
+#     Debian 13 (Trixie)   Python 3.13
+#     Manjaro              Python 3.14
+#
+# Dazu 3.11 als Untergrenze - tomllib kam in 3.11, und darunter läuft
+# SPIELRaum nicht.
+
+on:
+  push:
+    # An Text ändert sich durch einen Testlauf nichts.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+  pull_request:
+  workflow_dispatch:
+
+# Wer dreimal hintereinander pusht, braucht nur die Antwort auf den letzten.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Einrichten
+        run: pip install -e ".[entwicklung]"
+
+      - name: Tests
+        run: python -m pytest -q
+
+      # Die Kommandozeile muss auf einem Rechner durchlaufen, auf dem weder
+      # GameMode noch MangoHud noch eine Grafikkarte liegt. Genau dort fällt
+      # auf, wenn irgendwo doch ein Pfad angenommen statt nachgesehen wird.
+      - name: Kommandozeile auf nacktem System
+        run: |
+          python -m spielraum.cli --version
+          python -m spielraum.cli umgebung
+          python -m spielraum.cli pruefen profile/1963610-road-to-vostok.toml
+          python -m spielraum.cli aufraeumen

@@ -1,0 +1,60 @@
+# Road to Vostok – das erste echte Profil.
+#
+# Die Werte hier sind nicht geraten, sondern am 30.09.2026 auf dem Rechner
+# nachgesehen worden, auf dem das Spiel läuft: Godot 4.6.2, Windows-Bau unter
+# GE-Proton11-1, sechzehn Mods, GTX 1070 auf Wayland.
+#
+# Was dabei herauskam und warum es so dasteht:
+#
+#   * Das Spiel liegt auf einer drehenden Platte (Hitachi HDS721010DLE630).
+#     Das ist der größte Bremsklotz, und er bleibt – die Entscheidung dagegen
+#     ist gefallen. Also umgehen wir ihn, wo es geht: Der Shader-Zwischen-
+#     speicher soll nicht auch noch von dort gelesen werden.
+#   * Das Spiel fährt D3D12. Nachgesehen im Spielprotokoll, dort steht
+#     wörtlich »Driver Detected: d3d12«. Godot 4.6.2 hat aber auch Vulkan
+#     einkompiliert. D3D12 geht unter Proton den Umweg über vkd3d-proton;
+#     Vulkan spart diese Übersetzungsschicht.
+#
+# Der zweite Punkt ist ausdrücklich **eine Vermutung, keine Messung.** Er
+# steht deshalb auskommentiert da. Erst messen, dann einschalten – und wenn
+# es mit den Mods nicht gutgeht, war es das Messen trotzdem wert.
+
+[spiel]
+name         = "Road to Vostok"
+steam_app_id = 1963610
+engine       = "godot"
+
+[system]
+# GameMode übernimmt den Teil, der Systemrechte braucht: Taktregler hoch,
+# GPU auf Leistung, Prozesspriorität. Das ist erprobter Code mit einem
+# geprüften Dienst dahinter – ihn nachzubauen wäre eine schlechtere Fassung
+# desselben Programms.
+gamemode      = true
+nicht_stoeren = true
+
+[umgebung]
+# Der Shader-Zwischenspeicher von Godots OpenGL-Pfad. Vier Gigabyte, damit
+# er nicht mittendrin überläuft und neu aufgebaut werden muss.
+__GL_SHADER_DISK_CACHE      = "1"
+__GL_SHADER_DISK_CACHE_SIZE = "4294967296"
+__GL_THREADED_OPTIMIZATIONS = "1"
+
+# ACHTUNG, noch offen: Der vkd3d-proton-Zwischenspeicher liegt derzeit als
+# vkd3d-proton.cache im Spielordner – also auf der langsamen Platte. Ihn auf
+# die SSD umzuleiten wäre der zweite Hebel gegen den Flaschenhals. Die dafür
+# zuständige Umgebungsvariable ist noch nicht nachgeschlagen; im Proton-Bau
+# auf diesem Rechner ließ sie sich nicht finden. Steht in TODO.md.
+
+[start]
+# Einstweilen leer. Sobald gemessen ist, kommt hier hinein:
+#   argumente = ["--rendering-driver", "vulkan"]
+argumente = []
+
+[messen]
+mangohud = true
+
+# Keine [dateien]-Abschnitte, solange nicht feststeht, welche Einstellung
+# etwas bringt. Die override.cfg dieses Spiels führt den Mod-Loader an; sie
+# anzufassen ohne Grund wäre ein Risiko ohne Gegenwert. Wenn es so weit ist,
+# sorgt »zusammenfuehren = true« dafür, dass der Eintrag stehen bleibt –
+# tests/test_godot_cfg.py wacht darüber.

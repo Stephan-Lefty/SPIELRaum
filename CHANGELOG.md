@@ -1,0 +1,74 @@
+[Deutsch](CHANGELOG.md) | [Übersicht](README.md) | [TODO](TODO.md)
+
+# Änderungsprotokoll
+
+Alle nennenswerten Änderungen an SPIELRaum stehen hier.
+
+Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
+die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
+
+## [0.1.0] – 2026-09-30
+
+Der erste Aufschlag. Das Gerüst steht, der Kern ist geprüft, der Befehl, um
+den es eigentlich geht, fehlt noch.
+
+### Hinzugefügt
+
+- **Systemerkennung statt fester Pfade** (`spielraum/umgebung.py`). Arch und
+  Debian sind beide von Anfang an gemeint. Geprüft wird über `ID_LIKE` aus
+  `/etc/os-release`, nicht über `ID` – sonst unterstützt man genau zwei
+  Distributionen statt zweier Familien: Manjaro meldet sich als `manjaro`
+  mit `ID_LIKE=arch`, Mint als `linuxmint` mit `ID_LIKE=ubuntu debian`.
+  Fehlt ein Werkzeug, nennt die Meldung den Befehl zum Nachinstallieren –
+  je nach Familie `pacman -S` oder `apt install`.
+
+- **Profilformat** (`spielraum/profil.py`). Eine TOML-Datei pro Spiel. TOML,
+  weil Python es seit 3.11 mit `tomllib` selbst liest – kein Paket
+  nachzuziehen, nur um die eigene Konfiguration zu lesen, wiegt hier mehr
+  als jedes Format-Argument.
+
+  Profile enthalten **keine Befehle**, nur Werte aus einer festen Liste. Ein
+  Feld, in das man eine Befehlszeile schreiben kann, wäre ein Einfallstor:
+  Wer die Datei schreiben darf, führte sonst Code mit erhöhten Rechten aus.
+
+- **Zustandsjournal mit Absturzsicherung** (`spielraum/zustand.py`). Der alte
+  Wert wird gelesen und geschrieben, *bevor* geändert wird; andersherum wäre
+  ein Absturz zwischen beiden Schritten nicht mehr aufzulösen. Geschrieben
+  wird atomar über `os.replace` mit `fsync` davor – ohne das steht die Datei
+  zwar im Verzeichnis, ihr Inhalt aber womöglich noch im Schreibpuffer, und
+  genau dann nützt sie nach einem Stromausfall nichts.
+
+- **`override.cfg` zusammenführen statt überschreiben**
+  (`spielraum/godot_cfg.py`). Zeilenweise, nicht über `configparser`: Godots
+  Format sieht INI ähnlich, ist aber keines, und `configparser` schreibt beim
+  Zurückschreiben alles neu – Reihenfolge, Anführungszeichen und Kommentare
+  gehen dabei verloren.
+
+  Der Anlass ist konkret. Road to Vostok führt in dieser Datei seinen
+  Mod-Loader an. Wer sie überschreibt, schaltet sechzehn Mods ab und merkt es
+  erst, wenn das Spiel läuft und alles fehlt – es stürzt ja nicht ab. Genau
+  dieser Fall steht als `test_modloader_ueberlebt` in den Tests und wurde
+  zusätzlich gegen die echte Datei auf der Platte gegengeprüft.
+
+- **Erstes Profil: Road to Vostok** (`profile/1963610-road-to-vostok.toml`).
+  Nicht aus dem Lehrbuch, sondern am 30.09.2026 auf dem Rechner nachgesehen,
+  auf dem das Spiel läuft.
+
+- **Kommandozeile** mit `umgebung`, `profile`, `pruefen` und `aufraeumen`.
+
+### Bekannte Lücken
+
+- **`spielraum starten` gibt es noch nicht.** Das ist der Befehl, um den es
+  eigentlich geht. Er wird bewusst nicht als Platzhalter angeboten: Ein
+  Befehl, der so aussieht, als würde er das System herrichten, es aber nicht
+  tut, ist schlimmer als keiner.
+
+- **Der Wechsel auf Vulkan ist eine Vermutung, keine Messung.** Das
+  Spielprotokoll meldet `Driver Detected: d3d12`, und Godot 4.6.2 hat Vulkan
+  einkompiliert – der Umweg über vkd3d-proton ließe sich also womöglich
+  sparen. Ob das mit sechzehn Mods gutgeht, weiß niemand. Die Zeile steht
+  auskommentiert im Profil, bis gemessen ist.
+
+- **Die Umgebungsvariable für den vkd3d-proton-Zwischenspeicher fehlt.** Sie
+  ließ sich im Proton-Bau auf diesem Rechner nicht auffinden. Sie aus dem
+  Gedächtnis hinzuschreiben wäre geraten, und geraten steht hier nichts.

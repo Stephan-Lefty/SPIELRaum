@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+
+# Messprotokolle entstehen beim Spielen und gehören niemandem außer dem
+# Rechner, auf dem sie entstanden sind.
+messungen/
+*.csv

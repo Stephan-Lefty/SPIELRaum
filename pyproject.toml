@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spielraum"
+# Die Fassung steht ausschließlich in spielraum/__init__.py. Sie hier zu
+# wiederholen ging bei MailBurg schief: pyproject.toml blieb bei 0.1.0
+# stehen, während das Programm längst etwas anderes meldete.
+dynamic = ["version"]
+description = "Spiele starten, das System dafür herrichten, hinterher aufräumen"
+readme = "README.md"
+# 3.11 wegen tomllib aus der Standardbibliothek. Debian 13 bringt Python
+# 3.13 mit, Manjaro ohnehin Neueres - damit kommt SPIELRaum ohne eine
+# einzige Abhängigkeit für das Lesen seiner eigenen Profile aus.
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Stephan Rösner" }]
+keywords = ["gaming", "linux", "steam", "proton", "gamemode", "mangohud"]
+
+classifiers = [
+    # Nur, was tatsächlich im Betrieb erprobt ist.
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: German",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+    "Topic :: System :: Systems Administration",
+]
+
+# Keine Laufzeitabhängigkeiten. Was SPIELRaum braucht, sind Programme
+# (gamemoderun, mangohud), keine Python-Pakete - und die werden zur
+# Laufzeit gesucht, nicht vorausgesetzt. Siehe spielraum/umgebung.py.
+dependencies = []
+
+[project.optional-dependencies]
+oberflaeche = ["PySide6>=6.6"]
+entwicklung = ["pytest>=8"]
+
+[project.scripts]
+spielraum = "spielraum.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "spielraum.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["spielraum*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

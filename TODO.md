@@ -1,0 +1,73 @@
+[Deutsch](TODO.md) | [English](TODO.en.md) | [Übersicht](README.md) | [Änderungsprotokoll](CHANGELOG.md)
+
+# TODO
+
+Laufende Liste offener Punkte. Oben steht, was noch offen ist. Erledigtes wird
+nicht gelöscht, sondern nach unten verschoben – mit dem Datum, an dem es
+fertig wurde.
+
+## Offen
+
+- [ ] **`spielraum starten` bauen.** Der Befehl, um den es eigentlich geht.
+  Ablauf: Profil finden (über `SteamAppId` aus der Umgebung, die setzt Steam
+  beim Start), Journal anlegen, Stellschrauben anwenden, Spiel über
+  `gamemoderun` starten, auf das Ende warten, zurücksetzen. Das Zurücksetzen
+  muss auch dann laufen, wenn SPIELRaum selbst ein Signal bekommt – also
+  `try/finally` plus Signalbehandlung, nicht nur der gute Fall.
+
+- [ ] **Zurücksetzen aus verwaisten Journalen.** `spielraum aufraeumen` findet
+  sie schon und zeigt an, was zurückzusetzen wäre – getan wird es noch nicht.
+  Hängt an `starten`, weil beide dieselbe Anwenden-Funktion brauchen.
+
+- [ ] **Die Umgebungsvariable für den vkd3d-proton-Zwischenspeicher
+  nachschlagen.** Sie ließ sich am 30.09.2026 im Proton-Bau auf diesem
+  Rechner nicht finden (weder unter `/usr/lib` noch in
+  `compatibilitytools.d`). Der Zwischenspeicher liegt derzeit als
+  `vkd3d-proton.cache` im Spielordner, und der liegt bei Road to Vostok auf
+  einer drehenden Platte. Ihn auf die SSD umzuleiten wäre der zweite Hebel
+  gegen den Flaschenhals. Quelle: die vkd3d-proton-Dokumentation, nicht das
+  Gedächtnis.
+
+- [ ] **Messen: MangoHud-Protokolle auswerten.** Pro Lauf eine Datei,
+  daraus Mittelwert und 1-%-Tiefstwerte. Erst damit wird aus »fühlt sich
+  besser an« ein Vorher-Nachher. Die Protokolle gehören nach
+  `~/.local/share/spielraum/messungen` und nicht ins Repository – steht so
+  schon in `.gitignore`.
+
+- [ ] **D3D12 gegen Vulkan messen (Road to Vostok).** Das Spielprotokoll
+  meldet `Driver Detected: d3d12`; Godot 4.6.2 hat Vulkan einkompiliert. Der
+  Umweg über vkd3d-proton ließe sich womöglich sparen. Ob es mit den sechzehn
+  Mods gutgeht, ist offen. Die Zeile steht auskommentiert im Profil.
+
+- [ ] **.deb für Debian 13 bauen.** Ausdrücklicher Wunsch. Das Paket darf
+  PySide6 später nicht aus PyPI ziehen, sondern muss die Fassung der
+  Distribution nehmen. Achtung, Lehre aus MailBurg vom 14.09.2026: Ubuntu,
+  Mint, Pop!_OS und Zorin führen PySide6 nicht in ihren Quellen – für die
+  braucht es einen anderen Weg als das .deb.
+
+- [ ] **Auf Debian 13 wirklich ausprobieren.** Bisher ist SPIELRaum nur auf
+  Manjaro gelaufen. Die Systemerkennung ist für beide Familien gebaut, aber
+  gebaut und erprobt sind zweierlei. Es hängt an einem Gerät zum Prüfen.
+
+- [ ] **Oberfläche mit PySide6.** Erst wenn die Kommandozeile trägt. Farben
+  aus [`assets/farben.md`](assets/farben.md), wie in den anderen Programmen.
+
+- [ ] **Icon einsortieren.** Liegt vor (blaues Quadrat, Zahnrad über einem
+  Gamepad, Schriftzug SPIELRaum), gehört nach `assets/` in den üblichen
+  Größen plus SVG.
+
+- [ ] **Prüfen, ob KDE auf Wayland überhaupt etwas zum Abschalten hat.**
+  Unter X11 war »Compositor aus« ein echter Hebel. Unter Wayland gibt es das
+  so nicht mehr. Was es stattdessen gibt – Tearing erlauben, VRR – ist noch
+  nicht nachgesehen, nur vermutet.
+
+## Erledigt
+
+- [x] **Repository angelegt, Kern geprüft** (30.09.2026). Systemerkennung,
+  Profilformat, Zustandsjournal und das Zusammenführen von `override.cfg`
+  stehen und sind getestet. Das Zusammenführen wurde zusätzlich gegen die
+  echte Datei auf der Platte gegengeprüft: Der Mod-Loader-Eintrag bleibt
+  stehen.
+
+- [x] **MangoHud und GameMode installiert** (30.09.2026). Samt der
+  32-Bit-Fassungen – ohne sie greift MangoHud im Steam-Overlay nicht durch.
