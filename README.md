@@ -32,6 +32,18 @@ SPIELRaum setzt darauf auf und macht das, was GameMode nicht tut:
 | setzt zurück | setzt zurück, **auch nach einem Absturz** |
 | — | misst nach, ob es etwas gebracht hat |
 
+## Einrichten
+
+```
+./install.sh
+```
+
+Legt eine eigene Python-Umgebung im Repository an, installiert SPIELRaum
+hinein und stellt einen Starter nach `~/.local/bin`. Nichts davon braucht
+Systemrechte, nichts landet außerhalb von `$HOME`. Mitgelieferte Profile
+werden nach `~/.config/spielraum/spiele` kopiert – vorhandene bleiben
+unangetastet.
+
 ## Benutzen
 
 In den Steam-Startoptionen des Spiels:
