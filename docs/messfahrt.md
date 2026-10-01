@@ -77,6 +77,61 @@ nur im Journal.** Bricht jemand die Fahrt nach dem zweiten Lauf ab, muss
 SPIELRaum wissen, worauf zurückzustellen ist – das Journal des zweiten Laufs
 kennt nur den Zustand von Lauf eins.
 
+## Wer führt: die Oberfläche
+
+Das ist eine Architekturentscheidung, und sie wird besser vorher getroffen
+als nachher.
+
+Die Umhüllung (``spielraum starten``) **führt nicht**. Sie setzt, was in der
+Fahrtenakte steht, misst und schreibt das Ergebnis zurück – mehr nicht. Sie
+startet insbesondere **kein Spiel neu**. Wer nach dem ersten Lauf merkt, dass
+er keine Lust mehr hat, soll nicht gegen ein Spiel ankämpfen, das sich von
+selbst wieder öffnet.
+
+Geführt wird in der Oberfläche. Sie läuft parallel, sieht in der Fahrtenakte
+nach und zeigt nach jedem Lauf den Stand::
+
+    Messfahrt Road to Vostok          Lauf 1 von 3 erledigt
+
+      Optik           61,1 Bilder    1-%-Tief 29,0    ✓
+      Ausgeglichen    —                               ← als Nächstes
+      Leistung        —
+
+      [ Nächsten Lauf starten ]    [ Abbrechen ]
+
+Der Knopf setzt die nächste Variante und ruft Steam. Wann das geschieht,
+entscheidet der Anwender – gleich, nach dem Kaffee oder morgen. Die
+Fahrtenakte liegt auf der Platte und wartet.
+
+Das hat einen erwünschten Nebeneffekt: Das Zwischenergebnis steht nach jedem
+Lauf da. Wer schon nach »Optik« sieht, dass ihm 61 Bilder reichen, spart sich
+die restlichen zwanzig Minuten.
+
+## Der Timer gehört ins Spiel
+
+Woher weiß man, wann die zehn Minuten um sind? Nicht aus einem Fenster im
+Hintergrund – im Vollbild sieht man das nicht, und Alt-Tab mitten in der
+Messung verfälscht sie.
+
+MangoHud blendet beides mit ein::
+
+    SPIELRaum: Messfahrt 1/3 – Optik
+    Noch 7:42
+
+Dafür reichen zwei Einträge in ``MANGOHUD_CONFIG``:
+
+``custom_text_center``
+    die Zeile mit Lauf und Variante, fest für die Dauer des Laufs
+
+``exec``
+    ruft ein Programm auf, dessen Ausgabe eingeblendet wird – hier die
+    Restzeit. SPIELRaum bringt dafür einen eigenen Unterbefehl mit, statt
+    ein Shell-Skript daneben zu legen.
+
+Am 01.10.2026 ausprobiert: MangoHud nimmt diese Konfiguration an und schreibt
+sein Messprotokoll unverändert weiter. Wie die Einblendung im Spiel aussieht,
+muss am echten Spiel beurteilt werden.
+
 ## Wann ein Lauf zählt
 
 Nicht jeder Spielstart ist eine Messung. Ein Lauf zählt nur, wenn:
