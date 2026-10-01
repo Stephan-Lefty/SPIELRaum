@@ -7,6 +7,17 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
+- [ ] **Make frame rates comparable in a meaningful way.** Measured on
+  2026-10-01: within a *single* run the frame rate swung from 30.9 to 53.8 –
+  74 %, purely from where the player stood. The difference between hard disk
+  and SSD was 16 %, between D3D12 and Vulkan 0.6 %. The noise is larger than
+  anything we set out to measure.
+
+  SPIELRaum measures load times reliably and frame rates only roughly. See
+  [docs/messen.md](docs/messen.md) (German). Possible routes: show the
+  distribution across many runs instead of single means; compare sections of
+  equal GPU load; treat games with a built-in benchmark separately.
+
 - [ ] **Look up the environment variable for the vkd3d-proton cache.** It
   could not be found in the Proton build on this machine on 2026-09-30.
   Less urgent since the game moved to the SSD, and moot for Road to Vostok
@@ -56,7 +67,10 @@ deleted but moved down, with the date they were completed.
 - [x] **Road to Vostok moved to the SSD** (2026-09-30). What held across both
   runs: 24 to 25 seconds of loading and stutters while streaming. Measuring
   the disk itself gave 112 MB/s and 7.76 ms per seek against 509 MB/s and
-  0.13 ms on the SSD. Confirmation by a fresh measurement is still pending.
+  0.13 ms on the SSD. **Confirmed on 2026-10-01: load time down from 23.8 to
+  6.6 seconds**, against a prediction of 6 to 9. Frame rate and stutters, by
+  contrast, did not change – counter to the prediction, see the point on
+  measurability above.
 
 - [x] **Published to GitHub** (2026-09-30), private for now. Alpha, proven on
   exactly one machine, never run on Debian — going public is a one-click

@@ -6,4 +6,4 @@ das Programm längst etwas anderes meldete. ``pyproject.toml`` liest sie
 deshalb dynamisch aus dieser Datei.
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"

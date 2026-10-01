@@ -111,11 +111,19 @@ class Kennzahlen:
             f"1-%-Tief {self.tief_1:.1f}, 0,1-%-Tief {self.tief_01:.1f} "
             f"({self.stichproben} Stichproben über {self.dauer:.0f} s)"
         )
+        # Beides getrennt prüfen. In der ersten Fassung hing die Zeile mit
+        # den Aussetzern an der Bedingung für die Ladezeit - lud ein Spiel
+        # in unter einer Sekunde, verschwanden die Aussetzer aus der
+        # Anzeige, obwohl sie gezählt waren. Am 01.10.2026 genau so
+        # passiert: ein Lauf mit 49 Aussetzer-Stichproben meldete nichts.
+        teile = []
         if self.ladezeit >= 1:
-            text += f"\n      Ladezeit {self.ladezeit:.0f} s"
-            if self.aussetzer:
-                # Ein Zehntel Sekunde je Stichprobe - die übliche Schrittweite.
-                text += f", dazu {self.aussetzer / 10:.0f} s Aussetzer im Spiel"
+            teile.append(f"Ladezeit {self.ladezeit:.0f} s")
+        if self.aussetzer:
+            # Ein Zehntel Sekunde je Stichprobe - die übliche Schrittweite.
+            teile.append(f"{self.aussetzer / 10:.1f} s Aussetzer im Spiel")
+        if teile:
+            text += "\n      " + ", dazu ".join(teile)
         return text
 
 

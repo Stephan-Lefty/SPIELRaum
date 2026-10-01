@@ -66,6 +66,63 @@ Für einen belastbaren Vergleich:
 * **Eine Änderung auf einmal.** Wer Renderer und Shader-Zwischenspeicher
   gleichzeitig umstellt, weiß hinterher nicht, was gewirkt hat.
 
+## Was diese Messung *nicht* kann
+
+Nachgewiesen am 01.10.2026, und der Nachweis geht gegen das eigene
+Werkzeug: **Für den Vergleich von Bildraten zwischen zwei Läufen taugt diese
+Methode nicht** – jedenfalls nicht bei einem Spiel ohne wiederholbare Szene.
+
+Hier die Bildrate innerhalb *eines einzigen* Laufs von Road to Vostok,
+aufgeschlüsselt nach Zweiminutenabschnitten:
+
+```
+ 0- 2 min:  35,2
+ 2- 4 min:  30,9
+ 4- 6 min:  46,3
+ 6- 8 min:  47,8
+ 8-10 min:  45,9
+10-12 min:  53,8
+```
+
+**Von 30,9 auf 53,8 – 74 Prozent Unterschied.** Gleiches Spiel, gleiche
+Einstellungen, gleicher Rechner, gleicher Lauf. Der Unterschied ist allein,
+wo der Spieler gerade stand und was gerendert werden musste.
+
+Zum Vergleich die Unterschiede, die wir zwischen *verschiedenen* Läufen
+gemessen haben und denen wir eine Bedeutung geben wollten:
+
+| Vergleich | Unterschied |
+|---|---|
+| D3D12 gegen Vulkan | 0,6 % |
+| Festplatte gegen SSD | 16 % |
+| **innerhalb eines Laufs** | **74 %** |
+
+Die Störgröße ist größer als alles, was wir messen wollten. Ein Mittelwert
+aus einem Lauf sagt deshalb vor allem, wo gespielt wurde – nicht, wie gut die
+Einstellungen sind.
+
+### Was trotzdem trägt
+
+**Die Ladezeit.** Sie hängt fast ausschließlich am Datenträger und kaum am
+Spielgeschehen. Deshalb ist der Umzug von der Festplatte auf die SSD auch
+sauber nachgewiesen: 23,8 Sekunden gegen 6,6.
+
+**Die Aussetzer**, mit Einschränkung. Sie entstehen beim Nachladen und hängen
+damit ebenfalls am Datenträger – aber eben auch daran, *was* nachgeladen
+werden musste.
+
+### Was man bräuchte
+
+Eine wiederholbare Szene: dieselbe Stelle, derselbe Weg, dieselbe Dauer. Die
+meisten Spiele geben das nicht her, und Road to Vostok schon gar nicht. Ohne
+sie bleibt nur, viele Läufe zu sammeln und auf die Verteilung zu sehen statt
+auf einzelne Mittelwerte – was Geduld braucht und trotzdem nie so scharf wird
+wie ein Vergleich an derselben Stelle.
+
+Solange das nicht da ist, gilt: **SPIELRaum misst Ladezeiten zuverlässig und
+Bildraten nur grob.** Wer das anders darstellt, verkauft Rauschen als
+Ergebnis.
+
 ## Der Taktregler im Protokoll
 
 MangoHud schreibt in die Kopfzeile jedes Protokolls, welcher Taktregler

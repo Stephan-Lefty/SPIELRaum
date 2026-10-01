@@ -147,3 +147,29 @@ def test_ladezeit_ohne_ladephase(tmp_path):
     k = messen.auswerten(messen.lesen(log_schreiben(tmp_path, "l", [60.0] * 300)))
     assert k.ladezeit < 0.2
     assert k.aussetzer == 0
+
+
+def test_aussetzer_werden_auch_ohne_ladezeit_gemeldet(tmp_path):
+    """Der Anzeigefehler vom 01.10.2026.
+
+    Die Zeile mit den Aussetzern hing an der Bedingung für die Ladezeit.
+    Lud ein Spiel in unter einer Sekunde – etwa weil es kurz zuvor schon
+    lief und im Zwischenspeicher lag –, verschwanden die Aussetzer aus der
+    Anzeige, obwohl sie gezählt waren. Ein Lauf mit 49 solchen Stichproben
+    meldete nichts.
+    """
+    # Lädt sofort, hat aber mittendrin Hänger.
+    werte = [50.0] * 200 + [0.3] * 40 + [50.0] * 200
+    k = messen.auswerten(messen.lesen(log_schreiben(tmp_path, "l", werte)))
+    assert k.ladezeit < 1
+    assert k.aussetzer == 40
+    assert "Aussetzer" in str(k)
+
+
+def test_ladezeit_ohne_aussetzer_bleibt_lesbar(tmp_path):
+    werte = [2.81111e-05] * 240 + [50.0] * 300
+    k = messen.auswerten(messen.lesen(log_schreiben(tmp_path, "l", werte)))
+    text = str(k)
+    assert "Ladezeit" in text
+    assert "Aussetzer" not in text
+    assert ", dazu" not in text  # kein Komma ins Leere

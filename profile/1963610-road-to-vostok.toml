@@ -1,40 +1,34 @@
-# Road to Vostok – das erste Profil, das durchgemessen wurde.
+# Road to Vostok – das erste Profil, das vollständig durchgemessen wurde.
 #
-# Godot 4.6.2, Windows-Bau unter GE-Proton11-1, sechzehn Mods,
-# GTX 1070 auf Wayland.
+# Godot 4.6.3, Windows-Bau unter GE-Proton11-1, sechzehn Mods,
+# GTX 1070 auf Wayland, seit dem 30.09.2026 auf einer SSD.
 #
-# Gemessen am 30.09.2026, zwei Läufe von je rund zehn Minuten:
+# ===================================================================
+# Dieses Profil ist vor allem eine Liste dessen, was NICHT wirkt.
+# ===================================================================
 #
-#                      D3D12        Vulkan
-#     Mittel           49,0         49,3    Bilder/s
-#     1-%-Tief         15,8          0,0
-#     Ladezeit           24           25    Sekunden
-#     Aussetzer           5            9    Sekunden
+# Gemessen über vier Läufe von je zehn Minuten am 30.09. und 01.10.2026:
 #
-# Zwei Erkenntnisse daraus, beide gegen die Erwartung:
+#   Vulkan statt D3D12 .............. 0,6 %  = nichts
+#   GPU-Power-Limit anheben ......... die Karte bremste an 0,014 %
+#                                     der Laufzeit, also nichts zu holen
+#   Taktregler auf performance ...... EPP steht ohnehin auf performance;
+#                                     GameMode darf hier gar nicht (Polkit)
+#   __GL_*-Variablen ................ wirkungslos, siehe unten
 #
-# 1. **Der Renderer ist es nicht.** Die Vermutung war, der Umweg über
-#    vkd3d-proton koste Leistung. Er kostet nichts: 49,0 gegen 49,3 ist
-#    Rauschen. Godot fährt in beiden Fällen "Forward Mobile", und die
-#    GTX 1070 langweilt sich dabei - ihr Power-Limit bremste an 0,014 %
-#    der Laufzeit.
+# Was wirklich bremste, war die Platte:
 #
-# 2. **Die Platte war es.** Beide Läufe zeigten 24 bis 25 Sekunden
-#    Ladezeit und Aussetzer beim Nachladen; beim längsten stand das Bild
-#    vier Sekunden still. Das Spiel lag auf einer Hitachi von 2010:
+#   Ladezeit auf der Hitachi (2010) ....... 23,8 s
+#   Ladezeit auf der Crucial MX500 ......... 6,6 s
 #
-#        am Stück   112 MB/s      je Sprung   7,76 ms
+# Die Bildrate lag vorher wie nachher bei rund 45 - das Spiel lief auch
+# auf der Festplatte flüssig. Was störte, waren Ladezeit und
+# Nachladehänger von bis zu vier Sekunden Standbild.
 #
-#    Auf der SSD, wohin es am 30.09.2026 umgezogen ist:
-#
-#        am Stück   509 MB/s      je Sprung   0,13 ms
-#
-#    Viereinhalbmal so schnell am Stück, sechzigmal beim Springen.
-#
-# Was daraus für den nächsten Lauf erwartet wird - noch ungemessen:
-# Ladezeit auf 6 bis 9 Sekunden (ein Rest bleibt, die sechzehn Mods
-# werden beim Start eingehängt, und das ist Rechenarbeit), Aussetzer
-# verschwinden, Bildrate unverändert bei ~49.
+# **Warnung zur Bildrate:** Innerhalb eines einzigen Laufs schwankte sie
+# von 30,9 auf 53,8 Bilder/s, allein je nach Ort im Spiel. Jeder
+# Mittelwert-Vergleich zwischen zwei Läufen sagt deshalb mehr über die
+# gespielte Stelle als über die Einstellungen. Siehe docs/messen.md.
 
 [spiel]
 name         = "Road to Vostok"
@@ -42,23 +36,31 @@ steam_app_id = 1963610
 engine       = "godot"
 
 [system]
-# GameMode konnte am 30.09.2026 den Taktregler nicht setzen: Die
-# Polkit-Regel des Manjaro-Pakets steht auf allow_active=no, siehe
-# docs/gamemode.md. Der Eintrag bleibt trotzdem stehen - er schadet
-# nicht und greift, sobald die Berechtigung eingerichtet ist.
+# Bleibt eingeschaltet, obwohl GameMode am 01.10.2026 nichts ausrichten
+# konnte: Die Polkit-Regel des Manjaro-Pakets steht auf allow_active=no,
+# siehe docs/gamemode.md. Schadet nicht und greift, sobald die
+# Berechtigung eingerichtet ist.
 gamemode      = true
+
+# Die einzige Einstellung in diesem Profil, die nachweislich etwas tut.
 nicht_stoeren = true
 
-[umgebung]
-__GL_SHADER_DISK_CACHE      = "1"
-__GL_SHADER_DISK_CACHE_SIZE = "4294967296"
-__GL_THREADED_OPTIMIZATIONS = "1"
+# [umgebung] gibt es hier bewusst nicht mehr.
+#
+# Bis zum 01.10.2026 standen hier __GL_SHADER_DISK_CACHE,
+# __GL_SHADER_DISK_CACHE_SIZE und __GL_THREADED_OPTIMIZATIONS. Sie
+# stehen in jeder Linux-Gaming-Anleitung, und genau deshalb waren sie
+# hier gelandet - ungeprüft.
+#
+# Es sind Einstellungen des NVIDIA-Treibers für **OpenGL**. Dieses Spiel
+# fährt Vulkan; im gesamten Spielprotokoll kommt OpenGL kein einziges
+# Mal vor. Die drei Zeilen taten nichts, sahen aber nach Optimierung aus
+# - genau die Augenwischerei, gegen die SPIELRaum antritt.
 
 [start]
-# Bleibt eingeschaltet, obwohl die Messung keinen Gewinn zeigt: Vulkan
-# kostet auch nichts, und der Weg ohne Übersetzungsschicht ist der
-# geradere. Wer das anders sieht, nimmt die Zeile heraus - der
-# Ausgangswert mit D3D12 steht oben.
+# Kein gemessener Gewinn (0,6 %), aber auch kein Verlust. Bleibt, weil
+# der Weg ohne Übersetzungsschicht der geradere ist; wer das anders
+# sieht, nimmt die Zeile heraus.
 argumente = ["--rendering-driver", "vulkan"]
 
 [messen]
@@ -66,5 +68,6 @@ mangohud = true
 
 # Keine [dateien]-Abschnitte. Die override.cfg dieses Spiels führt den
 # Mod-Loader an; sie anzufassen ohne belegten Grund wäre ein Risiko ohne
-# Gegenwert. Wenn es so weit ist, sorgt "zusammenfuehren = true" dafür,
-# dass der Eintrag stehen bleibt - tests/test_godot_cfg.py wacht darüber.
+# Gegenwert. Beim Spiel-Update am 01.10.2026 hat der Mod-Loader sie von
+# sich aus zurückgesetzt und neu geschrieben - ein weiterer Grund, ihm
+# diese Datei zu überlassen.

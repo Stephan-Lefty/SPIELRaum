@@ -8,6 +8,18 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Bildraten belastbar vergleichbar machen.** Am 01.10.2026 gemessen:
+  Innerhalb *eines* Laufs schwankte die Bildrate von 30,9 auf 53,8 – 74 %,
+  allein durch die Stelle im Spiel. Der Unterschied zwischen Festplatte und
+  SSD betrug 16 %, der zwischen D3D12 und Vulkan 0,6 %. Die Störgröße ist
+  also größer als alles, was gemessen werden sollte.
+
+  Ladezeiten misst SPIELRaum zuverlässig, Bildraten nur grob. Siehe
+  [docs/messen.md](docs/messen.md). Denkbare Wege: über viele Läufe die
+  Verteilung zeigen statt einzelner Mittelwerte; Abschnitte gleicher
+  GPU-Last gegeneinander halten; Spiele mit eingebautem Messlauf gesondert
+  behandeln.
+
 - [ ] **Geführter Ablauf statt Einzelbefehle.** Gewünscht am 30.09.2026:
   Programm starten, es sucht die installierten Spiele, man klickt eines an
   und wird Schritt für Schritt durchgeführt – Ist-Zustand, Vorschlag,
@@ -22,10 +34,10 @@ fertig wurde.
   nachschlagen.** Sie ließ sich am 30.09.2026 im Proton-Bau auf diesem
   Rechner nicht finden (weder unter `/usr/lib` noch in
   `compatibilitytools.d`). Der Zwischenspeicher liegt derzeit als
-  `vkd3d-proton.cache` im Spielordner, und der liegt bei Road to Vostok auf
-  einer drehenden Platte. Ihn auf die SSD umzuleiten wäre der zweite Hebel
-  gegen den Flaschenhals. Quelle: die vkd3d-proton-Dokumentation, nicht das
-  Gedächtnis.
+  `vkd3d-proton.cache` im Spielordner. Seit dem Umzug auf die SSD weniger
+  dringend, und für Road to Vostok gegenstandslos – das Spiel fährt Vulkan
+  direkt, vkd3d-proton ist raus. Für andere Spiele bleibt es gültig. Quelle:
+  die vkd3d-proton-Dokumentation, nicht das Gedächtnis.
 
 - [ ] **.deb für Debian 13 bauen.** Ausdrücklicher Wunsch. Das Paket darf
   PySide6 später nicht aus PyPI ziehen, sondern muss die Fassung der
@@ -66,8 +78,10 @@ fertig wurde.
 - [x] **Road to Vostok auf die SSD umgezogen** (30.09.2026). Der Befund, der
   sich in beiden Läufen hielt: 24 bis 25 Sekunden Ladezeit und Aussetzer
   beim Nachladen. Gemessen wurde dann die Platte selbst - 112 MB/s und
-  7,76 ms je Sprung gegen 509 MB/s und 0,13 ms auf der SSD. Der Nachweis in
-  Form einer neuen Messung steht noch aus.
+  7,76 ms je Sprung gegen 509 MB/s und 0,13 ms auf der SSD. **Nachgemessen
+  am 01.10.2026: Ladezeit von 23,8 auf 6,6 Sekunden.** Die Vorhersage lautete
+  6 bis 9 Sekunden. Bildrate und Aussetzer blieben dagegen unverändert –
+  entgegen der Vorhersage, siehe den Punkt zur Messbarkeit oben.
 
 - [x] **Messen gebaut** (30.09.2026). `spielraum messungen` wertet die
   MangoHud-Protokolle aus und vergleicht die letzten beiden Läufe. Die ersten
