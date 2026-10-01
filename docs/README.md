@@ -19,6 +19,12 @@
   Zahlen, warum die ersten zehn Sekunden nicht zählen und wann ein
   Unterschied einer ist.
 
+## Entwürfe
+
+- [Die Messfahrt](messfahrt.md) – drei Varianten nacheinander messen, ohne
+  dass jemand ins Spielmenü muss. Noch nicht gebaut; das Papier beschreibt
+  den Ablauf und die Stelle, an der es schwierig wird.
+
 ## Noch zu schreiben
 
 - Ein Profil von Hand anlegen

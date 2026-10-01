@@ -7,6 +7,16 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
+- [ ] **Build the measurement run.** Drafted 2026-10-01, see
+  [docs/messfahrt.md](docs/messfahrt.md) (German). One button, three runs of
+  ten minutes each, with SPIELRaum switching settings in between. The hard
+  part is not the measuring but that SPIELRaum does not run between two
+  sessions — it needs a run record on disk that outlives several game
+  starts, including the original state for aborting.
+
+  Prerequisites: variants in the profile format, wiring up
+  `art = "godot-tres"` (the reader landed today), buttons in the interface.
+
 - [ ] **Make frame rates comparable in a meaningful way.** Measured on
   2026-10-01: within a *single* run the frame rate swung from 30.9 to 53.8 –
   74 %, purely from where the player stood. The difference between hard disk

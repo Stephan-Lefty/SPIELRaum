@@ -8,6 +8,16 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Messfahrt bauen.** Entworfen am 01.10.2026, siehe
+  [docs/messfahrt.md](docs/messfahrt.md). Ein Knopf, drei Läufe zu je zehn
+  Minuten, dazwischen stellt SPIELRaum selbst um. Die Schwierigkeit ist nicht
+  das Messen, sondern dass SPIELRaum zwischen zwei Läufen gar nicht läuft –
+  es braucht eine Fahrtenakte auf der Platte, die mehrere Spielstarts
+  überdauert, samt Ausgangszustand für den Abbruch.
+
+  Voraussetzungen: Varianten im Profilformat, `art = "godot-tres"` anbinden
+  (der Leser steht seit heute), Knöpfe in der Oberfläche.
+
 - [ ] **Bildraten belastbar vergleichbar machen.** Am 01.10.2026 gemessen:
   Innerhalb *eines* Laufs schwankte die Bildrate von 30,9 auf 53,8 – 74 %,
   allein durch die Stelle im Spiel. Der Unterschied zwischen Festplatte und
