@@ -58,7 +58,44 @@ def spiel_ermitteln(profil: Profil) -> steam.Spiel | None:
     return None
 
 
-def starten(profil: Profil, befehl: list[str], trocken: bool = False) -> int:
+def messmarke(profil: Profil) -> Path:
+    """Die Datei, die sagt: Der nächste Start ist ein Messlauf.
+
+    Sie gibt es, weil in den Steam-Startoptionen ``spielraum starten
+    %command%`` steht - ohne Angabe einer Dauer. Wer für einen Messlauf die
+    Startoptionen ändern müsste, vergisst es hinterher zurückzustellen.
+
+    Die Marke gilt für **einen** Start und wird dabei verbraucht. Das ist
+    Absicht: Eine vergessene Marke blendete sonst bei jedem Spielen eine
+    sinnlose Uhr ein.
+    """
+    return umgebung.daten_verzeichnis() / f"messlauf-{profil.steam_app_id or profil.name}.json"
+
+
+def marke_setzen(profil: Profil, minuten: float) -> Path:
+    import json
+
+    pfad = messmarke(profil)
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text(json.dumps({"minuten": minuten}), encoding="utf-8")
+    return pfad
+
+
+def marke_lesen(profil: Profil) -> float | None:
+    """Die Marke lesen und verbrauchen."""
+    import json
+
+    pfad = messmarke(profil)
+    try:
+        minuten = float(json.loads(pfad.read_text(encoding="utf-8"))["minuten"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    pfad.unlink(missing_ok=True)
+    return minuten
+
+
+def starten(profil: Profil, befehl: list[str], trocken: bool = False,
+            minuten: float | None = None) -> int:
     """Anwenden, starten, warten, zurücksetzen.
 
     ``trocken`` zeigt nur, was geschähe. Das ist kein Beiwerk: Wer einem
@@ -77,8 +114,25 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False) -> int:
     messen_in = stellschrauben.messordner() / f"{profil.steam_app_id or profil.name}"
 
     voller_befehl = stellschrauben.befehl_umhuellen(profil, befehl)
+
+    # Läuft eine Messung über eine feste Dauer, blendet MangoHud die
+    # Restzeit ein. Die Variante steht mit im Bild - sonst weiß man nach
+    # dem dritten Lauf nicht mehr, welcher gerade dran ist.
+    if minuten is None and not trocken:
+        minuten = marke_lesen(profil)
+
+    laeuft_bis = None
+    ueberschrift = ""
+    if minuten:
+        from . import varianten as varianten_modul
+
+        laeuft_bis = time.time() + minuten * 60
+        jetzt = varianten_modul.aktuelle(profil, spielordner, praefix)
+        ueberschrift = f"SPIELRaum: {jetzt or 'eigene Einstellung'}"
+
     laufumgebung = stellschrauben.umgebung_bauen(
-        profil, messen_in if profil.mangohud else None
+        profil, messen_in if profil.mangohud else None,
+        laeuft_bis=laeuft_bis, ueberschrift=ueberschrift,
     )
 
     if trocken:

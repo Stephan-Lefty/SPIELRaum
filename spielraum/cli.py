@@ -262,7 +262,8 @@ def _starten(args) -> int:
         print("Kein Profil für dieses Spiel – es startet unverändert.", file=sys.stderr)
         return subprocess.call(args.befehl)
 
-    return start_modul.starten(gefunden, args.befehl, trocken=args.trocken)
+    return start_modul.starten(gefunden, args.befehl, trocken=args.trocken,
+                               minuten=args.minuten)
 
 
 def _spiel_und_pfade(p):
@@ -311,6 +312,29 @@ def _variante(args) -> int:
     except (varianten.VariantenFehler, FileNotFoundError) as fehler:
         print(f"Geht nicht: {fehler}", file=sys.stderr)
         return 1
+
+
+def _messlauf(args) -> int:
+    """Den nächsten Spielstart als Messlauf markieren."""
+    from . import starten as start_modul
+
+    p = profil.finden(name=args.spiel) or profil.finden(
+        steam_app_id=int(args.spiel) if args.spiel.isdigit() else None)
+    if p is None:
+        print(f"Kein Profil für »{args.spiel}« gefunden.", file=sys.stderr)
+        return 1
+
+    ordner, praefix = _spiel_und_pfade(p)
+    from . import varianten
+
+    jetzt = varianten.aktuelle(p, ordner, praefix)
+    start_modul.marke_setzen(p, args.minuten)
+    print(f"Der nächste Start von {p.name} ist ein Messlauf.")
+    print(f"  Variante:  {jetzt or 'eigene Einstellung (zu keiner passend)'}")
+    print(f"  Dauer:     {args.minuten:.0f} Minuten, wird im Spiel eingeblendet")
+    print()
+    print("Die Marke gilt für einen Start und wird dabei verbraucht.")
+    return 0
 
 
 def _oberflaeche() -> int:
@@ -363,6 +387,12 @@ def main(argv: list[str] | None = None) -> int:
         help="den Zustand vor der ersten Umstellung wiederherstellen",
     )
 
+    messlauf = unterbefehle.add_parser(
+        "messlauf", help="Den nächsten Start als Messlauf markieren"
+    )
+    messlauf.add_argument("spiel", help="Name oder Steam-App-ID")
+    messlauf.add_argument("minuten", type=float, nargs="?", default=10.0)
+
     unterbefehle.add_parser(
         "oberflaeche", help="Die grafische Oberflaeche starten"
     )
@@ -389,6 +419,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     start.add_argument("--profil", help="Profil erzwingen statt über die Steam-App-ID")
     start.add_argument(
+        "--minuten", type=float, metavar="N",
+        help="Restzeit für N Minuten im Spiel einblenden (für Messläufe)",
+    )
+    start.add_argument(
         "--trocken", action="store_true",
         help="nur zeigen, was geschähe – nichts ändern, nichts starten",
     )
@@ -409,6 +443,8 @@ def main(argv: list[str] | None = None) -> int:
         return _pruefen(args.datei)
     if args.aktion == "variante":
         return _variante(args)
+    if args.aktion == "messlauf":
+        return _messlauf(args)
     if args.aktion == "oberflaeche":
         return _oberflaeche()
     if args.aktion == "messungen":

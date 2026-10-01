@@ -44,7 +44,32 @@ def messordner() -> Path:
 # --- Umgebung ---------------------------------------------------------------
 
 
-def umgebung_bauen(profil: Profil, messen_in: Path | None = None) -> dict[str, str]:
+def restzeit_skript(laeuft_bis: float, ueberschrift: str) -> Path:
+    """Ein winziges Shell-Skript, dessen Ausgabe MangoHud einblendet.
+
+    **Warum kein Python.** MangoHud ruft ``exec`` mehrmals je Sekunde auf.
+    Ein Python-Start kostet jedes Mal rund fünfzig Millisekunden - das wären
+    fünf Prozent eines Kerns, nur um eine Uhr anzuzeigen, und zwar während
+    einer Messung. Ein ``sh``-Aufruf kostet zwei Millisekunden.
+
+    Das Skript liegt im Laufzeitverzeichnis und verschwindet beim Abmelden.
+    """
+    pfad = umgebung.laufzeit_verzeichnis() / "restzeit.sh"
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text(
+        "#!/bin/sh\n"
+        f"R=$(( {int(laeuft_bis)} - $(date +%s) ))\n"
+        'if [ "$R" -le 0 ]; then echo "fertig"; '
+        "else printf '%d:%02d\\n' $((R/60)) $((R%60)); fi\n",
+        encoding="utf-8",
+    )
+    pfad.chmod(0o755)
+    return pfad
+
+
+def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
+                   laeuft_bis: float | None = None,
+                   ueberschrift: str = "") -> dict[str, str]:
     """Die Umgebung für das Spiel zusammenstellen.
 
     Wichtig: Es wird eine **Kopie** aufgebaut und dem Kindprozess mitgegeben,
@@ -62,12 +87,22 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None) -> dict[str, s
             # autostart_log zeichnet ab der ersten Sekunde auf; ohne das
             # müsste man im Spiel eine Taste drücken, und dann misst man
             # Sitzungen unterschiedlicher Länge gegeneinander.
-            werte["MANGOHUD_CONFIG"] = ",".join([
+            einstellungen = [
                 f"output_folder={messen_in}",
                 "autostart_log=1",
                 "log_interval=100",
                 "fps_limit=0",
-            ])
+            ]
+            # Der Timer gehört ins Bild, nicht in ein Fenster dahinter: Im
+            # Vollbild sieht man das nicht, und Alt-Tab mitten in der Messung
+            # verfälscht sie.
+            if laeuft_bis is not None:
+                skript = restzeit_skript(laeuft_bis, ueberschrift)
+                if ueberschrift:
+                    einstellungen.append(f"custom_text_center={ueberschrift}")
+                einstellungen.append("custom_text=Noch")
+                einstellungen.append(f"exec={skript}")
+            werte["MANGOHUD_CONFIG"] = ",".join(einstellungen)
     return werte
 
 
