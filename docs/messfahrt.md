@@ -30,6 +30,24 @@ Kein Menü, kein Umstellen, kein Mitschreiben.
 8.  Ausgangszustand wiederherstellen, falls nichts übernommen wird
 ```
 
+## Drei Läufe, nicht eine lange Sitzung
+
+Die zehn Minuten müssen **dreimal getrennt** gespielt werden, mit Spielende
+dazwischen. Eine halbe Stunde am Stück geht nicht.
+
+Der Grund ist das Spiel, nicht SPIELRaum: Eine Einstellungsdatei wird **beim
+Start** gelesen. Ändert man sie, während das Spiel läuft, passiert nichts –
+die neuen Werte greifen erst beim nächsten Mal. SPIELRaum kann also nur in
+der Lücke zwischen zwei Starts umstellen.
+
+Der Aufwand dafür ist gering: zweimal eine zusätzliche Ladezeit. Bei Road to
+Vostok auf der SSD sind das 6,6 Sekunden je Start; auf der alten Festplatte
+wären es knapp zwei Minuten gewesen – ein Nebeneffekt, der für den Umzug
+spricht.
+
+Die Alternative wäre, den Anwender zwischendurch ins Spielmenü zu schicken.
+Genau das soll die Messfahrt aber abnehmen.
+
 ## Die eigentliche Schwierigkeit
 
 SPIELRaum läuft **nicht durchgehend**. Es hängt als Umhüllung am Spielstart,
