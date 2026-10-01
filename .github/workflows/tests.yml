@@ -49,7 +49,19 @@ jobs:
       - name: Einrichten
         run: pip install -e ".[entwicklung]"
 
+      # PySide6-Essentials statt des vollen PySide6: rund ein Drittel der
+      # Groesse, und alles darin, was SPIELRaum anfasst (QtWidgets, QtGui).
+      # Auf dem eigenen Rechner kommt PySide6 aus der Distribution - hier
+      # gibt es die nicht, und ohne es wuerden die Oberflaechentests
+      # stillschweigend uebersprungen. Uebersprungene Tests, die niemand
+      # bemerkt, sind schlimmer als keine.
+      - name: PySide6 fuer die Oberflaechentests
+        run: pip install PySide6-Essentials
+
       - name: Tests
+        # offscreen: Der Runner hat keinen Grafikserver.
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: python -m pytest -q
 
       # Die Kommandozeile muss auf einem Rechner durchlaufen, auf dem weder
@@ -61,3 +73,4 @@ jobs:
           python -m spielraum.cli umgebung
           python -m spielraum.cli pruefen profile/1963610-road-to-vostok.toml
           python -m spielraum.cli aufraeumen
+          python -m spielraum.cli messungen

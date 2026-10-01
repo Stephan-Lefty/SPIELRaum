@@ -44,6 +44,27 @@ Systemrechte, nichts landet außerhalb von `$HOME`. Mitgelieferte Profile
 werden nach `~/.config/spielraum/spiele` kopiert – vorhandene bleiben
 unangetastet.
 
+## Oberfläche
+
+```
+spielraum-ui
+```
+
+Links die installierten Spiele, rechts der Befund: Wo das Spiel liegt, ob
+der Datenträger dreht, was das Profil tut und was bisher gemessen wurde.
+Der Knopf startet es über Steam – nicht direkt, denn sonst fehlte genau die
+Startoption, in der SPIELRaum steckt.
+
+Die Oberfläche verspricht bewusst nichts. Sie zeigt, was **gemessen** ist,
+und sagt dazu, wenn nichts gemessen wurde. Am 01.10.2026 stellte sich
+heraus, dass von allem, was für Road to Vostok eingestellt war, genau eine
+Sache nachweislich wirkte – eine Oberfläche, die daraufhin »Optimiert!«
+meldet, wäre eine Lüge mit Knöpfen.
+
+PySide6 kommt aus der Distribution, nicht aus PyPI – `pyside6` auf Arch,
+`python3-pyside6.qtwidgets` auf Debian. Fehlt es, läuft alles andere
+weiter; nur `spielraum-ui` sagt dann, was zu tun ist.
+
 ## Benutzen
 
 In den Steam-Startoptionen des Spiels:
@@ -88,9 +109,6 @@ engine       = "godot"
 gamemode      = true
 nicht_stoeren = true
 
-[umgebung]
-__GL_SHADER_DISK_CACHE_SIZE = "4294967296"
-
 [start]
 argumente = ["--rendering-driver", "vulkan"]
 ```
@@ -101,8 +119,10 @@ später Code mit erhöhten Rechten aus. Das *wie* steht im Programm, nicht in
 der Konfiguration.
 
 Das mitgelieferte Profil in [`profile/`](profile/) ist keine Vorlage aus dem
-Lehrbuch, sondern auf einem Rechner nachgemessen: Godot 4.6.2 unter
-GE-Proton11-1, sechzehn Mods, GTX 1070 auf Wayland.
+Lehrbuch. Es ist auf einem Rechner durchgemessen und führt vor allem auf,
+was **nicht** wirkt – unter anderem drei Umgebungsvariablen, die dort
+standen, weil sie in jeder Linux-Gaming-Anleitung stehen, und die nichts
+taten, weil sie für OpenGL gelten und das Spiel Vulkan fährt.
 
 ## Messen statt glauben
 
@@ -129,13 +149,12 @@ der Rechner hart ausgeht. Dafür gibt es vier Netze:
    keines: Es sieht gültig aus.
 4. Beim nächsten Start wird nach verwaisten Journalen gesehen.
 
-## Einrichten
+## Selbst daran arbeiten
 
 ```
 git clone …
 cd SPIELRaum
-python3 -m venv .venv
-.venv/bin/pip install -e ".[entwicklung]"
+./install.sh
 .venv/bin/python -m pytest
 ```
 

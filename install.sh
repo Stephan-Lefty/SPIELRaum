@@ -43,7 +43,10 @@ echo "Python: $(python3 --version)"
 # von Python dazu ist wenig hilfreich, deshalb hier eine eigene.
 if [ ! -d "$UMGEBUNG" ]; then
     echo "Lege Python-Umgebung an ..."
-    if ! python3 -m venv "$UMGEBUNG" 2>/dev/null; then
+    # --system-site-packages, damit PySide6 aus der Distribution
+    # sichtbar ist. Ueber pip nachgezogen braechte es sein eigenes Qt
+    # mit - 150 MB, die sich mit dem System beissen koennen.
+    if ! python3 -m venv --system-site-packages "$UMGEBUNG" 2>/dev/null; then
         echo >&2
         echo "Fehler: Die Python-Umgebung ließ sich nicht anlegen." >&2
         if [ -f /etc/debian_version ]; then
@@ -51,6 +54,16 @@ if [ ! -d "$UMGEBUNG" ]; then
             echo "    sudo apt install python3-venv" >&2
         fi
         exit 1
+    fi
+else
+    # Eine Umgebung aus einer frueheren Fassung sieht die Pakete des
+    # Systems nicht - und damit kein PySide6. Statt sie wegzuwerfen,
+    # wird der Schalter in pyvenv.cfg umgelegt; das ist genau die
+    # Stelle, die "python3 -m venv --system-site-packages" schreibt.
+    KONFIG="$UMGEBUNG/pyvenv.cfg"
+    if [ -f "$KONFIG" ] && grep -q "include-system-site-packages *= *false" "$KONFIG"; then
+        echo "Schalte vorhandene Umgebung auf die Pakete des Systems um ..."
+        sed -i "s/include-system-site-packages *= *false/include-system-site-packages = true/" "$KONFIG"
     fi
 fi
 
@@ -68,7 +81,42 @@ exec "$UMGEBUNG/bin/python3" -m spielraum.cli "\$@"
 STARTER
 chmod +x "$ZIEL/spielraum"
 
-echo "Starter: $ZIEL/spielraum"
+cat > "$ZIEL/spielraum-ui" <<STARTER
+#!/bin/sh
+# Erzeugt von install.sh. Nicht von Hand aendern.
+exec "$UMGEBUNG/bin/python3" -m spielraum.ui.fenster "\$@"
+STARTER
+chmod +x "$ZIEL/spielraum-ui"
+
+echo "Starter: $ZIEL/spielraum und $ZIEL/spielraum-ui"
+
+# --- Eintrag im Anwendungsmenue -------------------------------------------
+# Nach XDG, nicht nach /usr/share - das braeuchte Systemrechte, und die
+# will dieses Skript nicht.
+MENUE="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+SYMBOLE="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
+mkdir -p "$MENUE"
+for groesse in 16 24 32 48 64 128 256 512; do
+    if [ -f "$HIER/assets/icon-$groesse.png" ]; then
+        mkdir -p "$SYMBOLE/${groesse}x${groesse}/apps"
+        cp "$HIER/assets/icon-$groesse.png" "$SYMBOLE/${groesse}x${groesse}/apps/spielraum.png"
+    fi
+done
+cat > "$MENUE/spielraum.desktop" <<EINTRAG
+[Desktop Entry]
+Type=Application
+Name=SPIELRaum
+Comment=Spiele starten, das System dafuer herrichten, hinterher aufraeumen
+Comment[en]=Start a game, set the machine up for it, clean up afterwards
+Exec=$ZIEL/spielraum-ui
+Icon=spielraum
+Terminal=false
+Categories=Game;Settings;
+Keywords=Spiel;Gaming;Steam;Proton;
+EINTRAG
+command -v update-desktop-database >/dev/null && \
+    update-desktop-database "$MENUE" 2>/dev/null || true
+echo "Menue:   $MENUE/spielraum.desktop"
 
 # --- Profile mitgeben ------------------------------------------------------
 PROFILE="${XDG_CONFIG_HOME:-$HOME/.config}/spielraum/spiele"
@@ -101,6 +149,18 @@ case ":$PATH:" in
         ;;
 esac
 
+echo
+if "$UMGEBUNG/bin/python3" -c "import PySide6" 2>/dev/null; then
+    echo "Oberflaeche:  spielraum-ui"
+else
+    if [ -f /etc/debian_version ]; then
+        echo "Fuer die Oberflaeche fehlt noch PySide6:"
+        echo "    sudo apt install python3-pyside6.qtwidgets"
+    else
+        echo "Fuer die Oberflaeche fehlt noch PySide6:"
+        echo "    sudo pacman -S pyside6"
+    fi
+fi
 echo
 echo "In den Steam-Startoptionen eines Spiels:"
 echo

@@ -265,6 +265,23 @@ def _starten(args) -> int:
     return start_modul.starten(gefunden, args.befehl, trocken=args.trocken)
 
 
+def _oberflaeche() -> int:
+    """Die grafische Oberflaeche starten.
+
+    Der Import steht absichtlich hier und nicht oben: Die Kommandozeile
+    muss ohne PySide6 vollstaendig funktionieren - auf einem Server, in
+    der CI, in einer Textkonsole.
+    """
+    from . import ui
+
+    ok, meldung = ui.verfuegbar()
+    if not ok:
+        print(meldung, file=sys.stderr)
+        return 1
+    from .ui.fenster import main as fenster_main
+    return fenster_main()
+
+
 def _aufraeumen(nur_zeigen: bool) -> int:
     from . import starten as start_modul
 
@@ -288,6 +305,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     pruefen = unterbefehle.add_parser("pruefen", help="Eine Profildatei auf Fehler prüfen")
     pruefen.add_argument("datei", help="Pfad oder Dateiname im Profilverzeichnis")
+    unterbefehle.add_parser(
+        "oberflaeche", help="Die grafische Oberflaeche starten"
+    )
     messungen = unterbefehle.add_parser(
         "messungen", help="Was bisher gemessen wurde – und was es gebracht hat"
     )
@@ -329,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
         return _spiele_zeigen(alle=args.alle)
     if args.aktion == "pruefen":
         return _pruefen(args.datei)
+    if args.aktion == "oberflaeche":
+        return _oberflaeche()
     if args.aktion == "messungen":
         return _messungen_zeigen(args.spiel)
     if args.aktion == "aufraeumen":
