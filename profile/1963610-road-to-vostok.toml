@@ -10,10 +10,20 @@
 # Gemessen am 01.10.2026, zwei Laeufe gegeneinander, bei denen sich nur
 # die Grafikeinstellungen unterschieden (Mods aktiv, SSD, Vulkan):
 #
-#                      Hoch / MSAA 4x       Niedrig / MSAA 2x
-#   Mittel                   41,3                 61,1      +48 %
-#   1-%-Tief                 15,1                 29,0      +92 %
-#   Aussetzer je Minute      0,47 s               0,11 s
+#                    Optik      Ausgeglichen   Leistung
+#   Beleuchtung      Hoch       Mittel         Niedrig
+#   Kantenglaettung  MSAA 4x    MSAA 2x        aus
+#   Mittel           41,3       48,6           61,1
+#   1-%-Tief         15,1       26,7           29,0
+#   Messdauer        10,4 min   23,7 min       7,5 min
+#
+# Der Sprung liegt im ERSTEN Schritt: Von Optik auf Ausgeglichen gewinnt
+# man 77 % beim 1-%-Tiefstwert, von Ausgeglichen auf Leistung nur noch
+# 9 %. Der zweite Schritt kostet vor allem Bildqualitaet.
+#
+# Zur Vorsicht: Die 61,1 stammen aus 7,5 Minuten und sind damit
+# optimistisch - kurze Laeufe zeigen zu hohe Werte, siehe docs/messen.md.
+# Der Ausgeglichen-Lauf war mit 23,7 Minuten der verlaesslichste.
 #
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
@@ -121,7 +131,7 @@ beschreibung = "hübsch vor flüssig - gemessen: 41,3 Bilder/s, 1-%-Tief 15,1"
 grafik = { lighting = 3, antialiasing = 3 }
 
 [varianten.ausgeglichen]
-beschreibung = "die Mitte - NOCH NICHT GEMESSEN"
+beschreibung = "die Mitte - gemessen: 48,6 Bilder/s, 1-%-Tief 26,7"
 grafik = { lighting = 2, antialiasing = 2 }
 
 [varianten.leistung]

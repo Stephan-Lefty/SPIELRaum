@@ -49,6 +49,13 @@ class ProfilFehler(Exception):
 # nicht neu auf.
 ARTEN = ("godot-cfg", "godot-tres")
 
+# Wo MangoHud sein Overlay zeichnet. Die Liste stammt nicht aus dem
+# Gedächtnis, sondern aus der Bibliothek selbst (`strings libMangoHud.so`).
+OVERLAY_ECKEN = (
+    "top-left", "top-right", "middle-left", "middle-right",
+    "bottom-left", "bottom-right",
+)
+
 
 @dataclass
 class Dateiaenderung:
@@ -97,6 +104,10 @@ class Profil:
     varianten: dict[str, Variante] = field(default_factory=dict)
 
     mangohud: bool = True
+    # Wo das Overlay im Bild sitzt. MangoHud kennt sechs Stellen; die
+    # Vorgabe oben links deckt sich bei manchen Spielen mit deren eigener
+    # Anzeige.
+    overlay_ecke: str = "top-left"
 
     def warnungen(self) -> list[str]:
         """Was am Profil zwar erlaubt, auf *diesem* Rechner aber wirkungslos ist.
@@ -229,6 +240,14 @@ def laden(pfad: Path) -> Profil:
 
     messen = roh.get("messen", {})
     profil.mangohud = bool(messen.get("mangohud", True))
+    if (ecke := messen.get("ecke")) is not None:
+        ecke = _als_str(ecke, "messen.ecke")
+        if ecke not in OVERLAY_ECKEN:
+            raise ProfilFehler(
+                f"»{ecke}« ist keine Stelle, die MangoHud kennt. Möglich: "
+                + ", ".join(OVERLAY_ECKEN)
+            )
+        profil.overlay_ecke = ecke
 
     return profil
 

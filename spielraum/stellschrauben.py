@@ -88,6 +88,7 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
             # müsste man im Spiel eine Taste drücken, und dann misst man
             # Sitzungen unterschiedlicher Länge gegeneinander.
             einstellungen = [
+                f"position={profil.overlay_ecke}",
                 f"output_folder={messen_in}",
                 "autostart_log=1",
                 "log_interval=100",
