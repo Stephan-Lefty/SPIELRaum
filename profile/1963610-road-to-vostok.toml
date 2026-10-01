@@ -30,15 +30,30 @@
 #   lighting        3 -> 1     Beleuchtung Hoch   -> Niedrig
 #   antialiasing    3 -> 2     Kantenglaettung 4x -> 2x
 #
-# Die Skala ist 1-basiert, belegt am 01.10.2026: Bei ausgeschalteter
-# Kantenglaettung steht 1 in der Datei, bei MSAA 2x eine 2. Also
+# Die Zahl ist die STELLE IM MENUE, von 1 an gezaehlt - keine Bedeutung,
+# die fuer alle Einstellungen gleich waere. Belegt am 01.10.2026:
+#
 #   antialiasing  1=Aus 2=MSAA2x 3=MSAA4x 4=MSAA8x
 #   lighting      1=Niedrig 2=Mittel 3=Hoch 4=Ultra
-#   An/Aus-Werte  1=An 2=Aus
+#   smaa          1=Off 2=On          (im Menue steht Off zuerst)
+#   detailShadows 1=An  2=Aus         (im Menue steht An zuerst)
+#
+# Die letzten beiden Zeilen sehen widerspruechlich aus und sind es nicht:
+# Bei SMAA steht im Menue "SMAA Off | SMAA On", bei den Schatten
+# "An | Aus". Dieselbe 1 heisst einmal aus und einmal an.
+#
+# Hier stand bis zum 01.10.2026 die Faustregel "1=An, 2=Aus". Sie stimmte
+# fuer die Schatten und war fuer SMAA genau verkehrt. Wer eine solche
+# Regel aufstellt, muss sie an mehr als einem Beispiel pruefen.
 #
 # Zwei Laeufe mit 60,9 und 61,1 - diese Konsistenz hatte an zwei Tagen
 # kein anderer Vergleich. MSAA 4x laesst die Karte jedes Bild vierfach
-# ueberabtasten, und SMAA lief zusaetzlich mit.
+# ueberabtasten - das ist der teure Posten.
+#
+# SMAA stand bei allen drei Messungen auf AUS. Hier stand bis zum
+# 01.10.2026 das Gegenteil: behauptet war, SMAA laufe zusaetzlich mit.
+# Der Wert war aber nie etwas anderes als 1. Aufgefallen ist es erst, als
+# der Anwender SMAA einschaltete und die Zahl auf 2 sprang.
 #
 # ===================================================================
 # Alles andere, was ueblicherweise empfohlen wird: wirkungslos.
@@ -137,3 +152,29 @@ grafik = { lighting = 2, antialiasing = 2 }
 [varianten.leistung]
 beschreibung = "flüssig vor hübsch - gemessen: 61,1 Bilder/s, 1-%-Tief 29,0"
 grafik = { lighting = 1, antialiasing = 1 }
+
+# --- Stephans eigene Wahl, 01.10.2026 ----------------------------------
+#
+# Entstanden im Spielmenue, nicht aus einer Tabelle. Sie faehrt mehr
+# Effekte als alle drei Varianten oben - Schatten, Wasserreflexionen und
+# Zielfernrohre waren dort durchgehend aus - dafuer ohne MSAA.
+#
+# Die Ueberlegung dahinter: Bei 3840x2160 sieht man Treppenstufen kaum
+# noch, und SMAA glaettet nach, was uebrig bleibt - zum Preis von ein bis
+# zwei Prozent statt der zwanzig bis vierzig, die MSAA kostet. Dazu ein
+# Limit von 60 Bildern, weil beide Monitore 60 Hz liefern; alles darueber
+# zeigt niemand an.
+
+[varianten.stephan]
+beschreibung = "eigene Wahl: Schatten an, kein MSAA, SMAA an, 60 Bilder"
+grafik = { lighting = 3, antialiasing = 1, smaa = 2, detailShadows = 1, reflections = 2, PIP = 1, frameLimit = 1, sharpness = 0.9, exposure = 1.0, contrast = 1.05 }
+
+# exposure und contrast stehen hier mit drin, obwohl sie nichts mit
+# Leistung zu tun haben. Grund: Am 01.10.2026 fiel auf, dass das Spiel
+# nach dem Umschalten "extrem hell" wirkte. Die Ursache war eine
+# Belichtung von 1,05 statt 1,0 - fuenf Prozent, die in den dunklen
+# Szenen dieses Spiels deutlich auffallen.
+#
+# Wer eine Variante anlegt und die Bildwirkung ausspart, laesst sie beim
+# Umschalten auf dem Stand der vorigen stehen. Dann wundert man sich
+# ueber eine Helligkeit, die niemand gewaehlt hat.
