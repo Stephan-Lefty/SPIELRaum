@@ -4,7 +4,28 @@
 # GTX 1070 auf Wayland, seit dem 30.09.2026 auf einer SSD.
 #
 # ===================================================================
-# Dieses Profil ist vor allem eine Liste dessen, was NICHT wirkt.
+# Der eine Hebel, der wirkt, sitzt IM Spiel - nicht daneben.
+# ===================================================================
+#
+# Gemessen am 01.10.2026, zwei Laeufe gegeneinander, bei denen sich nur
+# die Grafikeinstellungen unterschieden (Mods aktiv, SSD, Vulkan):
+#
+#                      Ultra / MSAA 8x      Mittel / MSAA 4x
+#   Mittel                   41,3                 61,1      +48 %
+#   1-%-Tief                 15,1                 29,0      +92 %
+#   Aussetzer je Minute      0,47 s               0,11 s
+#
+# Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
+#
+#   lighting        3 -> 1     Beleuchtung Ultra  -> Mittel
+#   antialiasing    3 -> 2     Kantenglaettung 8x -> 4x
+#
+# Zwei Laeufe mit 60,9 und 61,1 - diese Konsistenz hatte an zwei Tagen
+# kein anderer Vergleich. Zum Hintergrund: MSAA 8x laesst die Karte
+# jedes Bild achtfach ueberabtasten, und SMAA lief zusaetzlich mit.
+#
+# ===================================================================
+# Alles andere, was ueblicherweise empfohlen wird: wirkungslos.
 # ===================================================================
 #
 # Gemessen über vier Läufe von je zehn Minuten am 30.09. und 01.10.2026:

@@ -124,6 +124,35 @@ was **nicht** wirkt – unter anderem drei Umgebungsvariablen, die dort
 standen, weil sie in jeder Linux-Gaming-Anleitung stehen, und die nichts
 taten, weil sie für OpenGL gelten und das Spiel Vulkan fährt.
 
+## Was dabei herauskam
+
+Zwei Tage Messen an einem echten Spiel (Road to Vostok auf einer GTX 1070)
+ergaben eine kurze Liste. **Wirkungslos** waren:
+
+| Hebel | Ergebnis |
+|---|---|
+| Vulkan statt D3D12 | 0,6 % – Rauschen |
+| GPU-Power-Limit anheben | Karte bremste an 0,014 % der Laufzeit |
+| Taktregler auf `performance` | EPP stand ohnehin darauf |
+| `__GL_*`-Variablen | gelten für OpenGL, das Spiel fährt Vulkan |
+
+**Gewirkt** haben zwei Dinge:
+
+| Hebel | Ergebnis |
+|---|---|
+| Spiel von der Festplatte auf die SSD | Ladezeit 23,8 → 6,6 s |
+| **Grafikeinstellungen im Spiel** | **Bildrate +48 %, 1-%-Tief +92 %** |
+
+Der zweite ist der eigentliche Fund. Das Spiel lief mit Kantenglättung auf
+MSAA 8× *und* zusätzlich SMAA, bei Beleuchtung auf Ultra. Zurück auf MSAA 4×
+und Beleuchtung Mittel: von 41,3 auf 61,1 Bilder, der 1-%-Tiefstwert von 15,1
+auf 29,0 – und das bei aktiven Mods, auf derselben Platte, mit demselben
+Renderer.
+
+Die Lehre daraus steckt inzwischen im ganzen Programm: Der Hebel sitzt
+meistens **im** Spiel, nicht daneben. Was in Linux-Gaming-Anleitungen steht,
+ist zum großen Teil wirkungslos – und ohne Messung merkt es niemand.
+
 ## Messen statt glauben
 
 Ohne Messwerte ist jede Optimierung geraten. SPIELRaum schreibt deshalb über
