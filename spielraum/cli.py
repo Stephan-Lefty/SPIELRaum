@@ -265,6 +265,54 @@ def _starten(args) -> int:
     return start_modul.starten(gefunden, args.befehl, trocken=args.trocken)
 
 
+def _spiel_und_pfade(p):
+    """Wo liegt das Spiel zu diesem Profil gerade?"""
+    from . import starten as start_modul
+
+    spiel = start_modul.spiel_ermitteln(p)
+    return (spiel.ordner if spiel else None,
+            spiel.proton_praefix if spiel else None)
+
+
+def _variante(args) -> int:
+    """Eine Variante setzen oder den Ausgangszustand wiederherstellen."""
+    from . import varianten
+
+    p = profil.finden(name=args.spiel) or profil.finden(
+        steam_app_id=int(args.spiel) if args.spiel.isdigit() else None)
+    if p is None:
+        print(f"Kein Profil für »{args.spiel}« gefunden.", file=sys.stderr)
+        return 1
+
+    ordner, praefix = _spiel_und_pfade(p)
+    try:
+        if args.zurueck:
+            for zeile in varianten.zuruecksetzen(p, ordner, praefix):
+                print(zeile)
+            return 0
+
+        if not args.name:
+            jetzt = varianten.aktuelle(p, ordner, praefix)
+            print(f"{p.name} – Varianten:")
+            for name, v in p.varianten.items():
+                zeichen = "*" if name == jetzt else " "
+                print(f"  {zeichen} {name:14} {v.beschreibung}")
+            if jetzt is None:
+                print("\n  Die Werte passen zu keiner Variante – vermutlich")
+                print("  von Hand im Spielmenü eingestellt.")
+            return 0
+
+        for zeile in varianten.anwenden(p, args.name, ordner, praefix):
+            print(zeile)
+        print()
+        print("Die Einstellung greift beim nächsten Spielstart – ein laufendes")
+        print("Spiel liest seine Einstellungen nicht neu.")
+        return 0
+    except (varianten.VariantenFehler, FileNotFoundError) as fehler:
+        print(f"Geht nicht: {fehler}", file=sys.stderr)
+        return 1
+
+
 def _oberflaeche() -> int:
     """Die grafische Oberflaeche starten.
 
@@ -305,6 +353,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     pruefen = unterbefehle.add_parser("pruefen", help="Eine Profildatei auf Fehler prüfen")
     pruefen.add_argument("datei", help="Pfad oder Dateiname im Profilverzeichnis")
+    variante = unterbefehle.add_parser(
+        "variante", help="Zwischen Optik, Ausgeglichen und Leistung umschalten"
+    )
+    variante.add_argument("spiel", help="Name oder Steam-App-ID")
+    variante.add_argument("name", nargs="?", help="ohne Angabe: auflisten")
+    variante.add_argument(
+        "--zurueck", action="store_true",
+        help="den Zustand vor der ersten Umstellung wiederherstellen",
+    )
+
     unterbefehle.add_parser(
         "oberflaeche", help="Die grafische Oberflaeche starten"
     )
@@ -349,6 +407,8 @@ def main(argv: list[str] | None = None) -> int:
         return _spiele_zeigen(alle=args.alle)
     if args.aktion == "pruefen":
         return _pruefen(args.datei)
+    if args.aktion == "variante":
+        return _variante(args)
     if args.aktion == "oberflaeche":
         return _oberflaeche()
     if args.aktion == "messungen":

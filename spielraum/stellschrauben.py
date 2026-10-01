@@ -25,7 +25,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import godot_cfg, umgebung
+from . import godot_cfg, godot_tres, umgebung
 from .profil import Profil
 from .zustand import Journal
 
@@ -133,11 +133,36 @@ def _pfad_aufloesen(vorlage: str, spielordner: Path | None, praefix: Path | None
     return Path(vorlage)
 
 
+def _neuer_inhalt(aenderung, alt: str, werte: dict) -> str:
+    """Den neuen Dateiinhalt bauen – je nach Format mit dem passenden Leser.
+
+    Beide Leser arbeiten zeilenweise und lassen alles unangetastet, was nicht
+    ausdrücklich geändert wird. Das ist bei fremden Dateien keine Höflichkeit,
+    sondern Notwendigkeit: In der Preferences.tres von Road to Vostok stehen
+    neben den Grafikeinstellungen die Tastenbelegungen.
+    """
+    if aenderung.art == "godot-tres":
+        if alt:
+            godot_tres.pruefen(alt)
+        elif not alt:
+            raise FileNotFoundError(
+                "Für godot-tres muss die Datei schon da sein - eine "
+                "Godot-Ressource lässt sich nicht sinnvoll aus dem Nichts "
+                "anlegen. Das Spiel schreibt sie beim ersten Start."
+            )
+        return godot_tres.schreiben(alt, werte)
+
+    if aenderung.zusammenfuehren:
+        return godot_cfg.zusammenfuehren(alt, werte)
+    return godot_cfg.zusammenfuehren("", werte)
+
+
 def dateien_anwenden(
     profil: Profil,
     journal: Journal,
     spielordner: Path | None = None,
     praefix: Path | None = None,
+    variante: str | None = None,
 ) -> list[str]:
     """Die Einstellungsdateien des Spiels anpassen – jede mit Sicherung.
 
@@ -148,10 +173,21 @@ def dateien_anwenden(
     """
     getan: list[str] = []
 
+    # Eine Variante überschreibt, was fest im Profil steht. Sie ersetzt die
+    # Werte nicht nur - sie ist der ganze Grund, warum die Datei angefasst
+    # wird. Steht keine Variante an, gilt, was unter [dateien] hinterlegt ist.
+    gewaehlt = profil.varianten.get(variante) if variante else None
+    if variante and gewaehlt is None:
+        raise ValueError(
+            f"Das Profil kennt keine Variante »{variante}«. Vorhanden: "
+            + (", ".join(profil.varianten) or "keine")
+        )
+
     for kennung, aenderung in profil.dateien.items():
         ziel = _pfad_aufloesen(aenderung.pfad, spielordner, praefix)
 
-        if not aenderung.werte:
+        werte = gewaehlt.dateien.get(kennung, {}) if gewaehlt else aenderung.werte
+        if not werte:
             continue
 
         if ziel.exists():
@@ -168,10 +204,7 @@ def dateien_anwenden(
             # Kein Vorher heißt: beim Zurücksetzen wieder löschen.
             journal.vermerken("datei", str(ziel), None)
 
-        if aenderung.zusammenfuehren:
-            neu = godot_cfg.zusammenfuehren(alt, aenderung.werte)
-        else:
-            neu = godot_cfg.zusammenfuehren("", aenderung.werte)
+        neu = _neuer_inhalt(aenderung, alt, werte)
 
         ziel.parent.mkdir(parents=True, exist_ok=True)
         ziel.write_text(neu, encoding="utf-8")

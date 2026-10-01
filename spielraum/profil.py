@@ -38,14 +38,44 @@ class ProfilFehler(Exception):
     """Das Profil ist unbrauchbar. Die Meldung sagt, welche Zeile gemeint ist."""
 
 
+# Welche Dateiformate SPIELRaum anfassen kann.
+#
+#   godot-cfg   das INI-artige override.cfg (spielraum/godot_cfg.py)
+#   godot-tres  Godot-Ressourcen wie Preferences.tres (godot_tres.py)
+#
+# Die Liste ist bewusst kurz. Jedes Format braucht einen eigenen Leser, der
+# nur ändert, was geändert werden soll, und alles andere Zeichen für Zeichen
+# durchreicht - eine Datei, die ein fremdes Programm verwaltet, baut man
+# nicht neu auf.
+ARTEN = ("godot-cfg", "godot-tres")
+
+
 @dataclass
 class Dateiaenderung:
     """Eine Datei des Spiels, die SPIELRaum anfasst – immer mit Sicherung."""
 
     pfad: str
-    art: str  # bisher nur "godot-cfg"
+    art: str
     zusammenfuehren: bool = True
-    werte: dict[str, dict[str, str]] = field(default_factory=dict)
+    # godot-cfg: {Abschnitt: {Schlüssel: Wert}}
+    # godot-tres: {Schlüssel: Wert}
+    werte: dict = field(default_factory=dict)
+
+
+@dataclass
+class Variante:
+    """Eine Richtung, zwischen denen der Anwender wählt.
+
+    Varianten sind die Antwort auf eine Einsicht vom 01.10.2026: »Optimal«
+    kann ein Programm nicht wissen, weil es Geschmack ist. Ob jemand lieber
+    61 Bilder ohne Kantenglättung hat oder 41 mit - das entscheidet er.
+    SPIELRaum erledigt nur die Mechanik und sagt dazu, was gemessen wurde.
+    """
+
+    name: str
+    beschreibung: str = ""
+    # {Dateikennung: {Schlüssel: Wert}} - die Kennung verweist auf [dateien.X]
+    dateien: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass
@@ -64,6 +94,7 @@ class Profil:
     variablen: dict[str, str] = field(default_factory=dict)
     argumente: list[str] = field(default_factory=list)
     dateien: dict[str, Dateiaenderung] = field(default_factory=dict)
+    varianten: dict[str, Variante] = field(default_factory=dict)
 
     mangohud: bool = True
 
@@ -142,10 +173,10 @@ def laden(pfad: Path) -> Profil:
         if not isinstance(block, dict) or "pfad" not in block:
             raise ProfilFehler(f"[dateien.{kennung}]: »pfad« fehlt.")
         art = _als_str(block.get("art", "godot-cfg"), f"dateien.{kennung}.art")
-        if art != "godot-cfg":
+        if art not in ARTEN:
             raise ProfilFehler(
                 f"[dateien.{kennung}]: »{art}« kennt SPIELRaum nicht. "
-                "Bisher gibt es nur »godot-cfg«."
+                "Möglich sind: " + ", ".join(ARTEN)
             )
         dateipfad = _als_str(block["pfad"], f"dateien.{kennung}.pfad")
         # Absolute Pfade sind hier verboten, und zwar aus einem konkreten
@@ -166,6 +197,35 @@ def laden(pfad: Path) -> Profil:
             zusammenfuehren=bool(block.get("zusammenfuehren", True)),
             werte=block.get("werte", {}),
         )
+
+    # --- Varianten ---------------------------------------------------
+    # Eine Variante nennt je Datei die Werte, die für sie gelten. Welche
+    # Datei gemeint ist, steht als Kennung da und muss in [dateien] stehen -
+    # geprüft wird das hier, nicht erst beim Anwenden.
+    for name, block in (roh.get("varianten") or {}).items():
+        if not isinstance(block, dict):
+            raise ProfilFehler(f"[varianten.{name}] muss eine Tabelle sein.")
+        variante = Variante(
+            name=name,
+            beschreibung=_als_str(block.get("beschreibung", ""),
+                                  f"varianten.{name}.beschreibung"),
+        )
+        for schluessel, werte in block.items():
+            if schluessel == "beschreibung":
+                continue
+            if not isinstance(werte, dict):
+                raise ProfilFehler(
+                    f"[varianten.{name}]: »{schluessel}« muss eine Tabelle von "
+                    "Werten sein, etwa { lighting = 1 }."
+                )
+            if schluessel not in profil.dateien:
+                raise ProfilFehler(
+                    f"[varianten.{name}] verweist auf »{schluessel}«, aber es "
+                    f"gibt kein [dateien.{schluessel}]. Vorhanden: "
+                    + (", ".join(profil.dateien) or "nichts")
+                )
+            variante.dateien[schluessel] = dict(werte)
+        profil.varianten[name] = variante
 
     messen = roh.get("messen", {})
     profil.mangohud = bool(messen.get("mangohud", True))

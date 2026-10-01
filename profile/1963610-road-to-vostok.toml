@@ -93,8 +93,37 @@ argumente = ["--rendering-driver", "vulkan"]
 [messen]
 mangohud = true
 
-# Keine [dateien]-Abschnitte. Die override.cfg dieses Spiels führt den
-# Mod-Loader an; sie anzufassen ohne belegten Grund wäre ein Risiko ohne
-# Gegenwert. Beim Spiel-Update am 01.10.2026 hat der Mod-Loader sie von
-# sich aus zurückgesetzt und neu geschrieben - ein weiterer Grund, ihm
-# diese Datei zu überlassen.
+# Die override.cfg bleibt unangetastet. Sie führt den Mod-Loader an; sie
+# anzufassen ohne belegten Grund wäre ein Risiko ohne Gegenwert. Beim
+# Spiel-Update am 01.10.2026 hat der Mod-Loader sie von sich aus
+# zurückgesetzt und neu geschrieben - ein weiterer Grund, ihm diese Datei
+# zu überlassen.
+
+# Die Grafikeinstellungen. Das Spiel verwaltet diese Datei selbst; in
+# denselben Datei stehen auch die Tastenbelegungen, weshalb der Leser
+# ausschließlich den [resource]-Abschnitt anfasst (spielraum/godot_tres.py).
+[dateien.grafik]
+pfad = "{praefix}/pfx/drive_c/users/steamuser/AppData/Roaming/Road to Vostok/Preferences.tres"
+art  = "godot-tres"
+
+# --- Die drei Richtungen --------------------------------------------------
+#
+# Die Werte sind 1-basiert, belegt am 01.10.2026:
+#     lighting      1=Niedrig 2=Mittel 3=Hoch 4=Ultra
+#     antialiasing  1=Aus 2=MSAA2x 3=MSAA4x 4=MSAA8x
+#
+# Hier stehen nur Stufen, die auf diesem Rechner tatsächlich gesehen
+# wurden. "4" wäre laut Menü möglich, ist aber nie dagewesen - und was
+# nicht dagewesen ist, steht nicht als Vorgabe in einem Profil.
+
+[varianten.optik]
+beschreibung = "hübsch vor flüssig - gemessen: 41,3 Bilder/s, 1-%-Tief 15,1"
+grafik = { lighting = 3, antialiasing = 3 }
+
+[varianten.ausgeglichen]
+beschreibung = "die Mitte - NOCH NICHT GEMESSEN"
+grafik = { lighting = 2, antialiasing = 2 }
+
+[varianten.leistung]
+beschreibung = "flüssig vor hübsch - gemessen: 61,1 Bilder/s, 1-%-Tief 29,0"
+grafik = { lighting = 1, antialiasing = 1 }
