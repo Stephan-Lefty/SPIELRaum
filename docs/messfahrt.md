@@ -81,7 +81,8 @@ kennt nur den Zustand von Lauf eins.
 
 Nicht jeder Spielstart ist eine Messung. Ein Lauf zählt nur, wenn:
 
-* nach Abzug der Ladezeit **mindestens fünf Minuten** übrig sind,
+* nach Abzug der Ladezeit **mindestens zehn Minuten** übrig sind
+  (warum nicht fünf, steht im nächsten Abschnitt),
 * das Spiel nicht abgestürzt ist,
 * und die Einstellungen während des Laufs unverändert blieben.
 
