@@ -10,19 +10,25 @@
 # Gemessen am 01.10.2026, zwei Laeufe gegeneinander, bei denen sich nur
 # die Grafikeinstellungen unterschieden (Mods aktiv, SSD, Vulkan):
 #
-#                      Ultra / MSAA 8x      Mittel / MSAA 4x
+#                      Hoch / MSAA 4x       Niedrig / MSAA 2x
 #   Mittel                   41,3                 61,1      +48 %
 #   1-%-Tief                 15,1                 29,0      +92 %
 #   Aussetzer je Minute      0,47 s               0,11 s
 #
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
-#   lighting        3 -> 1     Beleuchtung Ultra  -> Mittel
-#   antialiasing    3 -> 2     Kantenglaettung 8x -> 4x
+#   lighting        3 -> 1     Beleuchtung Hoch   -> Niedrig
+#   antialiasing    3 -> 2     Kantenglaettung 4x -> 2x
+#
+# Die Skala ist 1-basiert, belegt am 01.10.2026: Bei ausgeschalteter
+# Kantenglaettung steht 1 in der Datei, bei MSAA 2x eine 2. Also
+#   antialiasing  1=Aus 2=MSAA2x 3=MSAA4x 4=MSAA8x
+#   lighting      1=Niedrig 2=Mittel 3=Hoch 4=Ultra
+#   An/Aus-Werte  1=An 2=Aus
 #
 # Zwei Laeufe mit 60,9 und 61,1 - diese Konsistenz hatte an zwei Tagen
-# kein anderer Vergleich. Zum Hintergrund: MSAA 8x laesst die Karte
-# jedes Bild achtfach ueberabtasten, und SMAA lief zusaetzlich mit.
+# kein anderer Vergleich. MSAA 4x laesst die Karte jedes Bild vierfach
+# ueberabtasten, und SMAA lief zusaetzlich mit.
 #
 # ===================================================================
 # Alles andere, was ueblicherweise empfohlen wird: wirkungslos.

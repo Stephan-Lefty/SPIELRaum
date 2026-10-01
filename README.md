@@ -144,10 +144,10 @@ ergaben eine kurze Liste. **Wirkungslos** waren:
 | **Grafikeinstellungen im Spiel** | **Bildrate +48 %, 1-%-Tief +92 %** |
 
 Der zweite ist der eigentliche Fund. Das Spiel lief mit Kantenglättung auf
-MSAA 8× *und* zusätzlich SMAA, bei Beleuchtung auf Ultra. Zurück auf MSAA 4×
-und Beleuchtung Mittel: von 41,3 auf 61,1 Bilder, der 1-%-Tiefstwert von 15,1
-auf 29,0 – und das bei aktiven Mods, auf derselben Platte, mit demselben
-Renderer.
+MSAA 4× *und* zusätzlich SMAA, bei Beleuchtung auf Hoch. Zurück auf MSAA 2×
+und Beleuchtung Niedrig: von 41,3 auf 61,1 Bilder, der 1-%-Tiefstwert von
+15,1 auf 29,0 – und das bei aktiven Mods, auf derselben Platte, mit
+demselben Renderer.
 
 Die Lehre daraus steckt inzwischen im ganzen Programm: Der Hebel sitzt
 meistens **im** Spiel, nicht daneben. Was in Linux-Gaming-Anleitungen steht,
