@@ -44,6 +44,12 @@ fertig wurde.
   einem Pixelbild. Für eine Oberfläche, die beliebig skaliert, wäre eine
   gezeichnete Form besser.
 
+- [ ] **Node.js 20 in den Actions.** GitHub meldet seit dem ersten Lauf am
+  30.09.2026: `actions/checkout@v4` und `actions/setup-python@v5` zielen auf
+  Node.js 20 und werden übergangsweise auf 24 gezwungen. Läuft noch, bricht
+  irgendwann. Betrifft alle Repositorien gleichermaßen – besser in einem Zug
+  erledigen als einzeln.
+
 - [ ] **Prüfen, ob KDE auf Wayland überhaupt etwas zum Abschalten hat.**
   Unter X11 war »Compositor aus« ein echter Hebel. Unter Wayland gibt es das
   so nicht mehr. Was es stattdessen gibt – Tearing erlauben, VRR – ist noch

@@ -8,17 +8,10 @@ deleted but moved down, with the date they were completed.
 ## Open
 
 - [ ] **Look up the environment variable for the vkd3d-proton cache.** It
-  could not be found in the Proton build on this machine on 2026-09-30
-  (neither under `/usr/lib` nor in `compatibilitytools.d`). The cache
-  currently sits as `vkd3d-proton.cache` in the game directory, and for Road
-  to Vostok that directory is on a spinning disk. Redirecting it to the SSD
-  would be the second lever against that bottleneck. Source: the vkd3d-proton
-  documentation, not memory.
-
-- [ ] **Measure D3D12 against Vulkan (Road to Vostok).** The game log reports
-  `Driver Detected: d3d12`; Godot 4.6.2 has Vulkan compiled in. The detour
-  through vkd3d-proton might be avoidable. Whether that survives sixteen mods
-  is unknown. The line sits commented out in the profile.
+  could not be found in the Proton build on this machine on 2026-09-30.
+  Less urgent since the game moved to the SSD, and moot for Road to Vostok
+  specifically — that one now runs on Vulkan directly, so vkd3d-proton is
+  out of the picture. Still relevant for other games.
 
 - [ ] **Build a .deb for Debian 13.** Explicitly requested. The package must
   not later pull PySide6 from PyPI but take the distribution's build. Note,
@@ -42,12 +35,32 @@ deleted but moved down, with the date they were completed.
 - [ ] **Draw an `icon.svg`.** Every version in `assets/` comes from a
   bitmap. For an interface that scales freely, a drawn shape would be better.
 
+- [ ] **Node.js 20 in the actions.** GitHub has reported since the first run
+  on 2026-09-30 that `actions/checkout@v4` and `actions/setup-python@v5`
+  target Node.js 20 and are being forced onto 24. Still works, will break
+  eventually. Affects every repository alike — better done in one sweep.
+
 - [ ] **Check whether KDE on Wayland has anything to switch off at all.**
   Under X11, "disable compositing" was a real lever. Under Wayland it no
   longer exists in that form. What there is instead — allow tearing, VRR —
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **D3D12 measured against Vulkan** (2026-09-30). Result: **no
+  difference** — 49.0 against 49.3 frames per second is noise. The
+  assumption that the detour through vkd3d-proton costs performance is
+  refuted for this game on this card. Vulkan stays on anyway; it costs
+  nothing either.
+
+- [x] **Road to Vostok moved to the SSD** (2026-09-30). What held across both
+  runs: 24 to 25 seconds of loading and stutters while streaming. Measuring
+  the disk itself gave 112 MB/s and 7.76 ms per seek against 509 MB/s and
+  0.13 ms on the SSD. Confirmation by a fresh measurement is still pending.
+
+- [x] **Published to GitHub** (2026-09-30), private for now. Alpha, proven on
+  exactly one machine, never run on Debian — going public is a one-click
+  step later, going back is not.
 
 - [x] **Measuring built** (2026-09-30). `spielraum messungen` evaluates the
   MangoHud logs and compares the last two runs. The first ten seconds are
