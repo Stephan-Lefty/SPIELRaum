@@ -39,7 +39,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import stellschrauben, steam, umgebung, zustand
+from . import stellschrauben, steam, tasten, umgebung, zustand
 from .profil import Profil
 
 
@@ -147,6 +147,8 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
             print(f"  {name}={wert}")
         for kennung, aenderung in profil.dateien.items():
             print(f"  Datei {kennung}: {aenderung.pfad}")
+        for taste, ziel in profil.tasten.items():
+            print(f"  Taste {taste} → {ziel}")
         print("\nProbelauf – es wurde nichts geändert und nichts gestartet.")
         return 0
 
@@ -156,6 +158,17 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
     rueckgabe = 1
     try:
         getan = stellschrauben.dateien_anwenden(profil, journal, spielordner, praefix)
+
+        # Tastenbelegung. Scheitert sie, startet das Spiel trotzdem: Eine
+        # fehlende Gruppenmitgliedschaft ist ärgerlich, aber kein Grund,
+        # jemanden vom Spielen abzuhalten. Er soll nur wissen, warum die
+        # Tasten anders liegen als erwartet.
+        if profil.tasten:
+            try:
+                getan += [f"Taste {z}" for z in tasten.setzen(profil.tasten, journal)]
+            except tasten.TastenFehler as fehler:
+                print(f"Tastenbelegung ausgefallen: {fehler}", file=sys.stderr)
+
         # Das Journal muss liegen, bevor der erste Prozess startet. Fällt der
         # Strom danach aus, ist es die einzige Spur dessen, was verstellt war.
         zustand.schreiben(journal)

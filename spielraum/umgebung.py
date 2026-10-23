@@ -41,6 +41,9 @@ PAKETE: dict[str, dict[str, str]] = {
     "cpupower": {"arch": "cpupower", "debian": "linux-cpupower"},
     "powerprofilesctl": {"arch": "power-profiles-daemon", "debian": "power-profiles-daemon"},
     "nvidia-smi": {"arch": "nvidia-utils", "debian": "nvidia-smi"},
+    # Belegt Tasten pro Gerät um. Nötig für [tasten] im Profil; ohne das
+    # Paket fällt nur diese eine Stellschraube aus.
+    "keyd": {"arch": "keyd", "debian": "keyd"},
     # Gehört zu systemd und ist damit auf beiden Zielsystemen ohnehin da.
     # Steht hier trotzdem, weil »ohnehin da« keine Prüfung ist: In einem
     # Container oder unter einem anderen Init fehlt es.

@@ -109,6 +109,12 @@ class Profil:
     # Anzeige.
     overlay_ecke: str = "top-left"
 
+    # Welche Taste der Spieltastatur welche Taste schicken soll, solange
+    # dieses Spiel läuft. Links steht, was man drückt, rechts, was das Spiel
+    # sehen soll: ``up = "w"``. Die Namen prüft spielraum/tasten.py gegen
+    # das, was keyd selbst als gültig ausgibt.
+    tasten: dict[str, str] = field(default_factory=dict)
+
     def warnungen(self) -> list[str]:
         """Was am Profil zwar erlaubt, auf *diesem* Rechner aber wirkungslos ist.
 
@@ -122,6 +128,8 @@ class Profil:
             offen.append(umg.fehlt_hinweis("gamemoderun"))
         if self.mangohud and not umg.hat("mangohud"):
             offen.append(umg.fehlt_hinweis("mangohud"))
+        if self.tasten and not umg.hat("keyd"):
+            offen.append(umg.fehlt_hinweis("keyd"))
         return offen
 
 
@@ -248,6 +256,17 @@ def laden(pfad: Path) -> Profil:
                 + ", ".join(OVERLAY_ECKEN)
             )
         profil.overlay_ecke = ecke
+
+    # [tasten] -- was die Spieltastatur schicken soll, solange dieses Spiel
+    # läuft. Hier wird nur die Form geprüft (Text auf Text). Ob die Namen
+    # Tasten sind, weiß erst keyd; das prüft spielraum/tasten.py vor dem
+    # Setzen gegen dessen eigene Liste. Eine zweite Liste hier im Profil
+    # würde bei jeder keyd-Fassung veralten.
+    tasten = roh.get("tasten", {})
+    if not isinstance(tasten, dict):
+        raise ProfilFehler("Der Abschnitt [tasten] muss eine Tabelle sein.")
+    for taste, ziel in tasten.items():
+        profil.tasten[taste] = _als_str(ziel, f"tasten.{taste}")
 
     return profil
 

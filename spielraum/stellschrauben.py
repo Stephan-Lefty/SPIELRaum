@@ -25,7 +25,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import godot_cfg, godot_tres, umgebung
+from . import godot_cfg, godot_tres, tasten, umgebung
 from .profil import Profil
 from .zustand import Journal
 
@@ -261,6 +261,13 @@ def zuruecksetzen(journal: Journal) -> list[str]:
     bericht: list[str] = []
 
     for eintrag in reversed(journal.eintraege):
+        # Tasten gehen nicht über eine Sicherungskopie zurück, sondern über
+        # einen Befehl an keyd: Es gibt keine Datei, in der der alte Zustand
+        # stünde, weil der alte Zustand »gar keine Umbelegung« war.
+        if eintrag.stellschraube == tasten.STELLSCHRAUBE:
+            bericht.append(tasten.zuruecknehmen())
+            continue
+
         if eintrag.stellschraube != "datei":
             bericht.append(f"unbekannte Stellschraube: {eintrag.stellschraube}")
             continue

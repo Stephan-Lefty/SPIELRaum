@@ -1,0 +1,91 @@
+# Enshrouded – angelegt am 23.10.2026.
+#
+# Dieses Profil ist bewusst dünn. Gemessen wurde bisher nur, was die
+# Grafikkarte tut; welche Grafikeinstellung was bringt, ist offen. Nach der
+# Regel aus CLAUDE.md steht deshalb keine einzige Grafikeinstellung drin.
+#
+# ===================================================================
+# Was am 23.10.2026 gemessen wurde
+# ===================================================================
+#
+# Ein Lauf über 48 Minuten, GTX 1070 auf zwei 4K-Monitoren:
+#
+#   GPU-Auslastung ...... 96,4 % im Mittel, Median 99 %
+#   über 95 % ausgelastet 2.705 von 2.881 Sekunden (93,9 %)
+#   Takt ................ 1.918 MHz im Mittel
+#   Temperatur .......... 76,7 °C, Spitze 83 °C
+#   Hitzeschutz aktiv ... 322 Sekunden (11,2 % der Zeit)
+#   Grafikspeicher ...... 8.009 MiB im Mittel von 8.192 (97,8 %)
+#
+# Die Karte ist der Flaschenhals, nicht der Prozessor. Und sie drosselt:
+# In 11 % der Zeit hat der Hitzeschutz den Takt gesenkt. Der lohnendste
+# Hebel liegt damit nicht in den Einstellungen, sondern in der Kühlung.
+#
+# **Eine widerlegte Vermutung, die hier stehenbleibt:** Nach zwei Abstürzen
+# um 13:44 und 13:48 lag der Verdacht auf dem vollen Grafikspeicher –
+# 98,6 % waren belegt. Nach dem Schließen von Browser und Messenger waren
+# 1,6 GB frei. Das Spiel hat sie sich binnen Minuten selbst genommen und
+# lief danach 48 Minuten bei 97,8 % ohne Absturz. Der volle Speicher ist
+# also das Normalverhalten und war nicht die Ursache. Woran es lag, ist
+# offen; der Aufrufstapel im Absturzbericht war ohne Symbole.
+
+[spiel]
+name         = "Enshrouded"
+steam_app_id = 1203620
+
+[system]
+gamemode      = true
+nicht_stoeren = true
+
+[messen]
+mangohud = true
+
+# --- Tastenbelegung -------------------------------------------------------
+#
+# Links steht, was gedrückt wird, rechts, was das Spiel sehen soll.
+#
+# Der Grund: Die Maus liegt links, die rechte Hand erreicht ohne Umgreifen
+# nur den Bereich ab I/K/M nach rechts. Enshrouded legt seine Befehle aber
+# auf WASD, Leertaste und die linke Umschalttaste – alles unter der linken
+# Hand, die hier die Maus führt.
+#
+# Diese Belegung gilt nur, solange das Spiel läuft. Bis zum 23.10.2026 stand
+# sie fest in /etc/keyd/; dann schrieb die Pfeiltaste auch im Browser ein
+# »w«. Siehe docs/tasten.md.
+#
+# Die Spielbelegung muss dazu auf den Vorgabewerten stehen: Das Übersetzen
+# macht die Tastatur, nicht das Spiel. Stellt man beides um, heben sie sich
+# gegenseitig auf.
+
+[tasten]
+
+# Bewegung
+up    = "w"
+down  = "s"
+left  = "a"
+right = "d"
+
+# Springen, Sprinten, Schleichen.
+#
+# layer(shift) statt leftshift, weil keyd sonst nur den Tastencode schickt,
+# ohne ihn als Modifikator zu führen. Beim Sprinten hält man die Taste und
+# bewegt sich gleichzeitig.
+pageup   = "space"
+pagedown = "layer(shift)"
+end      = "layer(control)"
+
+# Was sonst links von I/K/M läge.
+home   = "e"
+insert = "r"
+delete = "tab"
+
+# Der Rucksack liegt in Enshrouded auf B. Das ist die einzige Zeile hier,
+# die einem einzelnen Spiel folgt statt einer allgemeinen Gewohnheit --
+# und genau deshalb steht sie im Profil und nicht in /etc/keyd.
+rightcontrol = "b"
+
+# Noch frei in Reichweite: rightshift, enter, 8, 9, 0 und die Tasten um
+# Ö/Ä. Ein Ziffernblock fehlt der SKILLER SGK50 S3, weshalb der
+# Schnellzugriff auf 1 bis 9 unerreichbar bleibt. Das Raster I/O/P – K/L/Ö
+# – M/,/. entspräche räumlich einem Ziffernblock, kostet aber die
+# Buchstaben selbst. Nicht gesetzt, weil nicht ausprobiert.

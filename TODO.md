@@ -8,6 +8,26 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Road to Vostok auf keyd umstellen.** Dort liegt die Bewegung in der
+  Spielbelegung auf den Pfeiltasten – seit keyd die in WASD übersetzt, läuft
+  die Figur nicht mehr. Die Spielbelegung muss auf die Vorgabewerte zurück.
+  Kniffliger als bei Enshrouded: `prepare` und `rail_movement` liegen beide
+  auf Strg, `item_drop` auf Umschalt – genau die Tasten, die keyd für Ducken
+  und Sprinten schickt. Da muss erst Platz geschaffen werden.
+
+- [ ] **Übersicht der Tastenbelegung aus dem Profil erzeugen.** Am 23.10.2026
+  entstanden zwei PDFs aus Wegwerfskripten – und waren fünf Minuten später
+  veraltet, weil die Belegung sich geändert hatte. Ein Befehl
+  `spielraum tasten <spiel>` sollte sie aus Profil und Spieldatei bauen.
+  Wichtig dabei: Es muss die *gedrückte* Taste zeigen, nicht die, die im
+  Spielmenü steht – seit keyd dazwischensitzt, sind das zwei verschiedene.
+
+- [ ] **Schnellzugriff ohne Ziffernblock.** Die SKILLER SGK50 S3 hat keinen.
+  Damit sind die Zahlen 1 bis 7 unerreichbar, auf denen in fast jedem Spiel
+  der Schnellzugriff liegt. Das Raster I/O/P – K/L/Ö – M/,/. entspräche
+  räumlich einem Ziffernblock, kostet aber die Buchstaben selbst. Nicht
+  ausprobiert.
+
 - [ ] **Messfahrt bauen.** Entworfen am 01.10.2026, siehe
   [docs/messfahrt.md](docs/messfahrt.md). Ein Knopf, drei Läufe zu je zehn
   Minuten, dazwischen stellt SPIELRaum selbst um. Die Schwierigkeit ist nicht

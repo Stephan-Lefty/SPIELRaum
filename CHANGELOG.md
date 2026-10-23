@@ -7,6 +7,51 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.0] – 2026-10-23
+
+Tastenbelegung pro Spiel. Für alle, die die Maus links führen und mit der
+rechten Hand nur den Bereich ab I/K/M erreichen – während Spiele ihre
+Befehle auf WASD und die linke Umschalttaste legen.
+
+### Hinzugefügt
+
+- **`[tasten]` im Profil** und **`spielraum/tasten.py`**. Links steht, was
+  gedrückt wird, rechts, was das Spiel sehen soll. Gesetzt wird beim
+  Spielstart über `keyd`, zurückgenommen beim Beenden – mit Journaleintrag,
+  also auch dann, wenn SPIELRaum dazwischen abstürzt.
+
+- **Ohne root und ohne Polkit.** keyd legt einen Socket an, der der Gruppe
+  `keyd` gehört. Wer darin ist, darf dem Dienst Belegungen schicken.
+  SPIELRaum selbst braucht keine erhöhten Rechte – anders als bei GameMode,
+  wo die Polkit-Regel des Manjaro-Pakets auf `allow_active=no` steht und
+  deshalb nichts ausrichtet.
+
+- **Ein Knopf in der Oberfläche**, der die Belegung von Hand setzt und
+  zurücknimmt. Für den Fall, dass ein Spiel direkt über Steam gestartet wird.
+
+- **Profil für Enshrouded** (`profile/1203620-enshrouded.toml`). Bewusst ohne
+  Grafikeinstellungen: Gemessen ist bisher nur, was die Grafikkarte tut.
+
+- **[docs/tasten.md](docs/tasten.md)** mit dem Einrichtungsweg und den beiden
+  Fallen, die am 23.10.2026 Zeit gekostet haben.
+
+### Wissenswert
+
+- **Die Belegung gilt nur, solange das Spiel läuft.** Erst stand sie fest in
+  `/etc/keyd/`. Dann schrieb die Pfeiltaste auch im Browser ein »w«. Eine
+  Übersetzung, die immer gilt, ist keine Spieleinstellung, sondern ein neues
+  Tastaturlayout.
+
+- **Die Spielbelegung muss auf den Vorgabewerten stehen.** Übersetzt sowohl
+  die Tastatur als auch das Spiel, heben sich beide auf. Bei Enshrouded löste
+  *Ende* dadurch Ausweichen statt Schleichen aus und *Entf* das Baumenü statt
+  des Rucksacks – gefunden hat das erst eine Gegenprobe, die jede gesendete
+  Taste gegen die Spielbelegung hält.
+
+- **keyd versteht keine Kommentare am Zeilenende.** Es verwirft solche Zeilen
+  mit einer bloßen Warnung statt mit einem Abbruch. Sechs Belegungen waren
+  still verschwunden, bis `keyd check` es meldete.
+
 ## [0.3.0] – 2026-09-30
 
 Gemessen wird jetzt. Damit ist SPIELRaum kein Programm mehr, das Einstellungen

@@ -13,6 +13,7 @@ gemessen wurde.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -24,7 +25,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from .. import __version__, farben, messen, profil, stellschrauben, steam, umgebung
+from .. import (__version__, farben, messen, profil, stellschrauben, steam,
+                tasten, umgebung, zustand)
 
 
 def _stil() -> str:
@@ -104,8 +106,18 @@ class Fenster(QMainWindow):
         self.knopf_neu = QPushButton("Neu einlesen")
         self.knopf_neu.clicked.connect(self._einlesen)
 
+        # Tasten von Hand umlegen. Im Normalfall braucht es diesen Knopf
+        # nicht -- beim Start über SPIELRaum passiert das von allein. Er ist
+        # für den Fall, dass jemand ein Spiel direkt über Steam startet und
+        # die Belegung trotzdem haben will.
+        self.tasten_liegen = False
+        self.knopf_tasten = QPushButton("Tasten umlegen")
+        self.knopf_tasten.clicked.connect(self._tasten_umschalten)
+        self.knopf_tasten.setEnabled(False)
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
+        knoepfe.addWidget(self.knopf_tasten)
         knoepfe.addStretch()
         knoepfe.addWidget(self.knopf_start)
 
@@ -167,10 +179,61 @@ class Fenster(QMainWindow):
     def _gewaehlt(self, zeile: int) -> None:
         if not 0 <= zeile < len(self.spiele):
             self.knopf_start.setEnabled(False)
+            self.knopf_tasten.setEnabled(False)
             return
         spiel = self.spiele[zeile]
         self.knopf_start.setEnabled(True)
+        # Der Tastenknopf gilt nur, wenn das Profil dieses Spiels überhaupt
+        # eine Belegung mitbringt. Ein Knopf, der nichts tut, ist schlimmer
+        # als keiner.
+        p = profil.finden(steam_app_id=spiel.app_id)
+        self.knopf_tasten.setEnabled(bool(p and p.tasten) or self.tasten_liegen)
         self.befund.setHtml(self._bericht(spiel))
+
+    # --- Tasten -----------------------------------------------------------
+
+    def _tasten_umschalten(self) -> None:
+        """Belegung setzen oder zurücknehmen – ein Knopf für beides.
+
+        Zwei getrennte Knöpfe wären ehrlicher gewesen, aber einer von beiden
+        ist immer der falsche: Man kann nicht zweimal setzen und nicht
+        zurücknehmen, was nicht liegt. Der Umschalter zeigt stattdessen an,
+        was gerade gilt.
+        """
+        if self.tasten_liegen:
+            meldung = tasten.zuruecknehmen()
+            self.tasten_liegen = False
+            self.knopf_tasten.setText("Tasten umlegen")
+            QMessageBox.information(self, "Tasten", meldung)
+            return
+
+        zeile = self.liste.currentRow()
+        if not 0 <= zeile < len(self.spiele):
+            return
+        p = profil.finden(steam_app_id=self.spiele[zeile].app_id)
+        if p is None or not p.tasten:
+            QMessageBox.information(
+                self, "Tasten",
+                "Für dieses Spiel ist im Profil keine Tastenbelegung hinterlegt.")
+            return
+
+        # Ein Journal, damit auch diese Belegung zurückgenommen wird, wenn
+        # SPIELRaum abstürzt, während sie liegt. Dieselbe Zusage wie beim
+        # Start über das Programm.
+        journal = zustand.Journal(spiel=f"{p.name} (nur Tasten)", pid=os.getpid())
+        try:
+            getan = tasten.setzen(p.tasten, journal)
+        except tasten.TastenFehler as fehler:
+            QMessageBox.warning(self, "Tasten gehen nicht", str(fehler))
+            return
+
+        zustand.schreiben(journal)
+        self.tasten_liegen = True
+        self.knopf_tasten.setText("Tasten zurücksetzen")
+        QMessageBox.information(
+            self, "Tasten umgelegt",
+            f"{len(getan)} Zuordnungen gesetzt:\n\n" + "\n".join(getan)
+            + "\n\nZum Zurücknehmen denselben Knopf noch einmal drücken.")
 
     # --- Der Bericht ------------------------------------------------------
 
