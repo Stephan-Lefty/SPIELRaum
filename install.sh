@@ -17,8 +17,126 @@ HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZIEL="$HOME/.local/bin"
 UMGEBUNG="$HIER/.venv"
 
+AUTOMATISCH=0
+for arg in "$@"; do
+    case "$arg" in
+        --ja|-j) AUTOMATISCH=1 ;;
+        --hilfe|-h|--help)
+            echo "Aufruf: ./install.sh [--ja]"
+            echo
+            echo "  --ja   Fehlende Pakete ohne Rückfrage nachinstallieren."
+            exit 0 ;;
+    esac
+done
+
 echo "SPIELRaum einrichten"
 echo "===================="
+echo
+
+# --- Welche Familie? -------------------------------------------------------
+# ID_LIKE ist hier wichtiger als ID: Manjaro meldet »manjaro« mit
+# ID_LIKE=arch, Mint meldet »linuxmint« mit ID_LIKE="ubuntu debian". Wer nur
+# ID prüft, unterstützt zwei Distributionen statt zweier Familien.
+FAMILIE="unbekannt"
+if [ -r /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    case " ${ID:-} ${ID_LIKE:-} " in
+        *" arch "*|*" archlinux "*|*" manjaro "*) FAMILIE="arch" ;;
+        *" debian "*|*" ubuntu "*)                FAMILIE="debian" ;;
+    esac
+fi
+
+# --- Gibt es dieses Paket überhaupt? ---------------------------------------
+# Auf Debian ist der Name von PySide6 nicht überall derselbe. Statt einen
+# zu raten und am Nutzer scheitern zu lassen, werden mehrere Kandidaten
+# geprüft und der erste genommen, den die Quellen kennen.
+paket_gibt_es() {
+    case "$FAMILIE" in
+        arch)   pacman -Si "$1" >/dev/null 2>&1 ;;
+        debian) apt-cache show "$1" >/dev/null 2>&1 ;;
+        *)      return 1 ;;
+    esac
+}
+
+erster_kandidat() {
+    for kandidat in "$@"; do
+        if paket_gibt_es "$kandidat"; then
+            echo "$kandidat"
+            return 0
+        fi
+    done
+    return 1
+}
+
+FEHLT=()
+notieren() {
+    # $1 = Prüfbefehl, $2.. = Paketkandidaten
+    local pruefung="$1"; shift
+    eval "$pruefung" >/dev/null 2>&1 && return 0
+    local paket
+    if paket="$(erster_kandidat "$@")"; then
+        FEHLT+=("$paket")
+    else
+        echo "  Hinweis: Für »$1« ist in den Quellen kein Paket zu finden."
+        echo "           Gesucht wurde nach: $*"
+    fi
+}
+
+echo "Sehe nach, was fehlt ..."
+if [ "$FAMILIE" = "arch" ]; then
+    notieren "command -v git"       git
+    notieren "python3 -c 'import venv'" python
+    notieren "python3 -c 'import PySide6.QtWidgets'" pyside6
+    notieren "command -v gamemoderun" gamemode
+    notieren "command -v mangohud"  mangohud
+    notieren "command -v keyd"      keyd
+elif [ "$FAMILIE" = "debian" ]; then
+    notieren "command -v git"       git
+    notieren "python3 -c 'import venv'" python3-venv
+    # Debian schnürt PySide6 in Teilpakete, und die Namen haben sich
+    # zwischen den Fassungen geändert. Der erste Treffer gewinnt.
+    notieren "python3 -c 'import PySide6.QtWidgets'" \
+        python3-pyside6.qtwidgets python3-pyside6 pyside6-tools
+    notieren "command -v gamemoderun" gamemode
+    notieren "command -v mangohud"  mangohud
+    notieren "command -v keyd"      keyd
+else
+    echo "  Unbekannte Distribution – es wird nichts nachinstalliert."
+    echo "  Gebraucht werden: python3 (3.11+), python3-venv, PySide6,"
+    echo "  dazu freiwillig gamemode, mangohud, keyd."
+fi
+
+if [ ${#FEHLT[@]} -gt 0 ]; then
+    echo
+    echo "Es fehlen: ${FEHLT[*]}"
+    if [ "$FAMILIE" = "arch" ]; then
+        BEFEHL=(sudo pacman -S --needed "${FEHLT[@]}")
+    else
+        BEFEHL=(sudo apt install -y "${FEHLT[@]}")
+    fi
+    echo "Befehl:    ${BEFEHL[*]}"
+    echo
+    if [ "$AUTOMATISCH" -eq 1 ]; then
+        ANTWORT="j"
+    else
+        # Beim Nachinstallieren wird zum ersten Mal nach dem Passwort
+        # gefragt. Wer das nicht erwartet, soll Nein sagen können.
+        printf "Jetzt nachinstallieren? [j/N] "
+        read -r ANTWORT </dev/tty || ANTWORT="n"
+    fi
+    case "$ANTWORT" in
+        [jJyY]*)
+            "${BEFEHL[@]}" || {
+                echo "Das Nachinstallieren ist fehlgeschlagen." >&2
+                echo "SPIELRaum läuft trotzdem – es fallen nur die" >&2
+                echo "betroffenen Stellschrauben aus." >&2
+            } ;;
+        *) echo "Übersprungen. Fehlende Werkzeuge fallen aus, mehr nicht." ;;
+    esac
+else
+    echo "  Alles da."
+fi
 echo
 
 # --- Python prüfen ---------------------------------------------------------

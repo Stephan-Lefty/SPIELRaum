@@ -1,5 +1,7 @@
 [Deutsch](README.md) | [English](README.en.md) | [Changelog](CHANGELOG.md) | [TODO](TODO.en.md)
 
+<img src="assets/icon-128.png" alt="SPIELRaum" width="128" align="right">
+
 # SPIELRaum
 
 Start a game, set the machine up for it, clean up afterwards.
@@ -37,6 +39,10 @@ SPIELRaum builds on top and does what GameMode does not:
 ```
 ./install.sh
 ```
+
+The script first checks what is missing on this machine and offers to install it, using your distribution's package manager. Pass `--ja` to skip the prompt.
+
+**In detail:** [docs/installation.en.md](docs/installation.en.md) for Arch/Manjaro, Debian 13 and Ubuntu.
 
 Creates a Python environment inside the repository, installs SPIELRaum into
 it and places a launcher in `~/.local/bin`. None of this needs system

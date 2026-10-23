@@ -4,6 +4,8 @@
 
 ## Entscheidungen
 
+- [installation.md](installation.md) – Einrichten unter Arch/Manjaro, Debian 13 und Ubuntu ([English](installation.en.md))
+
 - [Was ein Dienst mit Systemrechten kosten würde](systemdienst.md) – warum
   SPIELRaum die Grafikkarte nicht anfasst, und ab wann sich das ändern
   sollte. Mit der Messung, die die Frage entschieden hat.

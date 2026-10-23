@@ -1,5 +1,7 @@
 [Deutsch](README.md) | [English](README.en.md) | [Änderungsprotokoll](CHANGELOG.md) | [TODO](TODO.md) | [Anleitungen](docs/README.md)
 
+<img src="assets/icon-128.png" alt="SPIELRaum" width="128" align="right">
+
 # SPIELRaum
 
 Spiele starten, das System dafür herrichten, hinterher aufräumen.
@@ -37,6 +39,13 @@ SPIELRaum setzt darauf auf und macht das, was GameMode nicht tut:
 ```
 ./install.sh
 ```
+
+Das Skript sieht zuerst nach, was auf diesem Rechner fehlt, und bietet an,
+es nachzuinstallieren – mit dem Befehl der jeweiligen Distribution. Mit
+`--ja` geschieht das ohne Rückfrage.
+
+**Ausführlich:** [docs/installation.md](docs/installation.md) für
+Arch/Manjaro, Debian 13 und Ubuntu.
 
 Legt eine eigene Python-Umgebung im Repository an, installiert SPIELRaum
 hinein und stellt einen Starter nach `~/.local/bin`. Nichts davon braucht
