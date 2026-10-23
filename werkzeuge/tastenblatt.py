@@ -71,6 +71,38 @@ GODOT_MAUS = {
     8: "Daumen hinten", 9: "Daumen vorn",
 }
 
+SPIEL_DEUTSCH = {
+    1203620: {  # Enshrouded
+        "MovementUp": "Vorwärts", "MovementDown": "Rückwärts",
+        "MovementLeft": "Seitwärts links", "MovementRight": "Seitwärts rechts",
+        "CameraLeft": "Kamera links", "CameraRight": "Kamera rechts",
+        "CameraUp": "Kamera hoch", "CameraDown": "Kamera runter",
+        "CameraZoomIn": "Kamera heran", "CameraZoomOut": "Kamera weg",
+        "Jump": "Springen", "Glider": "Gleiter", "Sprint": "Sprinten",
+        "Walk": "Gehen", "Sneak": "Schleichen", "Evade": "Ausweichen",
+        "MainhandAction": "Angriff", "ContextualAction": "Benutzen / Aufheben",
+        "Block": "Blocken", "CancelAction": "Abbrechen",
+        "SpecialAbility": "Spezialfähigkeit", "DropItem": "Ablegen",
+        "LootTakeAll": "Alles nehmen", "RangedCombatArm": "Fernkampf anlegen",
+        "RangedCombatShoot": "Fernkampf schießen",
+        "AmmunitionSelectPrevious": "Munition zurück",
+        "AmmunitionSelectNext": "Munition vor",
+        "LockCombatTarget": "Ziel festhalten",
+        "ActionbarPreviousSlot": "Leiste zurück", "ActionbarNextSlot": "Leiste vor",
+        "ActionbarSwapPage": "Leiste umblättern",
+        "ShowEmoteWheel": "Gestenrad", "ShowActionbarWheel": "Aktionsrad",
+        "HeadDive": "Kopfsprung", "SwimStartDiving": "Tauchen",
+        "DiveAscend": "Auftauchen", "DiveDescend": "Abtauchen",
+        "UiBackpack": "Rucksack", "UiMap": "Karte", "UiCrafting": "Handwerk",
+        "UiBuildingMenu": "Baumenü", "UiInGameMenu": "Spielmenü",
+        "UiCharacter": "Charakter", "UiJournal": "Tagebuch",
+        "UiSkills": "Fähigkeiten", "UiSocial": "Gruppe",
+        "UiSystemMenu": "Systemmenü", "UiTextChat": "Textchat",
+        "VoiceChatPushToTalk": "Sprechtaste",
+        **{f"QuickUse{i}": f"Schnellzugriff {i + 1}" for i in range(10)},
+    },
+}
+
 VOSTOK_DEUTSCH = {
     "aim": "Zielen", "ammo_check": "Munition prüfen", "backward": "Rückwärts",
     "canted": "Schrägvisier", "crouch": "Ducken", "decor": "Dekoration",
@@ -144,6 +176,72 @@ def vostok_lesen(pfad: Path) -> list[tuple[str, str, str]]:
     return zeilen
 
 
+# --- Steams Cloud-Ordner ---------------------------------------------------
+# Manche Spiele legen ihre Einstellungen nicht ins Proton-Präfix, sondern in
+# Steams Cloud-Ordner. Die Benutzerkennung darin steht nirgends fest --
+# gesucht wird deshalb, statt sie zu erraten.
+ENSHROUDED_MAUS = {
+    "Left": "Zeigefinger", "Right": "Mittelfinger", "Middle": "Radklick",
+    "Button4": "Daumen hinten", "Button5": "Daumen vorn",
+}
+
+
+def cloud_datei(app_id: int, name: str) -> Path | None:
+    """Eine Datei aus Steams Cloud-Ordner dieses Spiels suchen."""
+    for wurzel in (Path.home() / ".local/share/Steam/userdata",
+                   Path.home() / ".steam/steam/userdata"):
+        if not wurzel.is_dir():
+            continue
+        for benutzer in wurzel.iterdir():
+            kandidat = benutzer / str(app_id) / "remote" / name
+            if kandidat.exists():
+                return kandidat
+    return None
+
+
+def json_belegung(pfad: Path, uebersetzung: dict[str, str]) -> list[tuple[str, str, str]]:
+    """Die Belegung aus einer JSON-Datei im Enshrouded-Format lesen.
+
+    Der Aufbau ist ``input.keyboardMouse.bindings.{gameplay,ui}``, jeweils
+    eine Liste aus ``{id, action:{primary,secondary}}``.
+    """
+    import json
+
+    d = json.loads(pfad.read_text(encoding="utf-8", errors="replace"))
+    try:
+        bind = d["input"]["keyboardMouse"]["bindings"]
+    except (KeyError, TypeError):
+        return []
+
+    def eine(op) -> tuple[str, str] | None:
+        o = op["operation"]
+        vor = "+".join(x["id"] for x in op.get("modifiers", []))
+        vor = f"{vor} + " if vor else ""
+        if o["type"] == "Key":
+            return "Tastatur", vor + beschriftet(o["id"].lower())
+        if o["type"] == "MouseButton":
+            return "Maus", vor + ENSHROUDED_MAUS.get(o["id"], o["id"])
+        if o["type"] == "MouseWheel":
+            return "Maus", vor + ("Rad hoch" if o["axis"] == "PositiveY" else "Rad runter")
+        if o["type"] == "MouseMove":
+            return "Maus", "Maus bewegen"
+        return None
+
+    zeilen = []
+    for bereich in ("gameplay", "ui"):
+        for eintrag in bind.get(bereich, []):
+            if eintrag["id"] == "Count":  # kein Befehl, nur der Zähler am Ende
+                continue
+            gefunden = [eine(eintrag["action"][s]) for s in ("primary", "secondary")]
+            gefunden = [g for g in gefunden if g]
+            if not gefunden:
+                continue
+            geraet = "Maus" if any(g[0] == "Maus" for g in gefunden) else "Tastatur"
+            taste = " oder ".join(dict.fromkeys(g[1] for g in gefunden))
+            zeilen.append((uebersetzung.get(eintrag["id"], eintrag["id"]), geraet, taste))
+    return zeilen
+
+
 def tabelle(zeilen, spalten) -> str:
     aus = ["| " + " | ".join(spalten) + " |",
            "|" + "|".join("---" for _ in spalten) + "|"]
@@ -174,19 +272,29 @@ def blatt(app_id: int) -> str:
                   "eine zweite darauf. Sie liegt nur links und damit außer "
                   "Reichweite.", ""]
 
-    # Die Spielbelegung, soweit lesbar. Bisher nur Godot.
-    if spiel and p.engine == "godot":
+    # Die Spielbelegung. Godot legt sie ins Proton-Präfix, andere Spiele in
+    # Steams Cloud-Ordner -- beide Wege werden versucht.
+    zeilen: list[tuple[str, str, str]] = []
+    if spiel and p.engine == "godot" and spiel.proton_praefix:
         tres = (spiel.proton_praefix / "pfx/drive_c/users/steamuser/AppData/Roaming"
-                / p.name / "Preferences.tres") if spiel.proton_praefix else None
-        if tres and tres.exists():
+                / p.name / "Preferences.tres")
+        if tres.exists():
             zeilen = vostok_lesen(tres)
-            maus = [(a, t) for a, g, t in zeilen if g == "Maus"]
-            tast = [(a, zurueck.get(t.lower(), zurueck.get(t, t)))
-                    for a, g, t in zeilen if g == "Tastatur"]
-            teile += ["## Maus", "", tabelle(maus, ["Aktion", "liegt auf"]), "",
-                      "## Tastatur", "",
-                      "Wo keyd übersetzt, steht die gedrückte Taste.", "",
-                      tabelle(sorted(tast), ["Aktion", "Taste"]), ""]
+    if not zeilen:
+        cloud = cloud_datei(app_id, "user_settings.json")
+        if cloud is not None:
+            zeilen = json_belegung(cloud, SPIEL_DEUTSCH.get(app_id, {}))
+
+    if zeilen:
+        maus = [(a, t) for a, g, t in zeilen if g == "Maus"]
+        # Wo keyd übersetzt, die gedrückte Taste zeigen statt der, die das
+        # Spiel sieht. Ohne das stünde »Space« da, während man Bild hoch drückt.
+        tast = [(a, zurueck.get(t.lower(), zurueck.get(t, t)))
+                for a, g, t in zeilen if g == "Tastatur"]
+        teile += ["## Maus", "", tabelle(maus, ["Aktion", "liegt auf"]), "",
+                  "## Tastatur", "",
+                  "Wo keyd übersetzt, steht die gedrückte Taste.", "",
+                  tabelle(sorted(tast), ["Aktion", "Taste"]), ""]
 
     teile += ["## Falls etwas klemmt", "",
               "Tastatur spinnt: `sudo systemctl stop keyd` — danach gilt wieder "
