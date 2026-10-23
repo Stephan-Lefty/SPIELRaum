@@ -58,6 +58,17 @@ jobs:
       - name: PySide6 fuer die Oberflaechentests
         run: pip install PySide6-Essentials
 
+      # Qt laedt libEGL schon beim Import, nicht erst beim Zeichnen -- auch
+      # im Offscreen-Betrieb. Der Ubuntu-Runner bringt die Bibliothek nicht
+      # mit.
+      #
+      # Seit dem 01.10.2026 waren die drei Oberflaechentests deshalb rot,
+      # ohne dass es auffiel: Die Zusammenfassung meldete "85 passed,
+      # 3 errors", und eine Zeile, die mit "85 passed" anfaengt, liest sich
+      # wie ein gruener Lauf.
+      - name: Systembibliotheken fuer Qt
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1
+
       - name: Tests
         # offscreen: Der Runner hat keinen Grafikserver.
         env:
