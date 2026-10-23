@@ -374,7 +374,8 @@ def _messfahrt(args) -> int:
             return 0
         for zeile in varianten.zuruecksetzen(p, ordner, praefix):
             print(zeile)
-        fahrt_modul.entfernen(p.steam_app_id)
+        laufende.abschliessen()
+        fahrt_modul.schreiben(laufende)
         print("Messfahrt abgebrochen, Ausgangszustand wiederhergestellt.")
         return 0
 
@@ -386,7 +387,9 @@ def _messfahrt(args) -> int:
         except varianten.VariantenFehler as fehler:
             print(f"Geht nicht: {fehler}", file=sys.stderr)
             return 1
-        fahrt_modul.entfernen(p.steam_app_id)
+        if laufende is not None:
+            laufende.abschliessen(args.uebernehmen)
+            fahrt_modul.schreiben(laufende)
         print(f"»{args.uebernehmen}« übernommen, Messfahrt abgeschlossen.")
         return 0
 

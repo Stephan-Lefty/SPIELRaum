@@ -174,3 +174,47 @@ def test_alle_uebergeht_fremde_dateien():
     fahrt.fahrten_verzeichnis().joinpath("notizen.json").write_text("{}")
     fahrt.schreiben(neue())
     assert [f.steam_app_id for f in fahrt.alle()] == [42]
+
+
+# --- Automatik -------------------------------------------------------------
+
+
+def test_abgeschlossene_fahrt_bleibt_liegen():
+    """Als Ergebnisspeicher und als Merker.
+
+    Ohne das begänne bei eingeschalteter Automatik nach jedem Verwerfen
+    sofort die nächste Fahrt – man käme nie zum Spielen.
+    """
+    f = neue()
+    for name in f.varianten:
+        f.vermerken(fahrt.Lauf(variante=name, messdatei=f"{name}.csv"))
+    f.abschliessen("leistung")
+    fahrt.schreiben(f)
+
+    zurueck = fahrt.lesen(42)
+    assert zurueck.abgeschlossen
+    assert zurueck.uebernommen == "leistung"
+
+
+def test_abbrechen_merkt_sich_das_auch():
+    """Auch eine verworfene Fahrt darf nicht sofort neu beginnen."""
+    f = neue()
+    f.abschliessen()
+    fahrt.schreiben(f)
+    assert fahrt.lesen(42).abgeschlossen
+    assert fahrt.lesen(42).uebernommen == ""
+
+
+def test_profil_schalter_ist_aus_wenn_nichts_dasteht(tmp_path):
+    from spielraum import profil
+    pfad = tmp_path / "t.toml"
+    pfad.write_text('[spiel]\nname = "X"\n', encoding="utf-8")
+    assert profil.laden(pfad).fahrt_automatisch is False
+
+
+def test_profil_schalter_laesst_sich_setzen(tmp_path):
+    from spielraum import profil
+    pfad = tmp_path / "t.toml"
+    pfad.write_text('[spiel]\nname = "X"\n\n[messen]\nfahrt = true\n',
+                    encoding="utf-8")
+    assert profil.laden(pfad).fahrt_automatisch is True

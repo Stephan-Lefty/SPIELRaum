@@ -344,7 +344,8 @@ class Fenster(QMainWindow):
             except varianten.VariantenFehler as fehler:
                 QMessageBox.warning(self, "Geht nicht", str(fehler))
                 return
-            fahrt.entfernen(spiel.app_id)
+            laufende.abschliessen(beste.variante)
+            fahrt.schreiben(laufende)
             QMessageBox.information(
                 self, "Übernommen",
                 f"»{beste.variante}« ist gesetzt. Es greift beim nächsten "
@@ -361,7 +362,10 @@ class Fenster(QMainWindow):
             bericht = varianten.zuruecksetzen(p, ordner, praefix)
         except Exception as fehler:  # noqa: BLE001
             bericht = [f"Zurücksetzen fehlgeschlagen: {fehler}"]
-        fahrt.entfernen(spiel.app_id)
+        laufende = fahrt.lesen(spiel.app_id)
+        if laufende is not None:
+            laufende.abschliessen()
+            fahrt.schreiben(laufende)
         QMessageBox.information(self, "Messfahrt beendet",
                                 "\n".join(bericht) or "Nichts zurückzusetzen.")
         self.befund.setHtml(self._bericht(spiel))

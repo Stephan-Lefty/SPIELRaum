@@ -122,13 +122,32 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
     fahrt_variante = None
     if profil.steam_app_id and not trocken:
         laufende_fahrt = fahrt.lesen(profil.steam_app_id)
+
+        # Automatik: Steht »fahrt = true« im Profil und gibt es noch keine
+        # Akte, beginnt hier eine. Danach nie wieder von selbst -- die
+        # abgeschlossene Akte bleibt als Merker liegen. Ohne den begänne
+        # nach jedem Verwerfen sofort die nächste Fahrt.
+        if (laufende_fahrt is None and profil.fahrt_automatisch
+                and len(profil.varianten) >= 2):
+            laufende_fahrt = fahrt.Fahrt(
+                spiel=profil.name, steam_app_id=profil.steam_app_id,
+                varianten=list(profil.varianten), angelegt=time.time())
+            fahrt.schreiben(laufende_fahrt)
+            print(f"Messfahrt begonnen: {len(profil.varianten)} Läufe zu je "
+                  f"{fahrt.MINDESTDAUER / 60:.0f} Minuten. Abbrechen mit: "
+                  f"spielraum messfahrt {profil.steam_app_id} --abbrechen")
+
         if laufende_fahrt is not None:
-            fahrt_variante = laufende_fahrt.naechste
-            if fahrt_variante is None:
-                # Alle Läufe erledigt. Die Akte bleibt liegen, bis jemand
-                # in der Oberfläche eine Variante übernimmt oder verwirft –
-                # sonst wäre das Ergebnis nach dem letzten Lauf weg.
+            if laufende_fahrt.abgeschlossen:
+                # Durch und entschieden. Nicht anfassen.
                 laufende_fahrt = None
+            else:
+                fahrt_variante = laufende_fahrt.naechste
+                if fahrt_variante is None:
+                    # Alle Läufe erledigt, aber noch nichts entschieden. Die
+                    # Akte bleibt liegen, bis jemand übernimmt oder verwirft –
+                    # sonst wäre das Ergebnis nach dem letzten Lauf weg.
+                    laufende_fahrt = None
 
     # Läuft eine Messung über eine feste Dauer, blendet MangoHud die
     # Restzeit ein. Die Variante steht mit im Bild - sonst weiß man nach

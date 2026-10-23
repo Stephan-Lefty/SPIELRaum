@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.1] – 2026-10-23
+
+### Hinzugefügt
+
+- **`[messen] fahrt = true`** beginnt die Messfahrt beim nächsten
+  Spielstart von selbst. Vorgabe aus: Eine Messfahrt verstellt die
+  Grafikeinstellungen, und das soll niemanden überraschen, der nur spielen
+  will.
+
+- **Eine abgeschlossene Fahrt bleibt liegen** statt gelöscht zu werden –
+  als Ergebnisspeicher und als Merker. Ohne das begänne bei eingeschalteter
+  Automatik nach jedem Verwerfen sofort die nächste Fahrt.
+
 ## [0.6.0] – 2026-10-23
 
 Die Messfahrt. Entworfen am 01.10.2026, jetzt gebaut.

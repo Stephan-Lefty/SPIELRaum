@@ -78,6 +78,12 @@ class Fahrt:
     # Sicherung umfasst auch, was SPIELRaum gar nicht kennt.
     ausgangszustand: str | None = None
     angelegt: float = 0.0
+    # Abgeschlossen heißt: ausgewertet und entschieden. Die Akte bleibt
+    # danach liegen -- als Ergebnisspeicher und als Merker, dass hier schon
+    # gemessen wurde. Ohne das begänne bei eingeschalteter Automatik nach
+    # jedem Verwerfen sofort die nächste Fahrt.
+    abgeschlossen: bool = False
+    uebernommen: str = ""
     fassung: int = FAHRT_FASSUNG
     laeufe: list[Lauf] = field(default_factory=list)
 
@@ -96,6 +102,11 @@ class Fahrt:
     @property
     def fertig(self) -> bool:
         return self.naechste is None
+
+    def abschliessen(self, uebernommen: str = "") -> None:
+        """Die Fahrt beenden, ohne die Zahlen wegzuwerfen."""
+        self.abgeschlossen = True
+        self.uebernommen = uebernommen
 
     @property
     def stand(self) -> str:

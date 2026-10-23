@@ -109,6 +109,15 @@ class Profil:
     # Anzeige.
     overlay_ecke: str = "top-left"
 
+    # Von selbst eine Messfahrt beginnen, wenn für dieses Spiel noch keine
+    # läuft und noch keine abgeschlossen ist.
+    #
+    # Vorgabe aus, und das mit Bedacht: Eine Messfahrt verstellt die
+    # Grafikeinstellungen. Wer sich abends hinsetzt und spielen will, soll
+    # nicht plötzlich »Optik« vorfinden, ohne es angefordert zu haben. Wer
+    # es trotzdem will, schaltet es hier ein -- pro Spiel.
+    fahrt_automatisch: bool = False
+
     # Welche Taste der Spieltastatur welche Taste schicken soll, solange
     # dieses Spiel läuft. Links steht, was man drückt, rechts, was das Spiel
     # sehen soll: ``up = "w"``. Die Namen prüft spielraum/tasten.py gegen
@@ -248,6 +257,7 @@ def laden(pfad: Path) -> Profil:
 
     messen = roh.get("messen", {})
     profil.mangohud = bool(messen.get("mangohud", True))
+    profil.fahrt_automatisch = bool(messen.get("fahrt", False))
     if (ecke := messen.get("ecke")) is not None:
         ecke = _als_str(ecke, "messen.ecke")
         if ecke not in OVERLAY_ECKEN:

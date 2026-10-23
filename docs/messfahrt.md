@@ -25,6 +25,25 @@ spielraum messfahrt <spiel> --starten --nur optik,leistung
 In der Oberfläche führt der Knopf **Messfahrt** durch dasselbe und zeigt am
 Ende eine Tabelle mit der Möglichkeit, eine Variante zu übernehmen.
 
+## Von selbst beginnen
+
+```toml
+[messen]
+fahrt = true
+```
+
+Dann beginnt SPIELRaum die Fahrt beim nächsten Spielstart selbst – ohne
+dass jemand `--starten` tippt.
+
+**Der Preis:** Die Grafikeinstellungen ändern sich, ohne dass man es
+angefordert hat. Wer sich abends hinsetzt und spielen will, findet
+womöglich »Optik« vor. Die Vorgabe ist deshalb **aus**; wer es will,
+schaltet es pro Spiel ein.
+
+Nach der letzten Variante bleibt die Akte liegen, bis jemand ein Ergebnis
+übernimmt oder verwirft. Von selbst beginnt dann keine neue – sonst käme
+man nie zum Spielen.
+
 ## Wozu
 
 Heute geht das Vergleichen von Einstellungen so: ins Spielmenü, umstellen,

@@ -40,6 +40,20 @@ nicht_stoeren = true
 [messen]
 mangohud = true
 
+# Von selbst eine Messfahrt beginnen, sobald für dieses Spiel noch keine
+# gelaufen ist. Eingeschaltet am 23.10.2026 auf ausdrücklichen Wunsch.
+#
+# Was das bedeutet: Der nächste Spielstart setzt die erste Variante, der
+# übernächste die zweite und so fort. Die Grafikeinstellungen ändern sich
+# dabei, ohne dass man es angefordert hat -- das ist der Preis dafür, nicht
+# daran denken zu müssen.
+#
+# Nach der letzten Variante bleibt die Fahrtenakte liegen, bis jemand ein
+# Ergebnis übernimmt oder verwirft. Von selbst beginnt dann keine neue.
+#
+# Abbrechen jederzeit:  spielraum messfahrt <app-id> --abbrechen
+fahrt = true
+
 # --- Tastenbelegung -------------------------------------------------------
 #
 # Links steht, was gedrückt wird, rechts, was das Spiel sehen soll.
