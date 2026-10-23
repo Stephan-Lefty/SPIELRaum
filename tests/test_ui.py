@@ -126,3 +126,36 @@ def test_bericht_warnt_vor_drehender_platte(anwendung, tmp_path, monkeypatch):
     html = f._bericht(erfunden)
     assert "drehende Platte" in html
     assert "Engpass" in html
+
+
+def test_tastenblatt_wird_gefunden(tmp_path, monkeypatch):
+    """Das eigene Blatt zum Spiel, gesucht über den Spielnamen.
+
+    Über den Namen und nicht über die App-ID, weil die Dateien zum Lesen
+    gedacht sind: »Road-to-Vostok-Tastenbelegung.pdf« findet man im
+    Dateiverwalter wieder, »1963610.pdf« nicht.
+    """
+    from spielraum import steam
+    from spielraum.ui import fenster
+
+    ordner = tmp_path / "tastenblaetter"
+    ordner.mkdir()
+    (ordner / "Road-to-Vostok-Tastenbelegung.pdf").write_bytes(b"%PDF-1.4\n")
+
+    # Der Ordner wird relativ zum Modul gesucht – hier umbiegen.
+    monkeypatch.setattr(fenster, "__file__", str(tmp_path / "x" / "y" / "z.py"))
+
+    spiel = steam.Spiel(app_id=1963610, name="Road to Vostok", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    assert fenster._tastenblatt(spiel) is not None
+
+
+def test_ohne_tastenblatt_kein_verweis(tmp_path, monkeypatch):
+    """Kein Blatt, kein Link. Ein Verweis ins Leere ist schlimmer als keiner."""
+    from spielraum import steam
+    from spielraum.ui import fenster
+
+    monkeypatch.setattr(fenster, "__file__", str(tmp_path / "x" / "y" / "z.py"))
+    spiel = steam.Spiel(app_id=999997, name="Gibt Es Nicht", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    assert fenster._tastenblatt(spiel) is None

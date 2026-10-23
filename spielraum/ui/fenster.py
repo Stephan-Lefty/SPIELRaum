@@ -29,6 +29,53 @@ from .. import (__version__, farben, messen, profil, stellschrauben, steam,
                 tasten, umgebung, zustand)
 
 
+# Wie keyd die Tasten nennt und wie sie auf einer deutschen Tastatur
+# beschriftet sind. Nur die, die sich unterscheiden -- »w« heißt »w«.
+TASTENNAMEN = {
+    "up": "Pfeil hoch", "down": "Pfeil runter",
+    "left": "Pfeil links", "right": "Pfeil rechts",
+    "pageup": "Bild hoch", "pagedown": "Bild runter",
+    "home": "Pos 1", "end": "Ende", "insert": "Einfg", "delete": "Entf",
+    "space": "Leertaste", "enter": "Enter", "esc": "Esc",
+    "leftshift": "Umschalt links", "rightshift": "Umschalt rechts",
+    "leftcontrol": "Strg links", "rightcontrol": "Strg rechts",
+    "leftalt": "Alt links", "rightalt": "Alt Gr",
+    "layer(shift)": "Umschalt", "layer(control)": "Strg",
+    "layer(alt)": "Alt", "layer(meta)": "Meta",
+}
+
+
+def _tastenblatt(spiel: steam.Spiel) -> Path | None:
+    """Das eigene Tastenblatt zu diesem Spiel, falls eines erzeugt wurde.
+
+    Liegt im Ordner ``tastenblaetter/`` und wird von Git ignoriert: Die
+    Belegung hängt an der Hand, die die Maus führt, und an den Tastaturen,
+    die auf dem Tisch stehen. Sie gehört niemandem sonst.
+
+    Erzeugt wird sie mit ``werkzeuge/tastenblatt.py``.
+    """
+    ordner = Path(__file__).resolve().parent.parent.parent / "tastenblaetter"
+    if not ordner.is_dir():
+        return None
+    # Nach dem Spielnamen suchen, nicht nach der App-ID: Die Dateien sind
+    # zum Lesen gedacht, nicht zum Nachschlagen durch ein Programm.
+    stamm = spiel.name.replace(" ", "-")
+    for endung in (".pdf", ".md", ".html"):
+        treffer = sorted(ordner.glob(f"{stamm}*{endung}"))
+        if treffer:
+            return treffer[0]
+    return None
+
+
+def _tastenname(name: str) -> str:
+    """Den keyd-Namen so zeigen, wie die Taste beschriftet ist.
+
+    ``pageup`` steht auf keiner deutschen Tastatur. Wer in der Übersicht
+    nachsieht, sucht »Bild hoch«.
+    """
+    return TASTENNAMEN.get(name, name.upper() if len(name) == 1 else name)
+
+
 def _stil() -> str:
     """Das Aussehen, aus der gemeinsamen Palette.
 
@@ -111,8 +158,11 @@ class Fenster(QMainWindow):
         # für den Fall, dass jemand ein Spiel direkt über Steam startet und
         # die Belegung trotzdem haben will.
         self.tasten_liegen = False
-        self.knopf_tasten = QPushButton("Tasten umlegen")
+        self.knopf_tasten = QPushButton("Belegung jetzt setzen")
         self.knopf_tasten.clicked.connect(self._tasten_umschalten)
+        self.knopf_tasten.setToolTip(
+            "Setzt die Tastenbelegung dieses Spiels sofort, ohne es zu starten.\n"
+            "Beim Start über SPIELRaum passiert das von allein.")
         self.knopf_tasten.setEnabled(False)
 
         knoepfe = QHBoxLayout()
@@ -203,7 +253,7 @@ class Fenster(QMainWindow):
         if self.tasten_liegen:
             meldung = tasten.zuruecknehmen()
             self.tasten_liegen = False
-            self.knopf_tasten.setText("Tasten umlegen")
+            self.knopf_tasten.setText("Belegung jetzt setzen")
             QMessageBox.information(self, "Tasten", meldung)
             return
 
@@ -229,7 +279,7 @@ class Fenster(QMainWindow):
 
         zustand.schreiben(journal)
         self.tasten_liegen = True
-        self.knopf_tasten.setText("Tasten zurücksetzen")
+        self.knopf_tasten.setText("Belegung zurücknehmen")
         QMessageBox.information(
             self, "Tasten umgelegt",
             f"{len(getan)} Zuordnungen gesetzt:\n\n" + "\n".join(getan)
@@ -290,6 +340,43 @@ class Fenster(QMainWindow):
             teile.append("<ul>" + "".join(f"<li>{z}</li>" for z in was) + "</ul>")
             for warnung in p.warnungen():
                 teile.append(f"<p style='color:#b4690e'>{warnung}</p>")
+
+            # --- Die Tastenbelegung dieses Spiels
+            #
+            # Steht hier und nicht hinter einem Knopf, weil es die Änderung
+            # ist, die man beim Spielen tatsächlich merkt. Am 23.10.2026
+            # zeigte der Befund alles -- Bildschirmschoner, GameMode,
+            # Messung -- nur die elf Tastenzuordnungen nicht. Gefragt wurde
+            # dann nach dem Knopf, nicht nach der Belegung.
+            if p.tasten:
+                teile.append(f"<h3 style='color:{farben.GRAU_DUNKEL}'>Tastenbelegung</h3>")
+                bereit, grund = tasten.verfuegbar()
+                teile.append(
+                    "<p>Gilt nur, solange das Spiel läuft. Links steht, was du "
+                    "drückst, rechts, was das Spiel sieht.</p>"
+                )
+                teile.append("<table cellpadding='3'>")
+                for taste, ziel in p.tasten.items():
+                    teile.append(
+                        f"<tr><td style='color:{farben.GRAU_LEISE}'>"
+                        f"<code>{_tastenname(taste)}</code></td>"
+                        f"<td style='color:{farben.GRAU_LEISE}'>→</td>"
+                        f"<td><code>{_tastenname(ziel)}</code></td></tr>"
+                    )
+                teile.append("</table>")
+                if not bereit:
+                    teile.append(
+                        f"<p style='background:#fff6e5;padding:8px;border-radius:5px'>"
+                        f"<b>Diese Belegung greift gerade nicht.</b><br>{grund}</p>"
+                    )
+
+                blatt = _tastenblatt(spiel)
+                if blatt is not None:
+                    teile.append(
+                        f"<p>📄 <a href='file://{blatt}'>Tastenblatt öffnen</a> "
+                        f"<span style='color:{farben.GRAU_LEISE}'>– die ganze "
+                        f"Belegung samt Maus, zum Ausdrucken</span></p>"
+                    )
 
         # --- Die Messungen
         teile.append(f"<h3 style='color:{farben.GRAU_DUNKEL}'>Messungen</h3>")

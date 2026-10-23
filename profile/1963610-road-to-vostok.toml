@@ -178,3 +178,37 @@ grafik = { lighting = 3, antialiasing = 1, smaa = 2, detailShadows = 1, reflecti
 # Wer eine Variante anlegt und die Bildwirkung ausspart, laesst sie beim
 # Umschalten auf dem Stand der vorigen stehen. Dann wundert man sich
 # ueber eine Helligkeit, die niemand gewaehlt hat.
+
+# --- Tastenbelegung -------------------------------------------------------
+#
+# Links steht, was gedrückt wird, rechts, was das Spiel sehen soll. Gilt nur,
+# solange Vostok läuft; siehe docs/tasten.md.
+#
+# Die Spielbelegung musste dafür am 23.10.2026 auf die Vorgabewerte zurück.
+# Vorher lag die Bewegung dort selbst auf den Pfeiltasten -- beide Seiten
+# zeigten in dieselbe Richtung und hoben sich auf.
+#
+# Drei Belegungen mussten dabei ausweichen, weil keyd ihre Tasten belegt:
+#
+#   item_drop     lag auf Umschalt -> jetzt L
+#   prepare       lag auf Strg     -> jetzt O
+#   rail_movement lag auf Strg     -> jetzt P
+#
+# L, O und P nutzt Vostok sonst nicht, keyd fasst sie nicht an, und sie
+# liegen rechts von I/K/M -- also in Reichweite der rechten Hand.
+
+[tasten]
+
+up    = "w"
+down  = "s"
+left  = "a"
+right = "d"
+
+pageup   = "space"
+pagedown = "layer(shift)"
+end      = "layer(control)"
+
+# Nachladen und Inventar lagen in Vostok schon auf R und Tab -- da musste
+# nichts geändert werden, die Zuordnung trifft sie direkt.
+insert = "r"
+delete = "tab"

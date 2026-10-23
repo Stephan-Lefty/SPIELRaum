@@ -21,3 +21,9 @@ assets/zeichnung*.png
 assets/probe*.png
 assets/p??.png
 assets/ChatGPT*
+
+# Die eigenen Tastenblätter. Sie entstehen aus dem Profil und der
+# Spieldatei dieses Rechners und gehören niemandem sonst: Wer die Maus
+# links führt und zwei Tastaturen hat, braucht andere als jemand mit
+# einem Gamepad. Erzeugt werden sie mit werkzeuge/tastenblatt.py.
+tastenblaetter/

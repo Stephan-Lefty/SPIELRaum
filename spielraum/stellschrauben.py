@@ -82,13 +82,34 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
 
     if profil.mangohud and umgebung.ermitteln().hat("mangohud"):
         werte["MANGOHUD"] = "1"
+
+        # Was im Bild stehen soll. Ohne diese Liste zeigt MangoHud nur die
+        # Bildrate -- und die allein sagt wenig. Die Auswahl folgt dem, was
+        # am 23.10.2026 bei Enshrouded tatsächlich den Unterschied machte:
+        #
+        #   gpu_temp          Der Hitzeschutz senkte in 11,2 % der Zeit den
+        #                     Takt. Ab 83 °C fängt das an.
+        #   throttling_status Sagt ausdrücklich, *dass* gedrosselt wird --
+        #                     sonst sieht man nur eine Bildrate, die ohne
+        #                     ersichtlichen Grund einbricht.
+        #   vram              Lag bei 97,8 % von 8 GB. Ob das stört, sieht
+        #                     man erst, wenn es danebensteht.
+        #   frame_timing      Ein Einbruch von 45 auf 5 Bilder dauert einen
+        #                     Wimpernschlag; im Mittelwert verschwindet er.
+        anzeige = [
+            "fps", "frametime", "frame_timing=1",
+            "gpu_stats", "gpu_temp", "gpu_power", "vram",
+            "cpu_stats", "cpu_temp", "ram",
+            "throttling_status",
+            f"position={profil.overlay_ecke}",
+        ]
+
         if messen_in is not None:
             messen_in.mkdir(parents=True, exist_ok=True)
             # autostart_log zeichnet ab der ersten Sekunde auf; ohne das
             # müsste man im Spiel eine Taste drücken, und dann misst man
             # Sitzungen unterschiedlicher Länge gegeneinander.
-            einstellungen = [
-                f"position={profil.overlay_ecke}",
+            einstellungen = anzeige + [
                 f"output_folder={messen_in}",
                 "autostart_log=1",
                 "log_interval=100",
@@ -104,6 +125,11 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
                 einstellungen.append("custom_text=Noch")
                 einstellungen.append(f"exec={skript}")
             werte["MANGOHUD_CONFIG"] = ",".join(einstellungen)
+        else:
+            # Kein Messordner heißt: anzeigen, nicht aufzeichnen. Vor dem
+            # 23.10.2026 blieb MANGOHUD_CONFIG dann ganz leer, und MangoHud
+            # zeigte seine Minimalanzeige -- eine nackte Zahl ohne Einheit.
+            werte["MANGOHUD_CONFIG"] = ",".join(anzeige)
     return werte
 
 

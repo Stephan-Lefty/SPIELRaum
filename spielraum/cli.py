@@ -259,8 +259,27 @@ def _starten(args) -> int:
         if not args.befehl:
             print("Weder Profil noch Startbefehl. Nichts zu tun.", file=sys.stderr)
             return 2
-        print("Kein Profil für dieses Spiel – es startet unverändert.", file=sys.stderr)
-        return subprocess.call(args.befehl)
+
+        # Gemessen wird trotzdem – seit dem 23.10.2026 auf ausdrücklichen
+        # Wunsch. Ein Spiel ohne Profil ist genau das, über das man noch
+        # nichts weiß; ohne Zahlen bleibt das so, und ein Profil entsteht
+        # nie, weil die Grundlage dafür fehlt.
+        #
+        # Die Messung ist dabei der einzige Eingriff. GameMode, Umgebung und
+        # Spieldateien bleiben unberührt: Dafür braucht es ein Profil, das
+        # jemand bewusst angelegt hat.
+        roh = os.environ.get("SteamAppId") or os.environ.get("SteamGameId")
+        app_id = int(roh) if roh and roh.isdigit() else None
+        gefunden = profil.Profil(
+            name=f"Spiel {app_id}" if app_id else "Unbekanntes Spiel",
+            quelle=profil.profil_verzeichnis() / "(ohne Profil)",
+            steam_app_id=app_id,
+            gamemode=False,
+            nicht_stoeren=False,
+            mangohud=True,
+        )
+        print("Kein Profil für dieses Spiel – es startet unverändert, "
+              "wird aber gemessen.", file=sys.stderr)
 
     return start_modul.starten(gefunden, args.befehl, trocken=args.trocken,
                                minuten=args.minuten)

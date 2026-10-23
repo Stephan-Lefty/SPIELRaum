@@ -132,6 +132,29 @@ Sicherheitsregel in `CLAUDE.md`.
 Eine zweite Liste im Profilcode gibt es bewusst nicht – sie würde mit jeder
 keyd-Fassung veralten.
 
+## Ein Blatt zum Danebenlegen
+
+```
+python3 werkzeuge/tastenblatt.py 1963610 tastenblaetter/Road-to-Vostok.md
+```
+
+Das Werkzeug liest Profil und Spieldatei und schreibt eine Übersicht in
+Markdown. Entscheidend daran: Es zeigt die Taste, die **gedrückt** wird --
+nicht die, die im Spielmenü steht. Seit keyd dazwischensitzt, sind das zwei
+verschiedene Dinge.
+
+Der Ordner `tastenblaetter/` wird von Git ignoriert. Die Belegung hängt an
+der Hand, die die Maus führt, und an den Tastaturen auf dem Tisch -- sie
+gehört niemandem sonst.
+
+Liegt dort eine Datei, deren Name mit dem Spielnamen beginnt, verweist die
+Oberfläche von selbst darauf.
+
+> Am 23.10.2026 entstanden zwei solche Übersichten aus Wegwerfskripten in
+> `/tmp`. Fünf Minuten später waren sie falsch, weil die Belegung sich
+> geändert hatte, und am Abend waren die Skripte weg. Was aus den echten
+> Quellen erzeugt wird, kann nicht veralten.
+
 ## Zurücksetzen
 
 `keyd bind reset` verwirft alles, was zur Laufzeit gesetzt wurde. Weil die

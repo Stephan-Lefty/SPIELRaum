@@ -7,6 +7,40 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.1] – 2026-10-23
+
+### Hinzugefügt
+
+- **`werkzeuge/tastenblatt.py`** erzeugt eine Übersicht aus Profil und
+  Spieldatei – mit der Taste, die *gedrückt* wird, nicht der, die im
+  Spielmenü steht. Seit keyd dazwischensitzt, sind das zwei verschiedene
+  Dinge.
+
+- **Die Oberfläche zeigt die Tastenbelegung** des gewählten Spiels und
+  verweist auf das Blatt, falls eines unter `tastenblaetter/` liegt. Der
+  Ordner wird von Git ignoriert: Eine Belegung hängt an der Hand, die die
+  Maus führt.
+
+- **Das Messfenster zeigt mehr als die Bildrate.** Bisher setzte SPIELRaum
+  nur `MANGOHUD=1`, und MangoHud zeigte eine nackte Zahl. Jetzt stehen dort
+  GPU-Temperatur, Drosselstatus, Grafikspeicher und ein Verlaufsgraph – die
+  Auswahl folgt dem, was bei Enshrouded den Unterschied machte.
+
+- **Spiele ohne Profil werden trotzdem gemessen.** Sonst entsteht nie ein
+  Profil, weil die Grundlage dafür fehlt. Die Messung ist dabei der einzige
+  Eingriff.
+
+- **Tastenbelegung für Road to Vostok.** Dafür musste die Spielbelegung auf
+  die Vorgabewerte zurück; drei Aktionen (`item_drop`, `prepare`,
+  `rail_movement`) lagen auf Umschalt und Strg und mussten auf L, O und P
+  ausweichen.
+
+### Behoben
+
+- **Die CI war seit dem 01.10.2026 rot**, ohne dass es auffiel: `libEGL`
+  fehlte im Runner, pytest meldete »85 passed, 3 errors«, und eine Zeile,
+  die mit »85 passed« anfängt, liest sich wie ein grüner Lauf.
+
 ## [0.5.0] – 2026-10-23
 
 Tastenbelegung pro Spiel. Für alle, die die Maus links führen und mit der
