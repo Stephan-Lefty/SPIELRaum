@@ -218,3 +218,38 @@ def test_profil_schalter_laesst_sich_setzen(tmp_path):
     pfad.write_text('[spiel]\nname = "X"\n\n[messen]\nfahrt = true\n',
                     encoding="utf-8")
     assert profil.laden(pfad).fahrt_automatisch is True
+
+
+def test_auswahl_der_varianten(tmp_path):
+    """Nicht jede Variante muss in die Messfahrt.
+
+    Vier Läufe sind drei Viertelstunden Spielzeit. Oft genügen die beiden
+    Enden – und eine persönliche Lieblingseinstellung ist keine Richtung,
+    die zur Auswahl steht.
+    """
+    from spielraum import profil
+    pfad = tmp_path / "t.toml"
+    pfad.write_text(
+        '[spiel]\nname = "X"\n\n[messen]\nfahrt = true\n'
+        'fahrt_varianten = ["optik", "leistung"]\n', encoding="utf-8")
+    assert profil.laden(pfad).fahrt_varianten == ["optik", "leistung"]
+
+
+def test_unbekannte_variante_in_der_auswahl_wird_gemeldet(tmp_path):
+    """Ein Tippfehler darf nicht stillschweigend die ganze Auswahl kippen."""
+    from spielraum import profil
+    pfad = tmp_path / "t.toml"
+    pfad.write_text(
+        '[spiel]\nname = "X"\n\n[messen]\nfahrt_varianten = ["gibtsnicht"]\n'
+        '\n[varianten.optik]\nbeschreibung = "hübsch"\n', encoding="utf-8")
+    p = profil.laden(pfad)
+    assert any("gibtsnicht" in w for w in p.warnungen())
+
+
+def test_auswahl_muss_eine_liste_sein(tmp_path):
+    from spielraum import profil
+    pfad = tmp_path / "t.toml"
+    pfad.write_text('[spiel]\nname = "X"\n\n[messen]\nfahrt_varianten = "optik"\n',
+                    encoding="utf-8")
+    with pytest.raises(profil.ProfilFehler):
+        profil.laden(pfad)

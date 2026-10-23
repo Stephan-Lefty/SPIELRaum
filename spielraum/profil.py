@@ -117,6 +117,10 @@ class Profil:
     # nicht plötzlich »Optik« vorfinden, ohne es angefordert zu haben. Wer
     # es trotzdem will, schaltet es hier ein -- pro Spiel.
     fahrt_automatisch: bool = False
+    # Welche Varianten die Messfahrt nimmt. Leer heißt: alle. Jede kostet
+    # zehn Minuten Spielzeit, und wer vier davon vergleicht, ist eine
+    # Dreiviertelstunde beschäftigt -- oft genügen die beiden Enden.
+    fahrt_varianten: list[str] = field(default_factory=list)
 
     # Welche Taste der Spieltastatur welche Taste schicken soll, solange
     # dieses Spiel läuft. Links steht, was man drückt, rechts, was das Spiel
@@ -139,6 +143,11 @@ class Profil:
             offen.append(umg.fehlt_hinweis("mangohud"))
         if self.tasten and not umg.hat("keyd"):
             offen.append(umg.fehlt_hinweis("keyd"))
+        unbekannt = [n for n in self.fahrt_varianten if n not in self.varianten]
+        if unbekannt:
+            offen.append(
+                f"»messen.fahrt_varianten« nennt {', '.join(unbekannt)} – "
+                f"vorhanden sind: {', '.join(self.varianten) or 'keine'}")
         return offen
 
 
@@ -258,6 +267,10 @@ def laden(pfad: Path) -> Profil:
     messen = roh.get("messen", {})
     profil.mangohud = bool(messen.get("mangohud", True))
     profil.fahrt_automatisch = bool(messen.get("fahrt", False))
+    rohe_auswahl = messen.get("fahrt_varianten", [])
+    if not isinstance(rohe_auswahl, list):
+        raise ProfilFehler("»messen.fahrt_varianten« muss eine Liste sein.")
+    profil.fahrt_varianten = [_als_str(n, "messen.fahrt_varianten") for n in rohe_auswahl]
     if (ecke := messen.get("ecke")) is not None:
         ecke = _als_str(ecke, "messen.ecke")
         if ecke not in OVERLAY_ECKEN:

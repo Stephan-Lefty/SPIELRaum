@@ -132,6 +132,11 @@ mangohud = true
 # Abbrechen jederzeit:  spielraum messfahrt <app-id> --abbrechen
 fahrt = true
 
+# Nur die beiden Enden messen statt aller vier. Vier Läufe wären drei
+# Viertelstunden Spielzeit, und »stephan« ist ohnehin eine eigene Wahl
+# und keine Richtung, die zur Auswahl steht.
+fahrt_varianten = ["optik", "leistung"]
+
 # Die override.cfg bleibt unangetastet. Sie führt den Mod-Loader an; sie
 # anzufassen ohne belegten Grund wäre ein Risiko ohne Gegenwert. Beim
 # Spiel-Update am 01.10.2026 hat der Mod-Loader sie von sich aus

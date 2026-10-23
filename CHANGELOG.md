@@ -16,6 +16,10 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Grafikeinstellungen, und das soll niemanden überraschen, der nur spielen
   will.
 
+- **`[messen] fahrt_varianten`** schränkt ein, was die Messfahrt misst.
+  Ohne die Zeile sind es alle – und vier Varianten bedeuten drei
+  Viertelstunden Spielzeit.
+
 - **Eine abgeschlossene Fahrt bleibt liegen** statt gelöscht zu werden –
   als Ergebnisspeicher und als Merker. Ohne das begänne bei eingeschalteter
   Automatik nach jedem Verwerfen sofort die nächste Fahrt.

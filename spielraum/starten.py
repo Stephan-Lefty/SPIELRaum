@@ -127,13 +127,15 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         # Akte, beginnt hier eine. Danach nie wieder von selbst -- die
         # abgeschlossene Akte bleibt als Merker liegen. Ohne den begänne
         # nach jedem Verwerfen sofort die nächste Fahrt.
+        auswahl = [n for n in profil.fahrt_varianten if n in profil.varianten] \
+            or list(profil.varianten)
         if (laufende_fahrt is None and profil.fahrt_automatisch
-                and len(profil.varianten) >= 2):
+                and len(auswahl) >= 2):
             laufende_fahrt = fahrt.Fahrt(
                 spiel=profil.name, steam_app_id=profil.steam_app_id,
-                varianten=list(profil.varianten), angelegt=time.time())
+                varianten=auswahl, angelegt=time.time())
             fahrt.schreiben(laufende_fahrt)
-            print(f"Messfahrt begonnen: {len(profil.varianten)} Läufe zu je "
+            print(f"Messfahrt begonnen: {len(auswahl)} Läufe zu je "
                   f"{fahrt.MINDESTDAUER / 60:.0f} Minuten. Abbrechen mit: "
                   f"spielraum messfahrt {profil.steam_app_id} --abbrechen")
 

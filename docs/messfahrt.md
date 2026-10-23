@@ -30,7 +30,13 @@ Ende eine Tabelle mit der Möglichkeit, eine Variante zu übernehmen.
 ```toml
 [messen]
 fahrt = true
+fahrt_varianten = ["optik", "leistung"]
 ```
+
+`fahrt_varianten` schränkt ein, was gemessen wird. Ohne die Zeile sind es
+alle Varianten des Profils – und jede kostet zehn Minuten Spielzeit. Oft
+genügen die beiden Enden; eine persönliche Lieblingseinstellung ist keine
+Richtung, die zur Auswahl steht.
 
 Dann beginnt SPIELRaum die Fahrt beim nächsten Spielstart selbst – ohne
 dass jemand `--starten` tippt.
