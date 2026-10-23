@@ -28,16 +28,6 @@ fertig wurde.
   räumlich einem Ziffernblock, kostet aber die Buchstaben selbst. Nicht
   ausprobiert.
 
-- [ ] **Messfahrt bauen.** Entworfen am 01.10.2026, siehe
-  [docs/messfahrt.md](docs/messfahrt.md). Ein Knopf, drei Läufe zu je zehn
-  Minuten, dazwischen stellt SPIELRaum selbst um. Die Schwierigkeit ist nicht
-  das Messen, sondern dass SPIELRaum zwischen zwei Läufen gar nicht läuft –
-  es braucht eine Fahrtenakte auf der Platte, die mehrere Spielstarts
-  überdauert, samt Ausgangszustand für den Abbruch.
-
-  Voraussetzungen: Varianten im Profilformat, `art = "godot-tres"` anbinden
-  (der Leser steht seit heute), Knöpfe in der Oberfläche.
-
 - [ ] **Bildraten belastbar vergleichbar machen.** Am 01.10.2026 gemessen:
   Innerhalb *eines* Laufs schwankte die Bildrate von 30,9 auf 53,8 – 74 %,
   allein durch die Stelle im Spiel. Der Unterschied zwischen Festplatte und
@@ -98,6 +88,12 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Messfahrt gebaut.** 23.10.2026. Fahrtenakte unter
+  `~/.local/share/spielraum/fahrten/`, Unterbefehl `messfahrt`, Knopf in
+  der Oberfläche. Offen geblieben ist die Prüfung, ob die Einstellungen
+  während des Laufs unverändert blieben – Begründung in
+  [docs/messfahrt.md](docs/messfahrt.md).
 
 - [x] **D3D12 gegen Vulkan gemessen** (30.09.2026). Ergebnis: **kein
   Unterschied** - 49,0 gegen 49,3 Bilder/s ist Rauschen. Die Vermutung, der

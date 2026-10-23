@@ -2,8 +2,28 @@
 
 # Die Messfahrt
 
-*Entwurf vom 01.10.2026. Noch nicht gebaut – dieses Papier beschreibt, was
-gebaut werden soll und woran es hängt.*
+*Entworfen am 01.10.2026, gebaut am 23.10.2026. Was hier steht, ist
+umgesetzt – mit einer Ausnahme, siehe [Was noch fehlt](#was-noch-fehlt).*
+
+## Benutzen
+
+```
+spielraum messfahrt <spiel> --starten     # beginnen
+spielraum messfahrt <spiel>               # Stand ansehen
+spielraum messfahrt <spiel> --abbrechen   # Ausgangszustand zurück
+```
+
+Dazwischen: das Spiel ganz normal starten. SPIELRaum setzt vor jedem Lauf
+die nächste Variante und trägt das Ergebnis hinterher ein.
+
+Wer nicht alle Varianten messen will – jede kostet zehn Minuten:
+
+```
+spielraum messfahrt <spiel> --starten --nur optik,leistung
+```
+
+In der Oberfläche führt der Knopf **Messfahrt** durch dasselbe und zeigt am
+Ende eine Tabelle mit der Möglichkeit, eine Variante zu übernehmen.
 
 ## Wozu
 
@@ -192,6 +212,20 @@ gelogen – und zwar nachweisbar.
 Der dritte Fall braucht eine Nachfrage statt stiller Fortsetzung: Wer nach
 drei Wochen wieder spielt, erinnert sich nicht an eine halb gelaufene
 Messfahrt und wundert sich sonst über fremde Grafikeinstellungen.
+
+## Was noch fehlt
+
+**Die Prüfung, ob die Einstellungen während des Laufs unverändert blieben.**
+Im Entwurf steht sie als dritte Bedingung dafür, dass ein Lauf zählt. Gebaut
+ist sie nicht: Wer mitten im Lauf ins Spielmenü geht und etwas verstellt,
+bekommt seinen Lauf trotzdem gezählt.
+
+Der Grund für den Aufschub: Die Prüfung müsste die Einstellungsdatei nach
+dem Lauf erneut lesen und mit dem vergleichen, was gesetzt wurde – aber
+manche Spiele schreiben beim Beenden ohnehin Werte zurück, die SPIELRaum
+nicht gesetzt hat. Ohne zu wissen, welche Felder ein Spiel von sich aus
+anfasst, würde die Prüfung gültige Läufe verwerfen. Das wäre schlimmer als
+die Lücke.
 
 ## Was danach kommt
 

@@ -333,6 +333,134 @@ def _variante(args) -> int:
         return 1
 
 
+def _messfahrt(args) -> int:
+    """Eine Messfahrt beginnen, ansehen, abbrechen oder abschließen.
+
+    Geführt wird hier und in der Oberfläche – nicht in der Umhüllung. Wer
+    nach dem ersten Lauf keine Lust mehr hat, soll nicht gegen ein Spiel
+    ankämpfen, das sich von selbst wieder öffnet.
+    """
+    from . import fahrt as fahrt_modul
+    from . import varianten
+
+    # Ohne Spielangabe: alle liegenden Akten zeigen.
+    if not args.spiel:
+        offen = fahrt_modul.alle()
+        if not offen:
+            print("Keine Messfahrt unterwegs.")
+            print()
+            print("Eine beginnen:  spielraum messfahrt <spiel> --starten")
+            return 0
+        for f in offen:
+            print(f"{f.spiel} ({f.steam_app_id}) – {f.stand} Läufen erledigt")
+        return 0
+
+    p = profil.finden(name=args.spiel) or profil.finden(
+        steam_app_id=int(args.spiel) if args.spiel.isdigit() else None)
+    if p is None:
+        print(f"Kein Profil für »{args.spiel}« gefunden.", file=sys.stderr)
+        return 1
+    if p.steam_app_id is None:
+        print("Eine Messfahrt braucht ein Profil mit Steam-App-ID.", file=sys.stderr)
+        return 1
+
+    ordner, praefix = _spiel_und_pfade(p)
+    laufende = fahrt_modul.lesen(p.steam_app_id)
+
+    # --- Abbrechen
+    if args.abbrechen:
+        if laufende is None:
+            print("Für dieses Spiel läuft keine Messfahrt.")
+            return 0
+        for zeile in varianten.zuruecksetzen(p, ordner, praefix):
+            print(zeile)
+        fahrt_modul.entfernen(p.steam_app_id)
+        print("Messfahrt abgebrochen, Ausgangszustand wiederhergestellt.")
+        return 0
+
+    # --- Eine Variante übernehmen und abschließen
+    if args.uebernehmen:
+        try:
+            for zeile in varianten.anwenden(p, args.uebernehmen, ordner, praefix):
+                print(zeile)
+        except varianten.VariantenFehler as fehler:
+            print(f"Geht nicht: {fehler}", file=sys.stderr)
+            return 1
+        fahrt_modul.entfernen(p.steam_app_id)
+        print(f"»{args.uebernehmen}« übernommen, Messfahrt abgeschlossen.")
+        return 0
+
+    # --- Neu beginnen
+    if args.starten:
+        namen = list(p.varianten)
+        if args.nur:
+            gewuenscht = [n.strip() for n in args.nur.split(",") if n.strip()]
+            unbekannt = [n for n in gewuenscht if n not in p.varianten]
+            if unbekannt:
+                print(f"Unbekannte Variante(n): {', '.join(unbekannt)}",
+                      file=sys.stderr)
+                print(f"Vorhanden: {', '.join(p.varianten)}", file=sys.stderr)
+                return 1
+            namen = gewuenscht
+        if len(namen) < 2:
+            print("Dieses Profil hat weniger als zwei Varianten – es gäbe",
+                  file=sys.stderr)
+            print("nichts zu vergleichen.", file=sys.stderr)
+            return 1
+        # Der Ausgangszustand gehört in die Akte, nicht nur ins Journal:
+        # Bricht jemand nach dem zweiten Lauf ab, kennt das Journal des
+        # zweiten Laufs nur den Zustand von Lauf eins.
+        import time as zeit_modul
+        neu = fahrt_modul.Fahrt(
+            spiel=p.name, steam_app_id=p.steam_app_id, varianten=namen,
+            angelegt=zeit_modul.time(),
+        )
+        fahrt_modul.schreiben(neu)
+        laufende = neu
+        print(f"Messfahrt für {p.name} begonnen.")
+        print(f"{len(namen)} Läufe zu je {fahrt_modul.MINDESTDAUER / 60:.0f} Minuten: "
+              + ", ".join(namen))
+        print()
+
+    if laufende is None:
+        print("Für dieses Spiel läuft keine Messfahrt.")
+        print()
+        print(f"Eine beginnen:  spielraum messfahrt {args.spiel} --starten")
+        return 0
+
+    # --- Stand zeigen
+    print(f"Messfahrt {laufende.spiel}          {laufende.stand} Läufen erledigt")
+    print()
+    erledigt = {l.variante: l for l in laufende.laeufe}
+    naechste = laufende.naechste
+    for name in laufende.varianten:
+        l = erledigt.get(name)
+        if l and l.zaehlt:
+            zeile = (f"  {name:14}  {l.mittel:5.1f} Bilder    "
+                     f"1-%-Tief {l.tief_1:4.1f}    ✓")
+        elif name == naechste:
+            zeile = f"  {name:14}  {'—':>5}                        ← als Nächstes"
+        else:
+            zeile = f"  {name:14}  {'—':>5}"
+        print(zeile)
+        if l and not l.zaehlt:
+            print(f"      verworfen: {l.verworfen}")
+
+    print()
+    if naechste:
+        print("Starte das Spiel wie immer – SPIELRaum setzt die Variante selbst.")
+    else:
+        beste = laufende.beste()
+        if beste:
+            print(f"Alle Läufe erledigt. Am gleichmäßigsten lief »{beste.variante}« "
+                  f"({beste.mittel:.1f} Bilder, 1-%-Tief {beste.tief_1:.1f}).")
+            print()
+            print(f"Übernehmen:  spielraum messfahrt {args.spiel} "
+                  f"--uebernehmen {beste.variante}")
+            print(f"Verwerfen:   spielraum messfahrt {args.spiel} --abbrechen")
+    return 0
+
+
 def _messlauf(args) -> int:
     """Den nächsten Spielstart als Messlauf markieren."""
     from . import starten as start_modul
@@ -422,6 +550,29 @@ def main(argv: list[str] | None = None) -> int:
         "spiel", nargs="?", help="auf ein Spiel einschränken (Teil des Namens genügt)"
     )
 
+    messfahrt = unterbefehle.add_parser(
+        "messfahrt",
+        help="Varianten gegeneinander messen – drei Läufe zu je zehn Minuten",
+        description="Ohne weitere Angabe: Stand der laufenden Fahrt zeigen.",
+    )
+    messfahrt.add_argument("spiel", nargs="?", help="Name oder Steam-App-ID")
+    messfahrt.add_argument(
+        "--starten", action="store_true",
+        help="eine neue Fahrt beginnen (bestehende wird verworfen)",
+    )
+    messfahrt.add_argument(
+        "--abbrechen", action="store_true",
+        help="die Fahrt beenden und den Ausgangszustand wiederherstellen",
+    )
+    messfahrt.add_argument(
+        "--nur", metavar="A,B",
+        help="nur diese Varianten messen statt aller – jede kostet zehn Minuten",
+    )
+    messfahrt.add_argument(
+        "--uebernehmen", metavar="VARIANTE",
+        help="eine Variante dauerhaft setzen und die Fahrt abschließen",
+    )
+
     aufraeumen = unterbefehle.add_parser(
         "aufraeumen", help="Nach einem Absturz Liegengebliebenes zurücksetzen"
     )
@@ -452,6 +603,8 @@ def main(argv: list[str] | None = None) -> int:
 
     args = zerleger.parse_args(argv)
 
+    if args.aktion == "messfahrt":
+        return _messfahrt(args)
     if args.aktion == "umgebung":
         return _umgebung_zeigen()
     if args.aktion == "profile":

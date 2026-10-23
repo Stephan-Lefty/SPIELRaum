@@ -7,6 +7,45 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.0] – 2026-10-23
+
+Die Messfahrt. Entworfen am 01.10.2026, jetzt gebaut.
+
+### Hinzugefügt
+
+- **`spielraum messfahrt`** und ein Knopf in der Oberfläche. Drei Läufe zu
+  je zehn Minuten, dazwischen stellt SPIELRaum selbst um. Am Ende eine
+  Tabelle und die Möglichkeit, eine Variante zu übernehmen.
+
+- **Die Fahrtenakte** (`spielraum/fahrt.py`). SPIELRaum läuft nicht
+  durchgehend – zwischen zwei Läufen existiert kein Prozess, der sich etwas
+  merken könnte. Die Akte liegt deshalb auf der Platte, atomar geschrieben,
+  und überlebt auch einen Neustart.
+
+- **Der Ausgangszustand steht in der Akte**, nicht nur im Journal. Bricht
+  jemand nach dem zweiten Lauf ab, kennt das Journal des zweiten Laufs nur
+  den Zustand von Lauf eins.
+
+- **Zu kurze Läufe zählen nicht** und werden wiederholt, mit Begründung.
+  Die Mindestdauer von zehn Minuten folgt aus einer Messung: Fünf Minuten
+  ergaben 60,6 Bilder/s, vierzig Minuten 46,1 – bei identischen
+  Einstellungen.
+
+- **Bewertet wird nach dem 1-%-Tiefstwert**, nicht nach dem Mittel. Der
+  Mittelwert sagt, wie es im Schnitt aussah; der Tiefstwert sagt, wie
+  schlecht es in den schlechtesten Momenten wurde – und die nimmt man als
+  Ruckeln wahr.
+
+- **Liegende Fahrten meldet `spielraum aufraeumen`.** Wer nach drei Wochen
+  wieder spielt, erinnert sich nicht an eine halb gelaufene Messfahrt.
+
+### Wissenswert
+
+- **Die Umhüllung führt nicht.** Sie setzt, was in der Akte steht, misst und
+  schreibt zurück – sie startet insbesondere kein Spiel neu. Wer nach dem
+  ersten Lauf keine Lust mehr hat, soll nicht gegen ein Spiel ankämpfen, das
+  sich von selbst wieder öffnet.
+
 ## [0.5.1] – 2026-10-23
 
 ### Hinzugefügt

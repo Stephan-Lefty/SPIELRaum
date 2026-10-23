@@ -39,7 +39,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import stellschrauben, steam, tasten, umgebung, zustand
+from . import fahrt, stellschrauben, steam, tasten, umgebung, zustand
 from .profil import Profil
 
 
@@ -115,11 +115,31 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
 
     voller_befehl = stellschrauben.befehl_umhuellen(profil, befehl)
 
+    # Läuft eine Messfahrt? Dann setzt dieser Start die nächste Variante.
+    # Geführt wird die Fahrt in der Oberfläche; hier wird nur ausgeführt,
+    # was in der Akte steht – und hinterher das Ergebnis zurückgeschrieben.
+    laufende_fahrt = None
+    fahrt_variante = None
+    if profil.steam_app_id and not trocken:
+        laufende_fahrt = fahrt.lesen(profil.steam_app_id)
+        if laufende_fahrt is not None:
+            fahrt_variante = laufende_fahrt.naechste
+            if fahrt_variante is None:
+                # Alle Läufe erledigt. Die Akte bleibt liegen, bis jemand
+                # in der Oberfläche eine Variante übernimmt oder verwirft –
+                # sonst wäre das Ergebnis nach dem letzten Lauf weg.
+                laufende_fahrt = None
+
     # Läuft eine Messung über eine feste Dauer, blendet MangoHud die
     # Restzeit ein. Die Variante steht mit im Bild - sonst weiß man nach
     # dem dritten Lauf nicht mehr, welcher gerade dran ist.
     if minuten is None and not trocken:
         minuten = marke_lesen(profil)
+    # Während einer Messfahrt ist die Mindestdauer vorgegeben. Ohne
+    # Restzeit im Bild müsste man im Vollbild raten, wann zehn Minuten um
+    # sind – und Alt-Tab zum Nachsehen verfälscht die Messung.
+    if laufende_fahrt is not None and not minuten:
+        minuten = fahrt.MINDESTDAUER / 60
 
     laeuft_bis = None
     ueberschrift = ""
@@ -127,8 +147,13 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         from . import varianten as varianten_modul
 
         laeuft_bis = time.time() + minuten * 60
-        jetzt = varianten_modul.aktuelle(profil, spielordner, praefix)
-        ueberschrift = f"SPIELRaum: {jetzt or 'eigene Einstellung'}"
+        if laufende_fahrt is not None:
+            nummer = sum(1 for l in laufende_fahrt.laeufe if l.zaehlt) + 1
+            ueberschrift = (f"SPIELRaum: Messfahrt {nummer}/"
+                            f"{len(laufende_fahrt.varianten)} – {fahrt_variante}")
+        else:
+            jetzt = varianten_modul.aktuelle(profil, spielordner, praefix)
+            ueberschrift = f"SPIELRaum: {jetzt or 'eigene Einstellung'}"
 
     laufumgebung = stellschrauben.umgebung_bauen(
         profil, messen_in if profil.mangohud else None,
@@ -156,8 +181,12 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         print(f"Hinweis: {warnung}", file=sys.stderr)
 
     rueckgabe = 1
+    vorher_bekannt = sorted(messen_in.glob("*.csv")) if messen_in.is_dir() else []
     try:
-        getan = stellschrauben.dateien_anwenden(profil, journal, spielordner, praefix)
+        getan = stellschrauben.dateien_anwenden(
+            profil, journal, spielordner, praefix, variante=fahrt_variante)
+        if fahrt_variante:
+            print(f"Messfahrt: Lauf mit Variante »{fahrt_variante}«")
 
         # Tastenbelegung. Scheitert sie, startet das Spiel trotzdem: Eine
         # fehlende Gruppenmitgliedschaft ist ärgerlich, aber kein Grund,
@@ -179,12 +208,63 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
     except Exception as fehler:  # noqa: BLE001 – hier ist Weitermachen falsch
         print(f"Abbruch: {fehler}", file=sys.stderr)
     finally:
+        # Erst den Lauf bewerten, dann zurücksetzen. Andersherum stünde in
+        # der Einstellungsdatei schon wieder der alte Wert, und die Prüfung
+        # »waren die Einstellungen während des Laufs unverändert?« ginge ins
+        # Leere.
+        if laufende_fahrt is not None:
+            _fahrt_auswerten(laufende_fahrt, fahrt_variante, messen_in, vorher_bekannt)
+
         bericht = stellschrauben.zuruecksetzen(journal)
         for zeile in bericht:
             print(f"Zurückgesetzt: {zeile}")
         zustand.entfernen(profil.name)
 
     return rueckgabe
+
+
+def _fahrt_auswerten(laufende: "fahrt.Fahrt", variante: str, messen_in: Path,
+                     vorher_bekannt: list[Path]) -> None:
+    """Den eben gespielten Lauf bewerten und in die Fahrtenakte eintragen.
+
+    Gesucht wird die Messdatei, die es vorher noch nicht gab – nicht die
+    neueste. Wer zwischendurch ein anderes Spiel misst, bekäme sonst dessen
+    Zahlen in seine Fahrtenakte.
+    """
+    from . import messen
+
+    neu = [p for p in sorted(messen_in.glob("*.csv")) if p not in vorher_bekannt]
+    eintrag = fahrt.Lauf(variante=variante)
+
+    if not neu:
+        eintrag.verworfen = ("Keine Messdatei entstanden. Läuft MangoHud, und "
+                             "steht »mangohud = true« im Profil?")
+    else:
+        messung = messen.lesen(neu[-1])
+        kennzahlen = messen.auswerten(messung)
+        grund = fahrt.pruefen(kennzahlen)
+        if grund:
+            eintrag.verworfen = grund
+            eintrag.dauer = kennzahlen.dauer if kennzahlen else 0.0
+        else:
+            eintrag.messdatei = neu[-1].name
+            eintrag.mittel = kennzahlen.mittel
+            eintrag.tief_1 = kennzahlen.tief_1
+            eintrag.tief_01 = kennzahlen.tief_01
+            eintrag.dauer = kennzahlen.dauer
+
+    laufende.vermerken(eintrag)
+    fahrt.schreiben(laufende)
+
+    if eintrag.zaehlt:
+        print(f"Messfahrt: »{variante}« gezählt – {eintrag.mittel:.1f} Bilder/s, "
+              f"1-%-Tief {eintrag.tief_1:.1f}")
+        rest = laufende.naechste
+        print(f"Messfahrt: {laufende.stand} Läufen erledigt"
+              + (f", als Nächstes »{rest}«" if rest else " – alle fertig"))
+    else:
+        print(f"Messfahrt: »{variante}« zählt nicht. {eintrag.verworfen}",
+              file=sys.stderr)
 
 
 def _laufen_lassen(befehl: list[str], laufumgebung: dict[str, str], profil: Profil) -> int:
@@ -227,10 +307,24 @@ def _laufen_lassen(befehl: list[str], laufumgebung: dict[str, str], profil: Prof
 
 
 def aufraeumen(nur_zeigen: bool = False) -> int:
-    """Journale abarbeiten, die ein Absturz hinterlassen hat."""
+    """Journale abarbeiten, die ein Absturz hinterlassen hat.
+
+    Liegende Messfahrten werden dabei nur gemeldet, nicht beendet: Eine
+    Fahrt ist kein Unfall, sondern Absicht, und zwischen zwei Läufen können
+    Tage liegen. Gemeldet werden muss sie trotzdem -- wer nach drei Wochen
+    wieder spielt, erinnert sich nicht daran und wundert sich sonst über
+    fremde Grafikeinstellungen.
+    """
+    for offene in fahrt.alle():
+        print(f"Messfahrt unterwegs: {offene.spiel} – {offene.stand} Läufen "
+              f"erledigt" + (f", als Nächstes »{offene.naechste}«"
+                             if offene.naechste else ", alle fertig"))
+        print(f"    Ansehen oder beenden:  spielraum messfahrt "
+              f"{offene.steam_app_id}")
+
     verwaist = zustand.verwaiste_journale()
     if not verwaist:
-        print("Nichts aufzuräumen.")
+        print("Keine liegengebliebenen Journale.")
         return 0
 
     for journal in verwaist:

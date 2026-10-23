@@ -25,8 +25,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from .. import (__version__, farben, messen, profil, stellschrauben, steam,
-                tasten, umgebung, zustand)
+from .. import (__version__, fahrt, farben, messen, profil, stellschrauben,
+                steam, tasten, umgebung, varianten, zustand)
 
 
 # Wie keyd die Tasten nennt und wie sie auf einer deutschen Tastatur
@@ -165,9 +165,17 @@ class Fenster(QMainWindow):
             "Beim Start über SPIELRaum passiert das von allein.")
         self.knopf_tasten.setEnabled(False)
 
+        # Die Messfahrt. Heißt bewusst nicht »Optimieren«: Ein Knopf, der
+        # in fünf Minuten die besten Werte verspricht, wäre gelogen -- und
+        # zwar nachweisbar, siehe docs/messfahrt.md.
+        self.knopf_fahrt = QPushButton("Messfahrt")
+        self.knopf_fahrt.clicked.connect(self._messfahrt)
+        self.knopf_fahrt.setEnabled(False)
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
         knoepfe.addWidget(self.knopf_tasten)
+        knoepfe.addWidget(self.knopf_fahrt)
         knoepfe.addStretch()
         knoepfe.addWidget(self.knopf_start)
 
@@ -238,7 +246,132 @@ class Fenster(QMainWindow):
         # als keiner.
         p = profil.finden(steam_app_id=spiel.app_id)
         self.knopf_tasten.setEnabled(bool(p and p.tasten) or self.tasten_liegen)
+        # Eine Messfahrt braucht mindestens zwei Varianten -- sonst gäbe es
+        # nichts zu vergleichen.
+        self.knopf_fahrt.setEnabled(bool(p and len(p.varianten) >= 2))
         self.befund.setHtml(self._bericht(spiel))
+
+    # --- Messfahrt --------------------------------------------------------
+
+    def _messfahrt(self) -> None:
+        """Eine Messfahrt beginnen, fortführen oder abschließen.
+
+        Hier wird geführt, nicht in der Umhüllung: Die startet kein Spiel
+        von selbst neu. Wer nach dem ersten Lauf keine Lust mehr hat, soll
+        nicht gegen ein Spiel ankämpfen, das sich wieder öffnet.
+        """
+        zeile = self.liste.currentRow()
+        if not 0 <= zeile < len(self.spiele):
+            return
+        spiel = self.spiele[zeile]
+        p = profil.finden(steam_app_id=spiel.app_id)
+        if p is None or len(p.varianten) < 2:
+            return
+
+        laufende = fahrt.lesen(spiel.app_id)
+
+        if laufende is None:
+            minuten = fahrt.MINDESTDAUER / 60
+            anzahl = len(p.varianten)
+            antwort = QMessageBox.question(
+                self, "Messfahrt beginnen",
+                f"<b>{anzahl} Läufe zu je {minuten:.0f} Minuten.</b><br><br>"
+                f"Du spielst normal, SPIELRaum stellt zwischendurch um. "
+                f"Dauer insgesamt etwa {anzahl * minuten / 60:.1f} Stunden.<br><br>"
+                f"Gemessen wird: {', '.join(p.varianten)}<br><br>"
+                f"Die Läufe müssen <b>getrennt</b> gespielt werden – ein Spiel "
+                f"liest seine Einstellungen nur beim Start. Zwischen zwei "
+                f"Läufen kann beliebig viel Zeit liegen.",
+                QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+            if antwort != QMessageBox.Yes:
+                return
+            import time as zeit
+            laufende = fahrt.Fahrt(
+                spiel=p.name, steam_app_id=spiel.app_id,
+                varianten=list(p.varianten), angelegt=zeit.time())
+            fahrt.schreiben(laufende)
+            self.befund.setHtml(self._bericht(spiel))
+            QMessageBox.information(
+                self, "Messfahrt begonnen",
+                f"Starte {p.name} wie immer – SPIELRaum setzt die Variante "
+                f"»{laufende.naechste}« beim nächsten Start selbst.")
+            return
+
+        if not laufende.fertig:
+            # Mitten in der Fahrt: Stand zeigen, Abbruch anbieten.
+            antwort = QMessageBox.question(
+                self, "Messfahrt unterwegs",
+                f"<b>{laufende.stand} Läufen erledigt.</b><br><br>"
+                f"Als Nächstes: <b>{laufende.naechste}</b><br><br>"
+                f"Starte das Spiel wie immer. Oder die Fahrt abbrechen und "
+                f"den Ausgangszustand wiederherstellen?",
+                QMessageBox.Close | QMessageBox.Discard, QMessageBox.Close)
+            if antwort == QMessageBox.Discard:
+                self._fahrt_abbrechen(p, spiel)
+            return
+
+        # Fertig: Ergebnis zeigen und zur Übernahme anbieten.
+        beste = laufende.beste()
+        tabelle = "<table cellpadding='4'>"
+        tabelle += ("<tr><td><b>Variante</b></td><td><b>Mittel</b></td>"
+                    "<td><b>1-%-Tief</b></td></tr>")
+        for l in laufende.laeufe:
+            if not l.zaehlt:
+                continue
+            fett = " style='font-weight:bold'" if beste and l is beste else ""
+            tabelle += (f"<tr{fett}><td>{l.variante}</td>"
+                        f"<td>{l.mittel:.1f}</td><td>{l.tief_1:.1f}</td></tr>")
+        tabelle += "</table>"
+
+        kasten = QMessageBox(self)
+        kasten.setWindowTitle("Messfahrt abgeschlossen")
+        kasten.setTextFormat(Qt.RichText)
+        kasten.setText(
+            f"{tabelle}<br>Am gleichmäßigsten lief <b>{beste.variante}</b>.<br><br>"
+            f"<small>Bewertet wird nach dem 1-%-Tiefstwert, nicht nach dem "
+            f"Mittel: Der sagt, wie schlecht es in den schlechtesten Momenten "
+            f"wurde – und die nimmt man als Ruckeln wahr.</small>"
+            if beste else f"{tabelle}<br>Kein Lauf hat gezählt.")
+        uebernehmen = kasten.addButton(f"»{beste.variante}« übernehmen",
+                                       QMessageBox.AcceptRole) if beste else None
+        kasten.addButton("Verwerfen", QMessageBox.DestructiveRole)
+        kasten.exec()
+
+        if uebernehmen is not None and kasten.clickedButton() is uebernehmen:
+            ordner, praefix = self._pfade(p)
+            try:
+                varianten.anwenden(p, beste.variante, ordner, praefix)
+            except varianten.VariantenFehler as fehler:
+                QMessageBox.warning(self, "Geht nicht", str(fehler))
+                return
+            fahrt.entfernen(spiel.app_id)
+            QMessageBox.information(
+                self, "Übernommen",
+                f"»{beste.variante}« ist gesetzt. Es greift beim nächsten "
+                f"Spielstart – ein laufendes Spiel liest seine Einstellungen "
+                f"nicht neu.")
+        else:
+            self._fahrt_abbrechen(p, spiel)
+        self.befund.setHtml(self._bericht(spiel))
+
+    def _fahrt_abbrechen(self, p, spiel) -> None:
+        """Fahrt beenden und auf den Ausgangszustand zurück."""
+        ordner, praefix = self._pfade(p)
+        try:
+            bericht = varianten.zuruecksetzen(p, ordner, praefix)
+        except Exception as fehler:  # noqa: BLE001
+            bericht = [f"Zurücksetzen fehlgeschlagen: {fehler}"]
+        fahrt.entfernen(spiel.app_id)
+        QMessageBox.information(self, "Messfahrt beendet",
+                                "\n".join(bericht) or "Nichts zurückzusetzen.")
+        self.befund.setHtml(self._bericht(spiel))
+
+    @staticmethod
+    def _pfade(p):
+        from .. import starten as start_modul
+        gefunden = start_modul.spiel_ermitteln(p)
+        return (gefunden.ordner if gefunden else None,
+                gefunden.proton_praefix if gefunden else None)
 
     # --- Tasten -----------------------------------------------------------
 
@@ -377,6 +510,39 @@ class Fenster(QMainWindow):
                         f"<span style='color:{farben.GRAU_LEISE}'>– die ganze "
                         f"Belegung samt Maus, zum Ausdrucken</span></p>"
                     )
+
+        # --- Läuft eine Messfahrt?
+        #
+        # Steht vor den Messungen, weil es das Dringendere ist: Wer nach drei
+        # Wochen wieder spielt, erinnert sich nicht an eine halb gelaufene
+        # Messfahrt und wundert sich sonst über fremde Grafikeinstellungen.
+        laufende = fahrt.lesen(spiel.app_id)
+        if laufende is not None:
+            teile.append(f"<h3 style='color:{farben.GRAU_DUNKEL}'>Messfahrt</h3>")
+            teile.append(f"<p>{laufende.stand} Läufen erledigt.</p>")
+            teile.append("<table cellpadding='3'>")
+            erledigt = {l.variante: l for l in laufende.laeufe}
+            for name in laufende.varianten:
+                l = erledigt.get(name)
+                if l and l.zaehlt:
+                    wert = (f"<b>{l.mittel:.1f}</b> Bilder, "
+                            f"1-%-Tief {l.tief_1:.1f}")
+                    zeichen = "✓"
+                elif name == laufende.naechste:
+                    wert = f"<i style='color:{farben.GRAU_LEISE}'>als Nächstes</i>"
+                    zeichen = "←"
+                else:
+                    wert = f"<span style='color:{farben.GRAU_LEISE}'>—</span>"
+                    zeichen = ""
+                teile.append(f"<tr><td>{zeichen}</td><td>{name}</td>"
+                             f"<td>{wert}</td></tr>")
+                if l and not l.zaehlt:
+                    teile.append(f"<tr><td></td><td colspan='2' "
+                                 f"style='color:#b4690e'>{l.verworfen}</td></tr>")
+            teile.append("</table>")
+            if laufende.fertig:
+                teile.append("<p><b>Alle Läufe erledigt.</b> Der Knopf "
+                             "»Messfahrt« zeigt das Ergebnis.</p>")
 
         # --- Die Messungen
         teile.append(f"<h3 style='color:{farben.GRAU_DUNKEL}'>Messungen</h3>")
