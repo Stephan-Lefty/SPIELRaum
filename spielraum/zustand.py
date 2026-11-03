@@ -21,6 +21,15 @@ Die Antwort darauf sind vier Netze, eines unter dem anderen:
 Das Journal ist bewusst dumm: eine Liste von Einträgen »Stellschraube X stand
 auf Y«. Es enthält keine Befehle, nur Werte. Zurückgesetzt wird in umgekehrter
 Reihenfolge des Setzens.
+
+**Netz 1 meint den Wert, nicht die Datei.** Bis zum 03.11.2026 stand bei
+Dateien nur der Pfad einer Vollsicherung im Journal, und zurückgesetzt wurde,
+indem diese Sicherung zurückkopiert wurde. Das setzt mehr zurück als die
+eigene Änderung: Alles, was das Spiel während des Laufs selbst in dieselbe
+Datei schreibt, war hinterher weg. Bei Road to Vostok traf es die
+Tastenbelegung – und weil jeder Lauf denselben Stand zurückholte, konnte die
+Datei fünf Wochen lang gar nicht mehr anders werden. Seit Fassung 2 steht im
+Journal, was die angefassten **Schlüssel** vorher enthielten.
 """
 
 from __future__ import annotations
@@ -28,12 +37,19 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 from . import umgebung
 
-JOURNAL_FASSUNG = 1
+JOURNAL_FASSUNG = 2
+
+# Fassungen, die ``lesen`` noch annimmt. Ein Journal, das nicht gelesen wird,
+# ist ein Journal, das nicht zurücksetzt – damit fiele das vierte Netz aus.
+# Beim Sprung auf Fassung 2 am 03.11.2026 lag auf dem Rechner ein Journal der
+# Fassung 1; hätte ``lesen`` es verworfen, wäre eine liegende Tastenbelegung
+# bis zum Neustart stehen geblieben.
+GELESENE_FASSUNGEN = (1, 2)
 
 
 @dataclass
@@ -44,6 +60,31 @@ class Eintrag:
     ziel: str  # welche Datei, welche GPU, welche Variable
     vorher: str | None  # None heißt: gab es vorher nicht, also wieder entfernen
     nachher: str | None = None
+
+    # --- Ab Journalfassung 2: die alten Werte einzeln -----------------------
+    #
+    # ``vorher`` ist bei Dateien der Pfad einer Vollsicherung. Sie beim
+    # Zurücksetzen zurückzukopieren war der Fehler vom 03.11.2026: Damit
+    # verschwand auch alles, was das Spiel selbst in dieselbe Datei
+    # geschrieben hatte – bei Road to Vostok die Tastenbelegung, die
+    # Lautstärken, das Blickfeld. Fünf Wochen lang konnte sich die Datei
+    # dadurch überhaupt nicht mehr ändern.
+    #
+    # Deshalb steht hier jetzt, was die **von uns angefassten** Schlüssel
+    # vorher enthielten – als Text, genau so wie sie in der Datei standen.
+    # Zurückgesetzt wird, indem diese Werte in die *aktuelle* Datei
+    # zurückgeschrieben werden. Die Vollsicherung bleibt als Netz darunter,
+    # nicht als Weg.
+    #
+    # ``art`` sagt, welcher Schreiber zuständig ist; ohne die Angabe müsste
+    # das Zurücksetzen das Dateiformat erraten.
+    art: str | None = None
+    alt_werte: dict | None = None
+
+    # Abschnitte, die es vor unserer Änderung gar nicht gab. Beim
+    # Zurücksetzen muss auch ihre Kopfzeile weichen, sonst bleibt ein
+    # ``[rendering/renderer]`` stehen, das SPIELRaum selbst angelegt hat.
+    fehlende_abschnitte: list | None = None
 
 
 @dataclass
@@ -56,8 +97,12 @@ class Journal:
     eintraege: list[Eintrag] = field(default_factory=list)
 
     def vermerken(self, stellschraube: str, ziel: str, vorher: str | None,
-                  nachher: str | None = None) -> None:
-        self.eintraege.append(Eintrag(stellschraube, ziel, vorher, nachher))
+                  nachher: str | None = None, art: str | None = None,
+                  alt_werte: dict | None = None,
+                  fehlende_abschnitte: list | None = None) -> None:
+        self.eintraege.append(
+            Eintrag(stellschraube, ziel, vorher, nachher, art, alt_werte,
+                    fehlende_abschnitte))
 
 
 def journal_pfad(spiel: str) -> Path:
@@ -93,17 +138,35 @@ def schreiben(journal: Journal) -> Path:
 
 
 def lesen(pfad: Path) -> Journal | None:
-    """Ein Journal einlesen. Unlesbares gilt als nicht vorhanden."""
+    """Ein Journal einlesen. Unlesbares gilt als nicht vorhanden.
+
+    Ältere Fassungen werden angenommen, nicht verworfen: Die neuen Felder
+    haben Vorgabewerte, und ein Eintrag ohne ``alt_werte`` wird beim
+    Zurücksetzen über die Vollsicherung aufgelöst – den alten Weg. Nur so
+    räumt eine neue Fassung auch hinter der vorigen auf.
+    """
     try:
         roh = json.loads(pfad.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    if roh.get("fassung") != JOURNAL_FASSUNG:
+    if roh.get("fassung") not in GELESENE_FASSUNGEN:
         return None
+
+    bekannt = {f.name for f in fields(Eintrag)}
+    eintraege = []
+    for e in roh.get("eintraege", []):
+        if not isinstance(e, dict) or "stellschraube" not in e:
+            continue
+        # Unbekannte Felder wegwerfen statt am Aufruf zu scheitern: Ein
+        # Journal einer *neueren* Fassung soll nicht dazu führen, dass gar
+        # nichts zurückgesetzt wird.
+        eintraege.append(Eintrag(**{k: v for k, v in e.items() if k in bekannt}))
+
     return Journal(
         spiel=roh.get("spiel", "?"),
         pid=int(roh.get("pid", 0)),
-        eintraege=[Eintrag(**e) for e in roh.get("eintraege", [])],
+        fassung=int(roh.get("fassung", JOURNAL_FASSUNG)),
+        eintraege=eintraege,
     )
 
 

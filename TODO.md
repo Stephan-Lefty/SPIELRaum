@@ -8,31 +8,23 @@ fertig wurde.
 
 ## Offen
 
-- [ ] **Zurücksetzen darf nur die eigenen Änderungen zurücknehmen.**
-  Gefunden am 03.11.2026, und es ist der schwerste offene Punkt. Angewendet
-  wird chirurgisch – `godot_tres.py` fasst ausschließlich die Schlüssel an,
-  die im Profil stehen. Zurückgesetzt wird mit dem Vorschlaghammer:
-  `stellschrauben.zuruecksetzen()` kopiert die **ganze** Sicherung über die
-  Datei ([stellschrauben.py:311](spielraum/stellschrauben.py)).
+- [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
+  schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn
+  der Abstand Rauschen ist. Am 03.11.2026 lagen `optik` (26,54) und
+  `leistung` (26,31) 0,9 % auseinander – empfohlen wurde `optik`, obwohl
+  `leistung` bei gleicher Ruhe 12 % mehr Bilder lieferte und dabei 56 %
+  länger gemessen wurde (lange Läufe fallen niedriger aus). Nach dem
+  eigenen Maßstab des Projekts ist das keine Entscheidung, sondern Rauschen
+  mit Nachkommastelle.
 
-  Folge: Alles, was das Spiel während des Laufs selbst in dieselbe Datei
-  schreibt, ist beim Beenden weg. Bei Road to Vostok sind das die
-  Tastenbelegung, die Lautstärken, das Blickfeld und die Monitorwahl.
-  Belegt: Die Sicherung »vor der ersten Variante« vom 01.10.2026 und alle
-  fünf Sicherungen vom 03.11.2026 sind **byte-identisch**. Die Datei steht
-  seit fünf Wochen still, weil jedes Spielende sie auf denselben Stand
-  zurückholt – ein geschlossener Kreis, sie kann sich nicht mehr ändern.
+  Nötig ist eine Schwelle, unterhalb derer SPIELRaum »kein Unterschied«
+  sagt und dann nach dem Mittelwert aufschlüsselt – oder gar keine
+  Empfehlung abgibt und nur die Zahlen zeigt. Die Schwelle muss aus den
+  Messdaten begründet sein, nicht geschätzt.
 
-  Deshalb hielt auch die Lösung vom 23.10.2026 nicht: Die Spielbelegung
-  wurde im Menü auf WASD zurückgesetzt und lag mit dem nächsten Spielende
-  wieder auf den Pfeiltasten.
-
-  Der Weg: Das Journal muss die **alten Werte der angefassten Schlüssel**
-  festhalten, nicht nur den Pfad einer Vollsicherung. Zurückgesetzt wird
-  dann, indem diese Werte in die *aktuelle* Datei zurückgeschrieben werden.
-  Die Vollsicherung bleibt als Netz, aber nicht als Weg. Betrifft
-  `zustand.py` (Journalformat), `stellschrauben.py`, `godot_tres.py` und
-  `godot_cfg.py` – die vier Netze aus CLAUDE.md müssen dabei halten.
+  Dazu gehört auch: `ausgangszustand` in der Fahrtenakte stand am
+  03.11.2026 auf `null`, obwohl `--abbrechen` damit den Ausgangszustand
+  wiederherstellen soll.
 
 - [ ] **Übersicht der Tastenbelegung aus dem Profil erzeugen.** Am 23.10.2026
   entstanden zwei PDFs aus Wegwerfskripten – und waren fünf Minuten später
@@ -107,6 +99,18 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Zurücksetzen nimmt nur noch die eigenen Änderungen zurück**
+  (03.11.2026). Journalfassung 2: Im Journal stehen die alten Werte der
+  angefassten Schlüssel, nicht nur der Pfad einer Vollsicherung.
+  Zurückgeschrieben wird in die *aktuelle* Datei, die Vollsicherung bleibt
+  als Netz darunter. Dasselbe im Variantenweg, wo die Sicherung noch fünf
+  Wochen älter war. Fassung 1 wird weiter gelesen, sonst fiele Netz 4 für
+  die Journale aus, die gerade herumliegen.
+
+  Gegengeprobt an der echten `Preferences.tres` von Vostok: Grafikwerte
+  gehen zurück, eine vom Spiel geschriebene Tastenbelegung, Lautstärke und
+  Blickfeld bleiben stehen – mit dem alten Weg waren alle drei weg.
 
 - [x] **Road to Vostok: Bewegung wird nur noch einmal umgelegt**
   (03.11.2026). Die Bewegung lag auf beiden Seiten – keyd übersetzte die

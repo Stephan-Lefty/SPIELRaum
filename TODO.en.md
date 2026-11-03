@@ -7,30 +7,21 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
-- [ ] **Undoing must only undo our own changes.** Found 2026-11-03, and it is
-  the heaviest open point. Applying is surgical — `godot_tres.py` touches
-  only the keys named in the profile. Undoing uses a sledgehammer:
-  `stellschrauben.zuruecksetzen()` copies the **whole** backup over the file
-  ([stellschrauben.py:311](spielraum/stellschrauben.py)).
+- [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
+  takes the highest 1 % low and declares a winner, even when the gap is
+  noise. On 2026-11-03 `optik` (26.54) and `leistung` (26.31) were 0.9 %
+  apart — `optik` was recommended, although `leistung` delivered 12 % more
+  frames at the same smoothness, measured over a 56 % longer run (longer
+  runs score lower). By the project's own standard that is not a decision,
+  it is noise with a decimal place.
 
-  Consequence: everything the game itself writes into that same file during
-  a session is gone on exit. For Road to Vostok that means the key bindings,
-  the volumes, the field of view and the monitor choice. Evidence: the
-  "before first variant" backup from 2026-10-01 and all five backups from
-  2026-11-03 are **byte-identical**. The file has stood still for five
-  weeks, because every exit restores it to the same state — a closed loop,
-  it can no longer change.
+  What is needed is a threshold below which SPIELRaum says "no difference"
+  and then falls back to the mean — or gives no recommendation at all and
+  just shows the numbers. The threshold has to be derived from the
+  measurements, not guessed.
 
-  This is also why the fix from 2026-10-23 did not hold: the in-game
-  bindings were reset to WASD and were back on the arrow keys after the next
-  exit.
-
-  The way forward: the journal must record the **old values of the keys we
-  touched**, not just the path of a full backup. Undoing then writes those
-  values back into the *current* file. The full backup stays as a safety
-  net, but not as the route. Affects `zustand.py` (journal format),
-  `stellschrauben.py`, `godot_tres.py` and `godot_cfg.py` — and the four
-  nets from CLAUDE.md have to hold throughout.
+  Related: `ausgangszustand` in the run record was `null` on 2026-11-03,
+  even though `--abbrechen` is supposed to restore that original state.
 
 - [ ] **Build the measurement run.** Drafted 2026-10-01, see
   [docs/messfahrt.md](docs/messfahrt.md) (German). One button, three runs of
@@ -92,6 +83,18 @@ deleted but moved down, with the date they were completed.
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **Undoing only undoes our own changes now** (2026-11-03). Journal
+  format 2: the journal records the old values of the keys we touched, not
+  just the path of a full backup. Those values are written back into the
+  *current* file; the full backup remains as a safety net underneath. Same
+  for the variant path, where the backup was another five weeks older.
+  Format 1 is still read — otherwise net 4 would fail for exactly the
+  journals lying around right now.
+
+  Verified against the real `Preferences.tres` of Vostok: the graphics
+  values go back, while a key binding, a volume and a field of view written
+  by the game all survive — with the old path all three were lost.
 
 - [x] **Road to Vostok: movement is remapped only once now** (2026-11-03).
   Movement was remapped on both sides — keyd translated the arrow keys into

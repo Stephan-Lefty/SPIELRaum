@@ -7,6 +7,49 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.7.0] – 2026-11-03
+
+### Geändert
+
+- **Zurücksetzen nimmt nur noch die eigenen Änderungen zurück.** Das ist
+  der Umbau am Kernversprechen des Programms. Angewendet wurde immer
+  chirurgisch – nur die Schlüssel, die im Profil stehen. Zurückgesetzt
+  wurde dagegen mit der ganzen Sicherung, und damit verschwand alles, was
+  das Spiel während des Laufs selbst in dieselbe Datei geschrieben hatte.
+
+  Bei Road to Vostok stehen in der `Preferences.tres` neben den
+  Grafikeinstellungen die **Tastenbelegung**, die Lautstärken und das
+  Blickfeld. Jeder Lauf holte denselben Stand zurück: Die Sicherung vom
+  01.10.2026 und alle fünf vom 03.11.2026 waren byte-identisch. Die Datei
+  konnte sich fünf Wochen lang nicht ändern, und eine Umbelegung im
+  Spielmenü war mit dem nächsten Spielende wieder weg.
+
+  Im Journal stehen jetzt die alten Werte der angefassten Schlüssel, als
+  Text und damit typgetreu (`1.0` bleibt `1.0`). Zurückgesetzt wird in die
+  *aktuelle* Datei. Die Vollsicherung bleibt als Netz darunter, nicht als
+  Weg. Gleiches gilt für `spielraum variante --zurueck`, wo dieselbe
+  Sicherung noch fünf Wochen älter war.
+
+- **Journalfassung 2.** Fassung 1 wird weiter gelesen und über den alten
+  Weg aufgelöst – sonst räumte eine neue Fassung nicht hinter der vorigen
+  auf, und Netz 4 fiele für genau die Journale aus, die noch herumliegen.
+
+- **Einstellungsdateien werden atomar geschrieben** (daneben, dann
+  umbenennen) – dasselbe Verfahren wie beim Journal. Eine halb geschriebene
+  `.tres` mit Tastenbelegungen darin sieht gültig aus.
+
+### Behoben
+
+- **Ein Schlüssel, den SPIELRaum selbst angelegt hat, wird beim
+  Zurücksetzen wieder entfernt** statt auf einen alten Wert gesetzt, den es
+  nie gab. Dazu können `godot_cfg` jetzt auch Zeilen und Abschnitte
+  entfernen.
+
+- **`godot_cfg` verlor beim Umbauen eine leere Schlusszeile.** `splitlines()`
+  plus »Zeilenumbruch anhängen« ist nicht verlustfrei. Fiel erst auf, als das
+  Zurücksetzen überhaupt durch diesen Code lief – vorher wurde die Datei ja
+  zurückkopiert.
+
 ## [0.6.2] – 2026-11-03
 
 ### Behoben

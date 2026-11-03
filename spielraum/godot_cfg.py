@@ -97,10 +97,18 @@ def zusammenfuehren(text: str, werte: dict[str, dict[str, str]]) -> str:
     abschnitt_abschliessen()
 
     # Was übrig ist, sind Abschnitte, die es in der Datei nicht gab.
+    #
+    # Die Leerzeile davor wird **immer** gesetzt, auch wenn die Datei schon
+    # leer endet. Das sieht einmal nach einer Leerzeile zu viel aus und ist
+    # trotzdem richtig: Nur so weiß ``entfernen`` beim Zurücksetzen, dass
+    # genau eine Leerzeile von uns stammt. Stand sie mal von uns und mal vom
+    # Spiel, ist aus der fertigen Datei nicht mehr zu erkennen, welche –
+    # und das Zurücksetzen müsste raten. Gefunden am 03.11.2026 daran, dass
+    # eine Datei nach anwenden+zurücksetzen eine Leerzeile verlor.
     for abschnitt, schluessel in offen.items():
         if not schluessel:
             continue
-        if ausgabe and ausgabe[-1].strip():
+        if ausgabe:
             ausgabe.append("")
         ausgabe.append(f"[{abschnitt}]")
         ausgabe.extend(f"{s}={w}" for s, w in schluessel.items())
@@ -109,3 +117,57 @@ def zusammenfuehren(text: str, werte: dict[str, dict[str, str]]) -> str:
     # Godot schreibt seine Dateien mit abschließendem Zeilenumbruch. Ohne ihn
     # hängt beim nächsten Anhängen alles in einer Zeile.
     return ergebnis if ergebnis.endswith("\n") else ergebnis + "\n"
+
+
+def entfernen(text: str, schluessel: dict[str, list[str]],
+              abschnitte: list[str] | None = None) -> str:
+    """Zeilen wieder herausnehmen, die ``zusammenfuehren`` angelegt hat.
+
+    Gebraucht beim Zurücksetzen: Ein Schlüssel, den es vorher **nicht** gab,
+    geht nicht auf einen alten Wert zurück – er muss weg. Ohne das bliebe
+    nach dem Zurücksetzen eine Zeile stehen, die SPIELRaum selbst erfunden
+    hat, und die Zusage »hinterher wie vorher« wäre gebrochen.
+
+    ``abschnitte`` nennt Abschnitte, die es vorher gar nicht gab; von denen
+    verschwindet auch die Kopfzeile. Das ist nötig für Byte-Gleichheit:
+    ``zusammenfuehren`` hängt einen neuen Abschnitt samt Leerzeile davor an,
+    und genau diese Leerzeile muss wieder mit. Ein Abschnitt, der vorher
+    schon leer dastand, bleibt dagegen unangetastet – auch leer ist ein
+    Zustand, den jemand so haben wollte.
+    """
+    weg_abschnitte = set(abschnitte or ())
+    ausgabe: list[str] = []
+    aktuell = ""
+
+    # ``split`` statt ``splitlines``: Nur so bleibt eine leere Schlusszeile
+    # erhalten. ``splitlines()`` plus »Zeilenumbruch anhängen« verliert sie,
+    # und damit wäre das Zurücksetzen um ein Zeichen daneben – bei einer
+    # Zusage »Byte für Byte wie vorher« ist das ein Fehler, kein Schönheits-
+    # fehler.
+    for zeile in text.split("\n"):
+        if treffer := ABSCHNITT.match(zeile):
+            aktuell = treffer.group(1)
+            if aktuell in weg_abschnitte:
+                # Die Leerzeile, die ``zusammenfuehren`` davor gesetzt hat,
+                # gehört zum Abschnitt und geht mit ihm. Sie steht dort
+                # immer – siehe die Begründung dort.
+                if ausgabe and not ausgabe[-1].strip():
+                    ausgabe.pop()
+                continue
+            ausgabe.append(zeile)
+            continue
+
+        if aktuell in weg_abschnitte:
+            # Leerzeilen bleiben: In einem Abschnitt, den SPIELRaum selbst
+            # angelegt hat, stehen nur Zuweisungen – eine Leerzeile dahinter
+            # ist bereits das Ende der Datei und gehört dem Spiel.
+            if zeile.strip():
+                continue
+
+        if (treffer := ZUWEISUNG.match(zeile)) and \
+                treffer.group(1) in schluessel.get(aktuell, ()):
+            continue
+
+        ausgabe.append(zeile)
+
+    return "\n".join(ausgabe)

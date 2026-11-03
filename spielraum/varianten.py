@@ -75,10 +75,36 @@ def anwenden(
         if neu == alt:
             bericht.append(f"{kennung}: stand schon so")
             continue
-        ziel.write_text(neu, encoding="utf-8")
+        stellschrauben.atomar_schreiben(ziel, neu)
         bericht.append(f"{kennung}: " + ", ".join(f"{k}={v}" for k, v in werte.items()))
 
     return bericht
+
+
+def _unsere_schluessel(profil: Profil, kennung: str) -> dict:
+    """Alle Schlüssel dieser Datei, die SPIELRaum überhaupt anfassen kann.
+
+    Das ist die Vereinigung aus dem festen ``[dateien]``-Block und allen
+    Varianten. Mehr als diese Schlüssel hat SPIELRaum nie geschrieben – also
+    darf es auch nie mehr zurücksetzen.
+
+    Die Werte sind hier gleichgültig, nur die Namen zählen; die alten Werte
+    kommen aus der Sicherung.
+    """
+    aenderung = profil.dateien[kennung]
+    gesammelt: dict = {}
+
+    def aufnehmen(werte: dict) -> None:
+        for schluessel, wert in werte.items():
+            if isinstance(wert, dict):
+                gesammelt.setdefault(schluessel, {}).update(dict.fromkeys(wert))
+            else:
+                gesammelt[schluessel] = None
+
+    aufnehmen(aenderung.werte)
+    for variante in profil.varianten.values():
+        aufnehmen(variante.dateien.get(kennung, {}))
+    return gesammelt
 
 
 def zuruecksetzen(
@@ -86,15 +112,49 @@ def zuruecksetzen(
     spielordner: Path | None = None,
     praefix: Path | None = None,
 ) -> list[str]:
-    """Den Zustand vor der ersten Umstellung wiederherstellen."""
+    """Die von SPIELRaum gesetzten Werte auf den Ausgangszustand zurückholen.
+
+    Hier stand bis zum 03.11.2026 ein ``shutil.copy2`` der ganzen Sicherung
+    über die Zieldatei – derselbe Fehler wie im Journalweg, nur mit einer
+    älteren Sicherung: Die hier liegt vom Tag der *ersten* Umstellung. Bei
+    Road to Vostok war sie fünf Wochen alt, und jedes Zurücksetzen hätte das
+    Spiel auf den Stand vom 01.10.2026 zurückgeworfen – samt Tastenbelegung,
+    Lautstärken und Blickfeld.
+
+    Jetzt werden nur die Schlüssel zurückgeschrieben, die über Profil oder
+    Varianten überhaupt in unserer Hand liegen. Die alten Werte stehen in
+    der Sicherung, die aktuelle Datei liefert alles andere.
+    """
     bericht: list[str] = []
     for kennung, aenderung in profil.dateien.items():
         sicherung = _sicherungspfad(profil, kennung)
         if not sicherung.exists():
             continue
         ziel = stellschrauben._pfad_aufloesen(aenderung.pfad, spielordner, praefix)
-        shutil.copy2(sicherung, ziel)
-        bericht.append(f"{kennung}: aus {sicherung.name} wiederhergestellt")
+
+        unsere = _unsere_schluessel(profil, kennung)
+        alt_text = sicherung.read_text(encoding="utf-8", errors="replace")
+        alt, fehlende = stellschrauben.alte_werte(aenderung, alt_text, unsere)
+
+        if not ziel.exists():
+            shutil.copy2(sicherung, ziel)
+            bericht.append(f"{kennung}: war weg – ganz aus {sicherung.name} geholt")
+            continue
+        if not alt:
+            bericht.append(
+                f"{kennung}: in {sicherung.name} steht keiner unserer Schlüssel – "
+                "nichts zurückzusetzen")
+            continue
+
+        jetzt = ziel.read_text(encoding="utf-8", errors="replace")
+        neu = stellschrauben._werte_einsetzen(aenderung.art, jetzt, alt, fehlende)
+        namen = stellschrauben._flach(alt)
+        if neu == jetzt:
+            bericht.append(f"{kennung}: stand schon auf dem Ausgangswert")
+            continue
+        stellschrauben.atomar_schreiben(ziel, neu)
+        bericht.append(f"{kennung}: {', '.join(namen)} auf den Ausgangswert zurück")
+
     if not bericht:
         bericht.append("Nichts zurückzusetzen – es wurde nie eine Variante gesetzt.")
     return bericht

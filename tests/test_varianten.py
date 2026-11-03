@@ -47,6 +47,56 @@ def aufbau(tmp_path, monkeypatch):
     return p, spielordner, datei
 
 
+def test_zuruecksetzen_laesst_dem_spiel_seine_eigenen_werte(aufbau):
+    """Der Fehler vom 03.11.2026, hier im Variantenweg.
+
+    Zurückgesetzt wurde mit ``shutil.copy2`` der ganzen Sicherung – und die
+    liegt vom Tag der *ersten* Umstellung. Alles, was das Spiel seither
+    selbst in dieselbe Datei geschrieben hat, war damit weg. Bei Road to
+    Vostok waren das die Tastenbelegung, die Lautstärken und das Blickfeld,
+    und weil jedes Spielende denselben Stand zurückholte, konnte die Datei
+    fünf Wochen lang gar nicht mehr anders werden.
+
+    Hier spielt der Test das nach: umschalten, dann schreibt »das Spiel«
+    etwas Eigenes, dann zurücksetzen.
+    """
+    profil, spielordner, datei = aufbau
+    varianten.anwenden(profil, "leistung", spielordner=spielordner)
+
+    # Jetzt schreibt das Spiel selbst - eine Taste und eine Lautstärke.
+    text = datei.read_text(encoding="utf-8")
+    text = text.replace("keycode = 4194322", "keycode = 4194320")
+    text = text.replace("[resource]", "[resource]\nmusicVolume = 0.1")
+    datei.write_text(text, encoding="utf-8")
+
+    varianten.zuruecksetzen(profil, spielordner=spielordner)
+    danach = datei.read_text(encoding="utf-8")
+
+    # Unsere Werte sind zurück...
+    assert "lighting = 3" in danach
+    assert "antialiasing = 3" in danach
+    # ...und das Spiel hat behalten, was ihm gehört.
+    assert "keycode = 4194320" in danach, "die Taste des Spiels wurde überschrieben"
+    assert "musicVolume = 0.1" in danach, "die Lautstärke des Spiels ist weg"
+
+
+def test_zuruecksetzen_fasst_nur_profilschluessel_an(aufbau):
+    """Was in keiner Variante und keinem [dateien]-Block steht, bleibt.
+
+    ``sharpness`` steht im Ausgangstext, aber in keinem Profilwert. Selbst
+    wenn das Spiel es verstellt, ist das nicht unsere Angelegenheit.
+    """
+    profil, spielordner, datei = aufbau
+    varianten.anwenden(profil, "leistung", spielordner=spielordner)
+    datei.write_text(
+        datei.read_text(encoding="utf-8").replace("sharpness = 1.0",
+                                                  "sharpness = 0.5"),
+        encoding="utf-8")
+
+    varianten.zuruecksetzen(profil, spielordner=spielordner)
+    assert "sharpness = 0.5" in datei.read_text(encoding="utf-8")
+
+
 def test_anwenden_aendert_die_werte(aufbau):
     p, ordner, datei = aufbau
     varianten.anwenden(p, "leistung", spielordner=ordner)

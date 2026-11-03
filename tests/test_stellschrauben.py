@@ -6,6 +6,7 @@ schlimmer als gar keiner – denn dann merkt man den Schaden erst Wochen
 später, wenn niemand mehr weiß, woher er kommt.
 """
 
+import json
 import os
 
 import pytest
@@ -39,6 +40,152 @@ def profil_mit_datei(tmp_path) -> Profil:
         werte={"rendering/renderer": {"rendering_method": '"mobile"'}},
     )
     return p
+
+
+TRES_VORHER = '''[gd_resource type="Resource" format=3]
+
+[sub_resource type="InputEventKey" id="A"]
+keycode = 4194322
+
+[resource]
+lighting = 3
+antialiasing = 3
+musicVolume = 1.0
+'''
+
+
+def profil_mit_tres(tmp_path) -> Profil:
+    p = Profil(name="Vostokartig", quelle=tmp_path / "x.toml", steam_app_id=43)
+    p.dateien["grafik"] = Dateiaenderung(
+        pfad="{spielordner}/Preferences.tres",
+        art="godot-tres",
+        werte={"lighting": 1, "antialiasing": 1},
+    )
+    return p
+
+
+def test_zuruecksetzen_laesst_dem_spiel_seine_eigenen_werte(eigene_ordner):
+    """Der Fehler vom 03.11.2026 – der eigentliche Grund für Journalfassung 2.
+
+    Zurückgesetzt wurde die **ganze** Sicherung. Damit verschwand alles, was
+    das Spiel während des Laufs selbst in dieselbe Datei geschrieben hatte.
+    Bei Road to Vostok stehen in der Preferences.tres neben den
+    Grafikeinstellungen die Tastenbelegung, die Lautstärken und das
+    Blickfeld – und weil jeder Lauf denselben Stand zurückholte, konnte die
+    Datei fünf Wochen lang gar nicht mehr anders werden. Die Umbelegung im
+    Spielmenü vom 23.10.2026 war deshalb am nächsten Tag wieder weg.
+    """
+    spielordner = eigene_ordner / "spiel"
+    spielordner.mkdir()
+    datei = spielordner / "Preferences.tres"
+    datei.write_text(TRES_VORHER, encoding="utf-8")
+
+    profil = profil_mit_tres(eigene_ordner)
+    journal = zustand.Journal(spiel=profil.name, pid=os.getpid())
+    stellschrauben.dateien_anwenden(profil, journal, spielordner=spielordner)
+    assert "lighting = 1" in datei.read_text(encoding="utf-8")
+
+    # Das Spiel läuft und schreibt selbst: eine Taste und eine Lautstärke.
+    text = datei.read_text(encoding="utf-8")
+    text = text.replace("keycode = 4194322", "keycode = 4194320")
+    text = text.replace("musicVolume = 1.0", "musicVolume = 0.1")
+    datei.write_text(text, encoding="utf-8")
+
+    stellschrauben.zuruecksetzen(journal)
+    danach = datei.read_text(encoding="utf-8")
+
+    assert "lighting = 3" in danach, "unsere Änderung kam nicht zurück"
+    assert "antialiasing = 3" in danach
+    assert "keycode = 4194320" in danach, "die Taste des Spiels wurde überschrieben"
+    assert "musicVolume = 0.1" in danach, "die Lautstärke des Spiels ist weg"
+
+
+def test_typ_bleibt_beim_zuruecksetzen_erhalten(eigene_ordner):
+    """``1.0`` muss ``1.0`` bleiben, nicht ``1`` werden.
+
+    Die alten Werte stehen als Text im Journal, genau wie sie in der Datei
+    standen. Eine Umwandlung nach Zahl und zurück würde den Typ ändern, auf
+    den sich GDScript verlässt.
+    """
+    spielordner = eigene_ordner / "spiel"
+    spielordner.mkdir()
+    datei = spielordner / "Preferences.tres"
+    datei.write_text(TRES_VORHER, encoding="utf-8")
+
+    profil = profil_mit_tres(eigene_ordner)
+    profil.dateien["grafik"].werte = {"musicVolume": 0.5}
+    journal = zustand.Journal(spiel=profil.name, pid=os.getpid())
+
+    stellschrauben.dateien_anwenden(profil, journal, spielordner=spielordner)
+    assert "musicVolume = 0.5" in datei.read_text(encoding="utf-8")
+
+    stellschrauben.zuruecksetzen(journal)
+    assert "musicVolume = 1.0" in datei.read_text(encoding="utf-8")
+
+
+def test_altes_journal_wird_noch_aufgeraeumt(eigene_ordner):
+    """Netz 4 muss auch hinter der *vorigen* Fassung aufräumen.
+
+    Ein Journal der Fassung 1 kennt keine Einzelwerte, nur den Pfad der
+    Vollsicherung. Würde ``lesen`` es verwerfen, bliebe eine Änderung nach
+    einem Absturz für immer stehen. Beim Sprung auf Fassung 2 am 03.11.2026
+    lag auf dem Rechner tatsächlich so ein Journal.
+    """
+    spielordner = eigene_ordner / "spiel"
+    spielordner.mkdir()
+    datei = spielordner / "override.cfg"
+    datei.write_text(VORHER, encoding="utf-8")
+
+    sicherung = eigene_ordner / "sicherung.cfg"
+    sicherung.write_text(VORHER, encoding="utf-8")
+    datei.write_text(VORHER + 'etwas="verstellt"\n', encoding="utf-8")
+
+    pfad = zustand.journal_pfad("Altspiel")
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text(json.dumps({
+        "spiel": "Altspiel",
+        "pid": 0,
+        "fassung": 1,
+        "eintraege": [{"stellschraube": "datei", "ziel": str(datei),
+                       "vorher": str(sicherung), "nachher": None}],
+    }), encoding="utf-8")
+
+    journal = zustand.lesen(pfad)
+    assert journal is not None, "ein Journal der Fassung 1 muss lesbar bleiben"
+
+    bericht = stellschrauben.zuruecksetzen(journal)
+    assert datei.read_text(encoding="utf-8") == VORHER
+    assert any("ganze Datei" in z for z in bericht), \
+        "der alte Weg soll im Bericht erkennbar sein"
+
+
+def test_angelegter_schluessel_wird_wieder_entfernt(eigene_ordner):
+    """Was vorher nicht dastand, geht nicht auf einen alten Wert zurück.
+
+    Es muss weg. Sonst bliebe nach dem Zurücksetzen eine Zeile stehen, die
+    SPIELRaum selbst erfunden hat – und zwar gerade dann, wenn sonst nichts
+    mehr an die Vollsicherung erinnert.
+    """
+    spielordner = eigene_ordner / "spiel"
+    spielordner.mkdir()
+    datei = spielordner / "override.cfg"
+    datei.write_text(VORHER, encoding="utf-8")
+
+    profil = profil_mit_datei(eigene_ordner)
+    journal = zustand.Journal(spiel=profil.name, pid=os.getpid())
+    stellschrauben.dateien_anwenden(profil, journal, spielordner=spielordner)
+
+    # Das Spiel schreibt daneben etwas Eigenes in einen eigenen Abschnitt.
+    datei.write_text(datei.read_text(encoding="utf-8")
+                     + '\n[display]\nwidth=1920\n', encoding="utf-8")
+
+    stellschrauben.zuruecksetzen(journal)
+    danach = datei.read_text(encoding="utf-8")
+
+    assert "rendering_method" not in danach, "unsere Zeile blieb stehen"
+    assert "[rendering/renderer]" not in danach, "unser Abschnitt blieb stehen"
+    assert "width=1920" in danach, "der Abschnitt des Spiels ist weg"
+    assert 'ModLoader="*res://modloader.gd"' in danach
 
 
 def test_anwenden_und_zuruecksetzen(eigene_ordner):

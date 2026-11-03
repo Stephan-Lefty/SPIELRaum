@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -195,6 +196,104 @@ def _pfad_aufloesen(vorlage: str, spielordner: Path | None, praefix: Path | None
     return Path(vorlage)
 
 
+def atomar_schreiben(ziel: Path, text: str) -> None:
+    """Eine Einstellungsdatei des Spiels atomar ersetzen.
+
+    Daneben schreiben, dann umbenennen – dasselbe Verfahren wie beim Journal
+    und aus demselben Grund: Eine halb geschriebene Einstellungsdatei sieht
+    gültig aus. Bei einer ``.tres`` mit Tastenbelegungen darin heißt »halb
+    geschrieben« im schlimmsten Fall ein Spiel, in dem nichts mehr reagiert.
+
+    Die Zwischendatei liegt im Zielverzeichnis, nicht in ``/tmp``:
+    ``os.replace`` ist nur innerhalb eines Dateisystems atomar, und das
+    Proton-Präfix liegt hier auf einer anderen Platte als ``/tmp``.
+    """
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    griff, zwischendatei = tempfile.mkstemp(dir=ziel.parent, suffix=".tmp")
+    try:
+        with os.fdopen(griff, "w", encoding="utf-8") as datei:
+            datei.write(text)
+            datei.flush()
+            os.fsync(datei.fileno())
+        os.replace(zwischendatei, ziel)
+    except BaseException:
+        Path(zwischendatei).unlink(missing_ok=True)
+        raise
+
+
+def alte_werte(aenderung, text: str, werte: dict) -> tuple[dict, list[str]]:
+    """Was die Schlüssel enthalten, die wir gleich ändern wollen.
+
+    Als Text, unverändert wie sie dastehen – beide Leser geben das so
+    zurück. Das ist Absicht: Schreibt man denselben Text zurück, steht
+    hinterher Zeichen für Zeichen dasselbe da. Eine Umwandlung nach Zahl und
+    zurück würde aus ``1.0`` ein ``1`` machen und damit den Typ ändern, auf
+    den das Spiel sich verlässt.
+
+    **Ein fehlender Schlüssel ist selbst ein Wert.** Steht er noch nicht in
+    der Datei, merkt sich das Journal ein ``None`` – zurückgesetzt heißt dann
+    nicht »alten Wert schreiben«, sondern »die Zeile wieder entfernen«. Ohne
+    diese Unterscheidung bliebe nach dem Zurücksetzen eine Zeile stehen, die
+    SPIELRaum selbst erfunden hat.
+
+    Zurück kommen die alten Werte und die Namen der Abschnitte, die es
+    vorher überhaupt nicht gab – von denen muss später auch die Kopfzeile
+    weichen.
+    """
+    if aenderung.art == "godot-tres":
+        # Bei der ``.tres`` kann kein Schlüssel fehlen: ``schreiben`` legt
+        # keine an und weist unbekannte Namen zurück (streng=True). Was hier
+        # nicht dasteht, wird also auch nie geschrieben.
+        vorhanden = godot_tres.lesen(text)
+        return {k: vorhanden[k] for k in werte if k in vorhanden}, []
+
+    vorhanden = godot_cfg.lesen(text)
+    gesammelt: dict[str, dict[str, str | None]] = {}
+    fehlende_abschnitte: list[str] = []
+    for abschnitt, schluessel in werte.items():
+        if abschnitt not in vorhanden:
+            fehlende_abschnitte.append(abschnitt)
+        da = vorhanden.get(abschnitt, {})
+        gesammelt[abschnitt] = {k: da.get(k) for k in schluessel}
+    return gesammelt, sorted(fehlende_abschnitte)
+
+
+def _werte_einsetzen(art: str | None, text: str, werte: dict,
+                     fehlende_abschnitte: list[str] | None = None) -> str:
+    """Die alten Werte zurück in den *aktuellen* Dateiinhalt schreiben.
+
+    Zwei Richtungen in einem Durchgang: Was einen alten Wert hat, wird auf
+    ihn zurückgesetzt; was vorher nicht dastand (``None``), wird entfernt.
+
+    ``streng=False`` bei der ``.tres``: Hat das Spiel einen Schlüssel
+    inzwischen selbst entfernt, soll das Zurücksetzen nicht abbrechen und
+    die übrigen Werte stehen lassen. Was nicht ankommt, meldet der Aufrufer.
+    """
+    if art == "godot-tres":
+        da = {k: v for k, v in werte.items() if v is not None}
+        return godot_tres.schreiben(text, da, streng=False)
+
+    setzen = {a: {k: v for k, v in s.items() if v is not None}
+              for a, s in werte.items()}
+    weg = {a: [k for k, v in s.items() if v is None] for a, s in werte.items()}
+
+    ergebnis = godot_cfg.zusammenfuehren(text, {a: s for a, s in setzen.items() if s})
+    if any(weg.values()) or fehlende_abschnitte:
+        ergebnis = godot_cfg.entfernen(ergebnis, weg, fehlende_abschnitte)
+    return ergebnis
+
+
+def _flach(werte: dict) -> list[str]:
+    """Die Schlüssel einer flachen oder verschachtelten Wertetabelle benennen."""
+    namen: list[str] = []
+    for schluessel, wert in werte.items():
+        if isinstance(wert, dict):
+            namen.extend(f"{schluessel}.{k}" for k in wert)
+        else:
+            namen.append(schluessel)
+    return sorted(namen)
+
+
 def _neuer_inhalt(aenderung, alt: str, werte: dict) -> str:
     """Den neuen Dateiinhalt bauen – je nach Format mit dem passenden Leser.
 
@@ -260,16 +359,23 @@ def dateien_anwenden(
             alt = ziel.read_text(encoding="utf-8", errors="replace")
             # Erst ins Journal, dann ändern. Andersherum wäre ein Absturz
             # zwischen beiden Schritten nicht mehr aufzulösen.
-            journal.vermerken("datei", str(ziel), str(sicherung))
+            #
+            # Im Journal stehen die alten Werte der angefassten Schlüssel,
+            # nicht nur der Pfad der Sicherung: Zurückgesetzt wird damit
+            # genau unsere Änderung und nicht alles, was das Spiel seither
+            # selbst in die Datei geschrieben hat. Siehe zustand.py.
+            alt_werte, fehlende = alte_werte(aenderung, alt, werte)
+            journal.vermerken("datei", str(ziel), str(sicherung),
+                              art=aenderung.art, alt_werte=alt_werte,
+                              fehlende_abschnitte=fehlende)
         else:
             alt = ""
             # Kein Vorher heißt: beim Zurücksetzen wieder löschen.
-            journal.vermerken("datei", str(ziel), None)
+            journal.vermerken("datei", str(ziel), None, art=aenderung.art)
 
         neu = _neuer_inhalt(aenderung, alt, werte)
 
-        ziel.parent.mkdir(parents=True, exist_ok=True)
-        ziel.write_text(neu, encoding="utf-8")
+        atomar_schreiben(ziel, neu)
         getan.append(f"{kennung}: {ziel}")
 
     return getan
@@ -303,14 +409,82 @@ def zuruecksetzen(journal: Journal) -> list[str]:
             if eintrag.vorher is None:
                 ziel.unlink(missing_ok=True)
                 bericht.append(f"{ziel} wieder entfernt")
+            elif eintrag.alt_werte:
+                bericht.append(_werte_zurueck(eintrag, ziel))
             else:
+                # Journal der Fassung 1, oder eine Datei ohne angefasste
+                # Schlüssel. Dann bleibt nur der alte Weg – die ganze
+                # Sicherung zurück. Er setzt zu viel zurück; das ist beim
+                # Aufräumen hinter einer älteren Fassung aber besser als
+                # nichts zurückzusetzen.
                 sicherung = Path(eintrag.vorher)
                 if not sicherung.exists():
                     bericht.append(f"FEHLT: Sicherung {sicherung} für {ziel}")
                     continue
                 shutil.copy2(sicherung, ziel)
-                bericht.append(f"{ziel} aus Sicherung wiederhergestellt")
+                bericht.append(f"{ziel} aus Sicherung wiederhergestellt (ganze Datei)")
         except OSError as fehler:
             bericht.append(f"FEHLER bei {ziel}: {fehler}")
 
     return bericht
+
+
+def _werte_zurueck(eintrag, ziel: Path) -> str:
+    """Nur die angefassten Schlüssel auf ihren alten Wert zurückschreiben.
+
+    Der eigentliche Zweck des Umbaus vom 03.11.2026. Gelesen wird der
+    **aktuelle** Dateiinhalt, nicht die Sicherung: Was das Spiel seither
+    selbst hineingeschrieben hat, soll ja gerade stehen bleiben.
+
+    Ist die Datei verschwunden, greift die Vollsicherung – dann gibt es
+    nichts mehr, in das sich einzelne Werte zurückschreiben ließen.
+    """
+    if not ziel.exists():
+        sicherung = Path(eintrag.vorher) if eintrag.vorher else None
+        if sicherung is not None and sicherung.exists():
+            shutil.copy2(sicherung, ziel)
+            return f"{ziel} war weg – ganz aus Sicherung wiederhergestellt"
+        return f"FEHLT: {ziel} ist weg und es gibt keine Sicherung"
+
+    jetzt = ziel.read_text(encoding="utf-8", errors="replace")
+    neu = _werte_einsetzen(eintrag.art, jetzt, eintrag.alt_werte,
+                           eintrag.fehlende_abschnitte)
+
+    namen = _flach(eintrag.alt_werte)
+    if neu == jetzt:
+        return f"{ziel}: stand schon wieder auf {', '.join(namen)}"
+
+    atomar_schreiben(ziel, neu)
+
+    # Nachsehen, ob jedes Wort auch angekommen ist. Beim Zurücksetzen wird
+    # ohne ``streng`` geschrieben, damit ein inzwischen entfernter Schlüssel
+    # den Rest nicht aufhält – dann muss aber auffallen, dass er fehlt.
+    offen = _nicht_angekommen(eintrag, neu)
+    if offen:
+        return (f"{ziel}: zurückgesetzt, aber nicht angekommen: "
+                + ", ".join(offen))
+    return f"{ziel}: {len(namen)} Werte zurückgesetzt ({', '.join(namen)})"
+
+
+def _nicht_angekommen(eintrag, text: str) -> list[str]:
+    """Welche der alten Zustände stehen hinterher *nicht* in der Datei?
+
+    Ein ``None`` im Journal heißt »gab es vorher nicht«. Angekommen ist das
+    dann, wenn der Schlüssel jetzt fehlt – nicht, wenn er einen Wert hat.
+    """
+    if eintrag.art == "godot-tres":
+        jetzt = godot_tres.lesen(text)
+        return sorted(k for k, v in eintrag.alt_werte.items()
+                      if v is not None and jetzt.get(k) != v)
+
+    jetzt = godot_cfg.lesen(text)
+    fehlend: list[str] = []
+    for abschnitt, schluessel in eintrag.alt_werte.items():
+        da = jetzt.get(abschnitt, {})
+        for k, v in schluessel.items():
+            if v is None:
+                if k in da:
+                    fehlend.append(f"{abschnitt}.{k}")
+            elif da.get(k) != v:
+                fehlend.append(f"{abschnitt}.{k}")
+    return sorted(fehlend)
