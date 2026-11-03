@@ -24,6 +24,7 @@ Die Gruppe wird einmalig vergeben, siehe ``docs/tasten.md``.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from functools import lru_cache
@@ -35,6 +36,11 @@ from .zustand import Journal
 # Name, weil das Zurücksetzen hier anders läuft als bei Dateien: Es gibt
 # keine Sicherungskopie, sondern einen Befehl, der alles zurückdreht.
 STELLSCHRAUBE = "tasten"
+
+# Wo keyd seinen Socket anlegt. Zwei Orte, weil ältere Fassungen
+# ``/var/run`` benutzen – auf den meisten Systemen ein Verweis auf ``/run``,
+# aber eben nicht auf allen.
+SOCKETS = ("/run/keyd.socket", "/var/run/keyd.socket")
 
 # Ebenen, die keyd von Haus aus kennt. Sie dürfen als Ziel stehen, damit
 # Umschalt und Strg sich wie echte Modifikatoren verhalten und nicht nur
@@ -139,31 +145,39 @@ def _dienst_laeuft() -> bool:
 def _socket_erreichbar() -> tuple[bool, str]:
     """Darf dieser Benutzer dem Dienst etwas schicken?
 
-    Geprüft wird durch Ausprobieren statt durch Nachrechnen über
-    Gruppenlisten: ``id`` zeigt die Gruppen der *Anmeldung*, und eine frisch
-    vergebene Gruppe steht dort erst nach dem nächsten Anmelden. Ein
-    harmloser Aufruf sagt die Wahrheit.
+    Gefragt wird der Kernel, ob der Socket beschreibbar ist – **nicht** keyd
+    selbst über einen Probeaufruf.
+
+    Hier stand bis zum 03.11.2026 ``keyd bind reset`` als »harmloser«
+    Testaufruf. Das ist wortgleich der Befehl, mit dem ``zuruecknehmen()``
+    jede gesetzte Belegung verwirft: Die Prüfung zerstörte, was sie prüfte.
+    Weil der Befund im Fenster sie bei jedem Spielwechsel aufruft, löschte
+    ein Klick in die Spieleliste die laufende Belegung – mitten im Spiel
+    waren dann Pfeiltasten und WASD gleichzeitig tot.
+
+    ``os.access`` rechnet nichts über Gruppenlisten nach, sondern lässt den
+    Kernel mit den Rechten *dieses Prozesses* antworten. Damit bleibt der
+    Grund gewahrt, aus dem hier ursprünglich ausprobiert wurde: Eine frisch
+    vergebene Gruppe gilt erst nach dem nächsten Anmelden – und genau das
+    sagt ``os.access`` dann auch, weil es die Gruppen der Anmeldung sieht
+    und nicht ``/etc/group``.
     """
-    umg = umgebung.ermitteln()
-    pfad = umg.pfad("keyd")
-    if pfad is None:
-        return False, "keyd ist nicht installiert."
-    try:
-        fertig = subprocess.run([pfad, "bind", "reset"], capture_output=True,
-                                text=True, timeout=5, check=False)
-    except (OSError, subprocess.SubprocessError) as fehler:
-        return False, f"keyd ließ sich nicht aufrufen: {fehler}"
+    for pfad in SOCKETS:
+        if os.path.exists(pfad):
+            if os.access(pfad, os.W_OK):
+                return True, ""
+            return False, (
+                f"Kein Zugriff auf {pfad}. Einmalig einrichten mit: "
+                "sudo usermod -aG keyd $USER — danach ab- und wieder anmelden."
+            )
 
-    if fertig.returncode == 0:
-        return True, ""
-
-    meldung = (fertig.stderr or fertig.stdout).strip()
-    if "permission" in meldung.lower() or "socket" in meldung.lower():
-        return False, (
-            "Kein Zugriff auf /run/keyd.socket. Einmalig einrichten mit: "
-            "sudo usermod -aG keyd $USER — danach ab- und wieder anmelden."
-        )
-    return False, f"keyd meldet: {meldung}"
+    # Der Dienst läuft – das hat der Aufrufer vorher geprüft –, aber sein
+    # Socket liegt nicht dort, wo wir nachsehen. Dann lieber sagen, wo
+    # gesucht wurde, als ein pauschales Nein.
+    return False, (
+        "Der keyd-Dienst läuft, aber sein Socket ist nicht zu finden. "
+        "Gesucht wurde in: " + ", ".join(SOCKETS)
+    )
 
 
 def setzen(belegung: dict[str, str], journal: Journal) -> list[str]:

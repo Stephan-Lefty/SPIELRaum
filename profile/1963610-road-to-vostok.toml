@@ -203,31 +203,33 @@ grafik = { lighting = 3, antialiasing = 1, smaa = 2, detailShadows = 1, reflecti
 # Links steht, was gedrückt wird, rechts, was das Spiel sehen soll. Gilt nur,
 # solange Vostok läuft; siehe docs/tasten.md.
 #
-# Die Spielbelegung musste dafür am 23.10.2026 auf die Vorgabewerte zurück.
-# Vorher lag die Bewegung dort selbst auf den Pfeiltasten -- beide Seiten
-# zeigten in dieselbe Richtung und hoben sich auf.
+# ACHTUNG, hier liegt eine Falle, die am 03.11.2026 zum zweiten Mal zugebissen
+# hat: Die Bewegung darf NUR AUF EINER SEITE umgelegt werden. Entweder keyd
+# uebersetzt, oder Vostok ist selbst umgebunden -- beides zusammen hebt sich
+# auf, und zwar geraeuschlos. Dann tun weder die Pfeiltasten noch WASD etwas.
 #
-# Drei Belegungen mussten dabei ausweichen, weil keyd ihre Tasten belegt:
+# Am 23.10.2026 wurde der Konflikt aufgeloest, indem die Spielbelegung im
+# Menue auf die Vorgabewerte (WASD) zurueckgesetzt wurde. Das hielt nicht:
+# Vostok schreibt seine Belegung in dieselbe Preferences.tres, die SPIELRaum
+# beim Beenden aus der Sicherung zurueckholt -- die Menueeingabe war mit dem
+# naechsten Spielende wieder weg. Die Datei steht inhaltlich seit dem
+# 01.10.2026 still; siehe den offenen Punkt in TODO.md.
 #
-#   item_drop     lag auf Umschalt -> jetzt L
-#   prepare       lag auf Strg     -> jetzt O
-#   rail_movement lag auf Strg     -> jetzt P
+# Deshalb jetzt die andere Seite: Vostok bindet selbst, keyd haelt sich raus.
+# Das ist ohnehin der robustere Weg -- es ueberlebt jeden Neustart und haengt
+# nicht an einem laufenden Dienst. Belegt in Preferences.tres unter
+# actionEvents (Godot-Tastencodes):
 #
-# L, O und P nutzt Vostok sonst nicht, keyd fasst sie nicht an, und sie
-# liegen rechts von I/K/M -- also in Reichweite der rechten Hand.
+#   forward  4194320 Pfeil hoch      jump    4194323 Bild hoch
+#   backward 4194322 Pfeil runter    sprint  4194324 Bild runter
+#   left     4194319 Pfeil links     crouch  4194318 Ende
+#   right    4194321 Pfeil rechts    lean_L  4194325 Umschalt rechts
+#
+# Was hier stehenbleibt, sind die zwei Zuordnungen, die Vostok NICHT selbst
+# anbietet: Nachladen und Inventar liegen fest auf R und Tab. Sie kollidieren
+# mit nichts, weil Insert und Entf im Spiel unbelegt sind.
 
 [tasten]
 
-up    = "w"
-down  = "s"
-left  = "a"
-right = "d"
-
-pageup   = "space"
-pagedown = "layer(shift)"
-end      = "layer(control)"
-
-# Nachladen und Inventar lagen in Vostok schon auf R und Tab -- da musste
-# nichts geändert werden, die Zuordnung trifft sie direkt.
 insert = "r"
 delete = "tab"

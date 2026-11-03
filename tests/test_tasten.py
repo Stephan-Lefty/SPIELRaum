@@ -148,6 +148,49 @@ def test_keyd_lehnt_ab_wird_weitergereicht():
     assert "so nicht" in str(fehler.value)
 
 
+# --- Rechteprüfung ---------------------------------------------------------
+
+
+def test_pruefung_ruft_keyd_ueberhaupt_nicht_auf(tmp_path):
+    """Der Kern des Fehlers vom 03.11.2026.
+
+    Hier stand ``keyd bind reset`` als Testaufruf – derselbe Befehl, mit dem
+    ``zuruecknehmen()`` alles verwirft. Weil der Befund im Fenster diese
+    Prüfung bei jedem Spielwechsel aufruft, löschte ein Klick in die
+    Spieleliste die laufende Belegung.
+
+    Der Test fixiert nicht das Ergebnis, sondern die Abwesenheit des
+    Aufrufs: Egal wie die Prüfung künftig aussieht, sie darf keinen
+    Unterprozess starten.
+    """
+    socket = tmp_path / "keyd.socket"
+    socket.touch()
+    with mock.patch.object(tasten, "SOCKETS", (str(socket),)), \
+         mock.patch.object(tasten.subprocess, "run") as lauf:
+        erreichbar, _ = tasten._socket_erreichbar()
+    assert erreichbar is True
+    lauf.assert_not_called()
+
+
+def test_ohne_schreibrecht_nennt_den_befehl(tmp_path):
+    """Kein Zugriff ist kein Absturz, sondern eine Anleitung."""
+    socket = tmp_path / "keyd.socket"
+    socket.touch()
+    with mock.patch.object(tasten, "SOCKETS", (str(socket),)), \
+         mock.patch.object(tasten.os, "access", return_value=False):
+        erreichbar, grund = tasten._socket_erreichbar()
+    assert erreichbar is False
+    assert "usermod -aG keyd" in grund
+
+
+def test_fehlender_socket_sagt_wo_gesucht_wurde(tmp_path):
+    """Ein pauschales Nein hilft niemandem weiter."""
+    with mock.patch.object(tasten, "SOCKETS", (str(tmp_path / "gibtsnicht"),)):
+        erreichbar, grund = tasten._socket_erreichbar()
+    assert erreichbar is False
+    assert "gibtsnicht" in grund
+
+
 # --- Zurücknehmen ----------------------------------------------------------
 
 

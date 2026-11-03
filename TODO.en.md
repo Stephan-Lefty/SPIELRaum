@@ -7,6 +7,31 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
+- [ ] **Undoing must only undo our own changes.** Found 2026-11-03, and it is
+  the heaviest open point. Applying is surgical — `godot_tres.py` touches
+  only the keys named in the profile. Undoing uses a sledgehammer:
+  `stellschrauben.zuruecksetzen()` copies the **whole** backup over the file
+  ([stellschrauben.py:311](spielraum/stellschrauben.py)).
+
+  Consequence: everything the game itself writes into that same file during
+  a session is gone on exit. For Road to Vostok that means the key bindings,
+  the volumes, the field of view and the monitor choice. Evidence: the
+  "before first variant" backup from 2026-10-01 and all five backups from
+  2026-11-03 are **byte-identical**. The file has stood still for five
+  weeks, because every exit restores it to the same state — a closed loop,
+  it can no longer change.
+
+  This is also why the fix from 2026-10-23 did not hold: the in-game
+  bindings were reset to WASD and were back on the arrow keys after the next
+  exit.
+
+  The way forward: the journal must record the **old values of the keys we
+  touched**, not just the path of a full backup. Undoing then writes those
+  values back into the *current* file. The full backup stays as a safety
+  net, but not as the route. Affects `zustand.py` (journal format),
+  `stellschrauben.py`, `godot_tres.py` and `godot_cfg.py` — and the four
+  nets from CLAUDE.md have to hold throughout.
+
 - [ ] **Build the measurement run.** Drafted 2026-10-01, see
   [docs/messfahrt.md](docs/messfahrt.md) (German). One button, three runs of
   ten minutes each, with SPIELRaum switching settings in between. The hard
@@ -67,6 +92,21 @@ deleted but moved down, with the date they were completed.
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **Road to Vostok: movement is remapped only once now** (2026-11-03).
+  Movement was remapped on both sides — keyd translated the arrow keys into
+  WASD, while Vostok itself expected the arrow keys. The two cancelled each
+  other out: neither the arrow keys nor WASD did anything. The game's side
+  won, because it survives every reboot and does not depend on a running
+  service. The profile now holds only `insert` and `delete` for reload and
+  inventory — the two mappings Vostok does not offer itself.
+
+- [x] **The permission check no longer deletes what it checks** (2026-11-03).
+  `tasten._socket_erreichbar()` used `keyd bind reset` as its probe — word
+  for word the command `zuruecknehmen()` uses to discard everything. Because
+  the report pane calls the check on every game switch, one click in the
+  game list wiped the live mapping. The check now uses `os.access` on the
+  socket; the test pins down that it starts **no** subprocess.
 
 - [x] **D3D12 measured against Vulkan** (2026-09-30). Result: **no
   difference** — 49.0 against 49.3 frames per second is noise. The

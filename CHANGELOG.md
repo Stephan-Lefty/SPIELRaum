@@ -7,6 +7,33 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.2] – 2026-11-03
+
+### Behoben
+
+- **Die Rechteprüfung löschte die Tastenbelegung, die sie prüfte.**
+  `tasten._socket_erreichbar()` probierte den Socket-Zugriff mit
+  `keyd bind reset` aus – wortgleich der Befehl, mit dem
+  `zuruecknehmen()` jede gesetzte Belegung verwirft. Weil der Befund im
+  Fenster die Prüfung bei jedem Spielwechsel aufruft, löschte ein Klick in
+  die Spieleliste die laufende Belegung. Geprüft wird jetzt mit
+  `os.access` auf `/run/keyd.socket`; ein Test hält fest, dass die Prüfung
+  keinen Unterprozess mehr startet.
+
+### Geändert
+
+- **Road to Vostok legt die Bewegung selbst um, nicht keyd.** Die Bewegung
+  lag auf beiden Seiten und hob sich auf – weder Pfeiltasten noch WASD taten
+  etwas. Im Profil stehen nur noch `insert` und `delete`.
+
+### Bekannt
+
+- **Zurücksetzen nimmt mehr zurück als die eigenen Änderungen.** Angewendet
+  wird chirurgisch, zurückgesetzt wird die ganze Datei. Was das Spiel selbst
+  hineinschreibt – bei Vostok Tastenbelegung, Lautstärken, Blickfeld –, ist
+  beim Beenden weg. Beschrieben in [TODO.md](TODO.md); bis zur Behebung
+  gehören Einstellungen ins Profil, nicht ins Spielmenü.
+
 ## [0.6.1] – 2026-10-23
 
 ### Hinzugefügt

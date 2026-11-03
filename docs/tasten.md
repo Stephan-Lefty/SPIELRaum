@@ -122,6 +122,30 @@ Am 23.10.2026 führte das zu zwei falschen Zuordnungen, die erst eine
 Gegenprobe zutage förderte – *Ende* löste Ausweichen statt Schleichen aus,
 *Entf* das Baumenü statt des Rucksacks.
 
+**Am 03.11.2026 biss dieselbe Falle ein zweites Mal, und zwar vollständig:**
+Bei Road to Vostok lag die Bewegung auf beiden Seiten. Dann tut *gar nichts*
+mehr etwas – nicht die Pfeiltasten, weil das Spiel sie nicht mehr erwartet,
+und nicht WASD, weil keyd sie nicht schickt. Das ist der verwirrendste Fall,
+weil es aussieht wie eine kaputte Tastatur und nicht wie eine doppelte
+Einstellung.
+
+Zwei Lehren daraus:
+
+1. **Eine Gegenprobe gehört dazu**, und zwar mit der Frage »welche Taste tut
+   *was*«, nicht »tut die Taste etwas«. Wer nur prüft, ob sich die Figur
+   bewegt, findet vertauschte Zuordnungen nicht.
+
+2. **Wo das Spiel selbst umbinden kann, soll es das tun.** Die eigene
+   Belegung des Spiels überlebt jeden Neustart und hängt nicht an einem
+   laufenden Dienst. keyd ist für die Spiele da, die es nicht anbieten.
+   Deshalb ist bei Vostok seit dem 03.11.2026 nur noch Nachladen und
+   Inventar über keyd belegt.
+
+Solange das Zurücksetzen die ganze Einstellungsdatei zurückholt (siehe
+`TODO.md`), hält eine Änderung im **Spielmenü** übrigens nicht: Sie ist mit
+dem nächsten Spielende wieder weg. Das ist der Grund, warum die Lösung vom
+23.10.2026 nicht hielt.
+
 ### Was geprüft wird
 
 Alle Namen laufen gegen die Liste, die `keyd list-keys` ausgibt. Ein Profil

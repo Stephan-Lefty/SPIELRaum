@@ -8,12 +8,31 @@ fertig wurde.
 
 ## Offen
 
-- [ ] **Road to Vostok auf keyd umstellen.** Dort liegt die Bewegung in der
-  Spielbelegung auf den Pfeiltasten – seit keyd die in WASD übersetzt, läuft
-  die Figur nicht mehr. Die Spielbelegung muss auf die Vorgabewerte zurück.
-  Kniffliger als bei Enshrouded: `prepare` und `rail_movement` liegen beide
-  auf Strg, `item_drop` auf Umschalt – genau die Tasten, die keyd für Ducken
-  und Sprinten schickt. Da muss erst Platz geschaffen werden.
+- [ ] **Zurücksetzen darf nur die eigenen Änderungen zurücknehmen.**
+  Gefunden am 03.11.2026, und es ist der schwerste offene Punkt. Angewendet
+  wird chirurgisch – `godot_tres.py` fasst ausschließlich die Schlüssel an,
+  die im Profil stehen. Zurückgesetzt wird mit dem Vorschlaghammer:
+  `stellschrauben.zuruecksetzen()` kopiert die **ganze** Sicherung über die
+  Datei ([stellschrauben.py:311](spielraum/stellschrauben.py)).
+
+  Folge: Alles, was das Spiel während des Laufs selbst in dieselbe Datei
+  schreibt, ist beim Beenden weg. Bei Road to Vostok sind das die
+  Tastenbelegung, die Lautstärken, das Blickfeld und die Monitorwahl.
+  Belegt: Die Sicherung »vor der ersten Variante« vom 01.10.2026 und alle
+  fünf Sicherungen vom 03.11.2026 sind **byte-identisch**. Die Datei steht
+  seit fünf Wochen still, weil jedes Spielende sie auf denselben Stand
+  zurückholt – ein geschlossener Kreis, sie kann sich nicht mehr ändern.
+
+  Deshalb hielt auch die Lösung vom 23.10.2026 nicht: Die Spielbelegung
+  wurde im Menü auf WASD zurückgesetzt und lag mit dem nächsten Spielende
+  wieder auf den Pfeiltasten.
+
+  Der Weg: Das Journal muss die **alten Werte der angefassten Schlüssel**
+  festhalten, nicht nur den Pfad einer Vollsicherung. Zurückgesetzt wird
+  dann, indem diese Werte in die *aktuelle* Datei zurückgeschrieben werden.
+  Die Vollsicherung bleibt als Netz, aber nicht als Weg. Betrifft
+  `zustand.py` (Journalformat), `stellschrauben.py`, `godot_tres.py` und
+  `godot_cfg.py` – die vier Netze aus CLAUDE.md müssen dabei halten.
 
 - [ ] **Übersicht der Tastenbelegung aus dem Profil erzeugen.** Am 23.10.2026
   entstanden zwei PDFs aus Wegwerfskripten – und waren fünf Minuten später
@@ -88,6 +107,23 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Road to Vostok: Bewegung wird nur noch einmal umgelegt**
+  (03.11.2026). Die Bewegung lag auf beiden Seiten – keyd übersetzte die
+  Pfeiltasten nach WASD, und Vostok erwartete selbst die Pfeiltasten. Beides
+  hob sich auf: Weder Pfeiltasten noch WASD taten etwas. Entschieden wurde
+  für die Seite des Spiels, weil sie jeden Neustart überlebt und nicht an
+  einem laufenden Dienst hängt. Im Profil stehen nur noch `insert` und
+  `delete` für Nachladen und Inventar – die beiden Zuordnungen, die Vostok
+  selbst nicht anbietet.
+
+- [x] **Die Rechteprüfung löscht nicht mehr, was sie prüft** (03.11.2026).
+  `tasten._socket_erreichbar()` benutzte `keyd bind reset` als Testaufruf –
+  wortgleich der Befehl, mit dem `zuruecknehmen()` alles verwirft. Weil der
+  Befund im Fenster die Prüfung bei jedem Spielwechsel aufruft, löschte ein
+  Klick in die Spieleliste die laufende Belegung. Geprüft wird jetzt mit
+  `os.access` auf dem Socket; der Test fixiert, dass die Prüfung **keinen**
+  Unterprozess startet.
 
 - [x] **Messfahrt gebaut.** 23.10.2026. Fahrtenakte unter
   `~/.local/share/spielraum/fahrten/`, Unterbefehl `messfahrt`, Knopf in
