@@ -8,6 +8,36 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Die Mods zur Messung mitschreiben.** Festgestellt am 03.11.2026: Die
+  Messungen halten den Taktregler fest, aber nicht, welche Mods mit welcher
+  Fassung liefen. Bei Road to Vostok sind das **16 Mods**, die in Inventar,
+  HUD, Beleuchtung und Trefferberechnung eingreifen – die größte
+  unprotokollierte Störgröße, die es hier gibt.
+
+  Das erklärt vermutlich einen Widerspruch in den eigenen Zahlen: `optik`
+  stand am 01.10.2026 bei 41,3 Bildern, am 03.11.2026 bei 48,1. Dazwischen
+  haben sich die Mods geändert (ItemClarity, LM und das
+  Konfigurationsmenü tragen den 21.10., ElegantHUD und die deutsche
+  Übersetzung den 01.10.). Ein Vergleich über diese Grenze hinweg vergleicht
+  nicht zwei Varianten, sondern zwei verschiedene Spiele. Gehört damit zum
+  Toleranzband-Punkt darunter.
+
+  Alles Nötige liegt lokal: Jede `.vmz` im `mods/`-Ordner ist ein ZIP mit
+  einer `mod.txt`, darin `name`, `id` und `version`. Kein Netzzugriff.
+
+  Bezogen werden die Mods von <https://modworkshop.net/g/roadtovostok>; die
+  `mod.txt` nennt die Nummer dort als `[updates] modworkshop=<id>`.
+
+  Zu tun: beim Messen Namen und Fassungen mitschreiben, im Befund anzeigen
+  und beim Vergleich zweier Läufe warnen, wenn sie sich unterschieden haben.
+
+  **Nicht** zu tun: das Aktualisieren der Mods. Das kann der spielseitige
+  Mod Loader (`modloader.gd` 3.2.1) schon selbst – Reiter »Updates«, Knopf
+  »Check for Updates«, Herunterladen über `api.modworkshop.net`, dazu eine
+  Selbstprüfung. Derselbe Fall wie GameMode, siehe CLAUDE.md. Nur zwei Mods
+  kann auch er nicht prüfen, weil ihnen der `[updates]`-Abschnitt fehlt:
+  *El-Prime Armor Durability* und *MedicalDurability*.
+
 - [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
   schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn
   der Abstand Rauschen ist. Am 03.11.2026 lagen `optik` (26,54) und

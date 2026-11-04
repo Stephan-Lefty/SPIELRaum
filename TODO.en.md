@@ -7,6 +7,35 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
+- [ ] **Record the mods alongside each measurement.** Established
+  2026-11-03: measurements record the CPU governor, but not which mods ran
+  at which version. For Road to Vostok that is **16 mods** reaching into
+  inventory, HUD, lighting and damage calculation — the largest unrecorded
+  confounder there is.
+
+  It probably explains a contradiction in our own numbers: `optik` scored
+  41.3 frames on 2026-10-01 and 48.1 on 2026-11-03. The mod set changed in
+  between (ItemClarity, LM and the configuration menu are dated 10-21,
+  ElegantHUD and the German translation 10-01). A comparison across that
+  line does not compare two variants, it compares two different games.
+  Belongs with the tolerance-band point below.
+
+  Everything needed is local: each `.vmz` in the `mods/` folder is a ZIP
+  containing a `mod.txt` with `name`, `id` and `version`. No network access.
+
+  The mods come from <https://modworkshop.net/g/roadtovostok>; `mod.txt`
+  names the id there as `[updates] modworkshop=<id>`.
+
+  To do: record names and versions while measuring, show them in the report,
+  and warn when two compared runs differ.
+
+  **Not** to do: updating the mods. The game's own mod loader
+  (`modloader.gd` 3.2.1) already does that — an "Updates" tab, a "Check for
+  Updates" button, downloads via `api.modworkshop.net`, plus a self-check.
+  Same case as GameMode, see CLAUDE.md. Only two mods are beyond its reach
+  because they carry no `[updates]` section: *El-Prime Armor Durability* and
+  *MedicalDurability*.
+
 - [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
   takes the highest 1 % low and declares a winner, even when the gap is
   noise. On 2026-11-03 `optik` (26.54) and `leistung` (26.31) were 0.9 %
