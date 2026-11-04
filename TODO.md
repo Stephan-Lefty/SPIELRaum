@@ -45,6 +45,20 @@ fertig wurde.
   Zu tun: beim Messen Namen und Fassungen mitschreiben, im Befund anzeigen
   und beim Vergleich zweier Läufe warnen, wenn sie sich unterschieden haben.
 
+  **Dasselbe gilt für fremde Programme, die sich die GPU nehmen.** Am
+  04.11.2026 blieb Road to Vostok beim Start stehen, und die Ursache war
+  RustDesk – ein Bildschirm, der nebenbei abgegriffen und übertragen wird,
+  kostet genau die Leistung, die SPIELRaum zu messen vorgibt. Ob es bei den
+  Läufen desselben Tages mitlief, lässt sich hinterher nicht mehr sagen, und
+  das ist der Punkt: Eine Messung, bei der nicht feststeht, was sonst noch
+  lief, ist keine.
+
+  Mitschreiben also auch, was zur Laufzeit sonst an der Karte hing –
+  Fernwartung, Bildschirmaufnahme, ein zweites Spiel. Die Namen sind kurz,
+  die Liste ist über `nvidia-smi` zu haben (steht ohnehin schon in der
+  Werkzeugliste), und sie beantwortet hinterher die Frage, die man sich
+  sonst nicht mehr beantworten kann.
+
   Dazu darf SPIELRaum **anzeigen**, dass Mods veraltet sind – im Befund,
   *bevor* das Spiel startet. Der Abgleich ist billig: 14 der 16 Mods nennen
   ihre Nummer, und `api.modworkshop.net/mods/versions` nimmt bis zu 100 auf

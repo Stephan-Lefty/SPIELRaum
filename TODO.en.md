@@ -41,6 +41,18 @@ deleted but moved down, with the date they were completed.
   To do: record names and versions while measuring, show them in the report,
   and warn when two compared runs differ.
 
+  **The same goes for other programs taking the GPU.** On 2026-11-04 Road to
+  Vostok stalled on startup, and the cause was RustDesk — a screen captured
+  and streamed on the side costs exactly the performance SPIELRaum claims to
+  measure. Whether it was running during that day's measured runs can no
+  longer be determined, and that is the point: a measurement where it is
+  unclear what else was running is not one.
+
+  So record what else was on the card at runtime — remote desktop, screen
+  recording, a second game. The names are short, the list is available via
+  `nvidia-smi` (already in the tool list), and it answers afterwards the
+  question that otherwise cannot be answered at all.
+
   SPIELRaum may also **report** that mods are outdated — in the report pane,
   *before* the game starts. The comparison is cheap: 14 of the 16 mods name
   their id, and `api.modworkshop.net/mods/versions` takes up to 100 at once.
