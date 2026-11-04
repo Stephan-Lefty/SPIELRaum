@@ -8,6 +8,40 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Den Mod Loader aktuell halten.** Gewünscht am 04.11.2026, und hier
+  gibt es wirklich eine Lücke: Die *Mods* aktualisiert der Mod Loader
+  selbst, sich selbst aber nicht. Er prüft nur und zeigt »Open Page«
+  (`_show_modloader_update_dialog` ruft `OS.shell_open` auf) – Herunterladen
+  und Einbauen ist Handarbeit. Folge: Auf diesem Rechner lief am 04.11.2026
+  die Fassung 3.2.1, während seit dem 06.10.2026 v3.4.2 veröffentlicht war.
+
+  Technisch unspektakulär, weil der Installer es vormacht:
+
+  ```
+  https://github.com/ametrocavich/vostok-mod-loader/releases/latest/download/modloader.gd
+  https://api.github.com/repos/ametrocavich/vostok-mod-loader/releases/latest   (tag_name)
+  ```
+
+  Feste Adressen, kein Schlüssel. Die installierte Fassung steht als
+  `MODLOADER_VERSION` in der ersten Handvoll Zeilen der `modloader.gd`.
+
+  **Prüfen und herunterladen** von selbst, im Hintergrund, und niemals den
+  Spielstart aufhalten – kein Netz heißt »nicht geprüft«, gestartet wird wie
+  immer. **Einbauen nur auf Knopfdruck**, und zwar aus einem Grund, der im
+  Loader selbst steht: Bei einem Fassungswechsel verwirft er seinen
+  Hook-Zwischenspeicher, löscht seinen Zustand und setzt die `override.cfg`
+  zurück (`_static_reset_override_cfg`). Eine neue Fassung kann also das
+  Zusammenspiel mit den 16 Mods verändern, und das soll niemanden in dem
+  Moment überraschen, in dem er spielen wollte. **Zurück** über das Journal,
+  die alte Datei bleibt liegen.
+
+  Achtung bei der Umsetzung: Dass der Loader die `override.cfg`
+  zurücksetzt, ist nur so lange harmlos, wie das Vostok-Profil sie nicht
+  anfasst (heute fasst es nur die `Preferences.tres` an). Käme dort eine
+  `override.cfg`-Stellschraube hinzu, hätten wir denselben Konflikt wie bei
+  den Tasten am 03.11.2026: zwei Programme, eine Datei, und keines weiß vom
+  anderen.
+
 - [ ] **Die Mods zur Messung mitschreiben.** Festgestellt am 03.11.2026: Die
   Messungen halten den Taktregler fest, aber nicht, welche Mods mit welcher
   Fassung liefen. Bei Road to Vostok sind das **16 Mods**, die in Inventar,
