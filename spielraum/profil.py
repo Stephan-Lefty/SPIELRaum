@@ -128,6 +128,17 @@ class Profil:
     # das, was keyd selbst als gültig ausgibt.
     tasten: dict[str, str] = field(default_factory=dict)
 
+    # Kennung einer Mod-Loader-Quelle aus ``modloader.QUELLEN`` – oder leer.
+    #
+    # Hier steht bewusst **keine Adresse**, sondern nur ein Name aus einer
+    # festen Liste im Programm. Eine Profildatei kann jeder bearbeiten; stünde
+    # dort eine URL, aus der SPIELRaum eine Datei ins Spielverzeichnis lädt,
+    # wäre das ein Weg hinein. Dieselbe Überlegung wie bei [tasten].
+    #
+    # Leer heißt aus. Vorgabe aus, weil SPIELRaum sonst nirgends ins Netz
+    # greift – und wer das nicht erwartet, soll es nicht ungefragt bekommen.
+    modloader: str = ""
+
     def warnungen(self) -> list[str]:
         """Was am Profil zwar erlaubt, auf *diesem* Rechner aber wirkungslos ist.
 
@@ -290,6 +301,25 @@ def laden(pfad: Path) -> Profil:
         raise ProfilFehler("Der Abschnitt [tasten] muss eine Tabelle sein.")
     for taste, ziel in tasten.items():
         profil.tasten[taste] = _als_str(ziel, f"tasten.{taste}")
+
+    # [modloader] quelle = "vostok"
+    #
+    # Geprüft wird hier gegen die feste Liste im Programm, nicht erst beim
+    # Herunterladen: Ein Tippfehler soll auffallen, wenn man das Profil
+    # prüft, nicht erst in dem Moment, in dem etwas aus dem Netz käme.
+    ladeblock = roh.get("modloader", {})
+    if not isinstance(ladeblock, dict):
+        raise ProfilFehler("Der Abschnitt [modloader] muss eine Tabelle sein.")
+    if quelle := ladeblock.get("quelle"):
+        from . import modloader as modloader_modul
+
+        kennung = _als_str(quelle, "modloader.quelle")
+        if kennung not in modloader_modul.QUELLEN:
+            raise ProfilFehler(
+                f"[modloader]: »{kennung}« kennt SPIELRaum nicht. Vorhanden: "
+                + ", ".join(sorted(modloader_modul.QUELLEN))
+            )
+        profil.modloader = kennung
 
     return profil
 

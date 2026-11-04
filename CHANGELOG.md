@@ -7,6 +7,48 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.0] – 2026-11-04
+
+### Hinzugefügt
+
+- **`spielraum modloader` hält den Mod Loader aktuell.** Der Vostok Mod
+  Loader aktualisiert *die Mods* selbst, sich selbst aber nicht – er prüft
+  nur und bietet »Open Page« an, das einen Browser öffnet. Auf diesem
+  Rechner lief deshalb am 04.11.2026 die Fassung 3.2.1, während seit dem
+  06.10.2026 v3.4.2 veröffentlicht war.
+
+  **Geprüft und heruntergeladen wird von selbst**, beim Spielstart in einem
+  eigenen Faden, damit die Netzabfrage den Start nicht um ihre Laufzeit
+  verzögert. Ohne Netz steht »nicht geprüft« und gestartet wird wie immer.
+
+  **Eingebaut wird nur auf Verlangen** (`--einbauen`). Grund: Bei einem
+  Fassungswechsel verwirft der Loader seinen Hook-Zwischenspeicher, löscht
+  seinen Zustand und setzt die `override.cfg` zurück – eine neue Fassung
+  kann das Zusammenspiel mit den installierten Mods verändern, und das soll
+  niemanden in der Sekunde überraschen, in der er spielen wollte. Zurück
+  geht es mit `--zurueck`; die alte Fassung wird vorher gesichert.
+
+  Eingebaut wird nur, was sich ausweisen kann: über 50 KB groß, mit
+  Fassungszeile, und diese muss zu der Marke passen, die GitHub nennt.
+  Sonst wird nichts angefasst und gesagt, was nicht stimmte.
+
+  Angeschaltet wird pro Spiel mit `[modloader] quelle = "vostok"`. Vorgabe
+  aus, weil SPIELRaum sonst nirgends ins Netz greift. Im Profil steht eine
+  **Kennung**, keine Adresse – eine URL in einer Datei, die jeder
+  bearbeiten kann, wäre ein Weg ins Spielverzeichnis.
+
+  Siehe [docs/modloader.md](docs/modloader.md).
+
+- **`spielraum pruefen` nennt Tastenbelegung und Mod Loader**, damit
+  sichtbar ist, was an einem Profil überhaupt eingeschaltet ist.
+
+### Nicht gebaut
+
+- **Das Aktualisieren der Mods selbst.** Das kann der Mod Loader, samt
+  Umbenennen beim Austauschen, Ladereihenfolge über `priority` und dem
+  Verwerfen des Hook-Zwischenspeichers. Nachbauen hieße, sechzehn Mods aufs
+  Spiel zu setzen, um einen Knopfdruck zu sparen.
+
 ## [0.7.0] – 2026-11-03
 
 ### Geändert

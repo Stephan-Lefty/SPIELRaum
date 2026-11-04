@@ -233,3 +233,33 @@ grafik = { lighting = 3, antialiasing = 1, smaa = 2, detailShadows = 1, reflecti
 
 insert = "r"
 delete = "tab"
+
+# --- Mod Loader -----------------------------------------------------------
+#
+# Der Vostok Mod Loader haelt die MODS von selbst aktuell -- Reiter
+# "Updates" im Spiel, Knopf, fertig. SICH SELBST haelt er nicht aktuell: Er
+# prueft nur und bietet "Open Page" an, das eine Webseite oeffnet.
+#
+# Das ist nicht theoretisch. Am 04.11.2026 lief hier die Fassung 3.2.1,
+# waehrend seit dem 06.10.2026 v3.4.2 veroeffentlicht war -- ein Monat
+# Rueckstand, nur weil der Weg ueber einen Browser fuehrt.
+#
+# "vostok" ist eine Kennung aus modloader.QUELLEN, keine Adresse. Wohin sie
+# zeigt, entscheidet das Programm; siehe die Sicherheitsregel in CLAUDE.md.
+#
+# Geprueft und heruntergeladen wird von selbst, im Hintergrund waehrend das
+# Spiel laedt. Eingebaut wird nur auf Verlangen:
+#
+#   spielraum modloader 1963610              was ist da, was ist neu
+#   spielraum modloader 1963610 --einbauen   uebernehmen
+#   spielraum modloader 1963610 --zurueck    wieder die alte Fassung
+#
+# Warum nicht von selbst einbauen: Bei einem Fassungswechsel verwirft der
+# Loader seinen Hook-Zwischenspeicher, loescht seinen Zustand und setzt die
+# override.cfg zurueck. Eine neue Fassung kann damit das Zusammenspiel mit
+# den 16 Mods veraendern -- das soll niemanden in der Sekunde ueberraschen,
+# in der er spielen wollte.
+
+[modloader]
+
+quelle = "vostok"

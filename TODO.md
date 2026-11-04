@@ -8,36 +8,25 @@ fertig wurde.
 
 ## Offen
 
-- [ ] **Den Mod Loader aktuell halten.** Gewünscht am 04.11.2026, und hier
-  gibt es wirklich eine Lücke: Die *Mods* aktualisiert der Mod Loader
-  selbst, sich selbst aber nicht. Er prüft nur und zeigt »Open Page«
-  (`_show_modloader_update_dialog` ruft `OS.shell_open` auf) – Herunterladen
-  und Einbauen ist Handarbeit. Folge: Auf diesem Rechner lief am 04.11.2026
-  die Fassung 3.2.1, während seit dem 06.10.2026 v3.4.2 veröffentlicht war.
+- [ ] **Den Mod-Loader-Stand in der Oberfläche zeigen.** Der Unterbefehl
+  `spielraum modloader` steht seit 0.8.0, die Oberfläche weiß nichts davon.
+  Dafür gedacht ist `modloader.stand_lokal()`: Es liest nur die installierte
+  Fassung und das Zwischenlager, fragt also **nicht** im Netz nach und hält
+  das Fenster nicht auf. Dazu ein Knopf »Einbauen«, wenn etwas bereitliegt.
 
-  Technisch unspektakulär, weil der Installer es vormacht:
+  Nicht vergessen: Der Knopf darf nichts tun, solange das Spiel läuft – die
+  Datei ist dann in Benutzung.
 
-  ```
-  https://github.com/ametrocavich/vostok-mod-loader/releases/latest/download/modloader.gd
-  https://api.github.com/repos/ametrocavich/vostok-mod-loader/releases/latest   (tag_name)
-  ```
+- [ ] **Eine zweite Mod-Loader-Quelle einhängen.** `modloader.QUELLEN` kennt
+  bisher eine, und sie zeigt auf GitHub-Veröffentlichungen. Die Form
+  »Fassung aus der Datei lesen, neueste von einer Adresse holen« sollte
+  tragen, ist aber nur an einem Fall erprobt. Erst am zweiten wird man
+  sehen, was daran zu starr ist.
 
-  Feste Adressen, kein Schlüssel. Die installierte Fassung steht als
-  `MODLOADER_VERSION` in der ersten Handvoll Zeilen der `modloader.gd`.
-
-  **Prüfen und herunterladen** von selbst, im Hintergrund, und niemals den
-  Spielstart aufhalten – kein Netz heißt »nicht geprüft«, gestartet wird wie
-  immer. **Einbauen nur auf Knopfdruck**, und zwar aus einem Grund, der im
-  Loader selbst steht: Bei einem Fassungswechsel verwirft er seinen
-  Hook-Zwischenspeicher, löscht seinen Zustand und setzt die `override.cfg`
-  zurück (`_static_reset_override_cfg`). Eine neue Fassung kann also das
-  Zusammenspiel mit den 16 Mods verändern, und das soll niemanden in dem
-  Moment überraschen, in dem er spielen wollte. **Zurück** über das Journal,
-  die alte Datei bleibt liegen.
-
-  Achtung bei der Umsetzung: Dass der Loader die `override.cfg`
-  zurücksetzt, ist nur so lange harmlos, wie das Vostok-Profil sie nicht
-  anfasst (heute fasst es nur die `Preferences.tres` an). Käme dort eine
+  Dabei die Warnung im Auge behalten: Dass der Vostok-Loader bei einem
+  Fassungswechsel die `override.cfg` zurücksetzt, ist nur so lange harmlos,
+  wie das Profil diese Datei nicht selbst anfasst. Beim Vostok-Profil ist
+  das so – es fasst nur die `Preferences.tres` an. Käme dort eine
   `override.cfg`-Stellschraube hinzu, hätten wir denselben Konflikt wie bei
   den Tasten am 03.11.2026: zwei Programme, eine Datei, und keines weiß vom
   anderen.
@@ -181,6 +170,15 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Den Mod Loader aktuell halten** (04.11.2026). `spielraum modloader`
+  prüft und lädt von selbst – beim Spielstart in einem eigenen Faden, damit
+  die Netzabfrage den Start nicht verzögert –, baut aber nur auf Verlangen
+  ein. Eingeschaltet pro Spiel mit `[modloader] quelle = "vostok"`, Vorgabe
+  aus, weil SPIELRaum sonst nirgends ins Netz greift. Im Profil steht eine
+  Kennung, keine Adresse. Zurück über die Sicherung, nicht über das Journal
+  – ein eingebauter Loader soll bleiben, auch nach einem Absturz.
+  Hintergrund in [docs/modloader.md](docs/modloader.md).
 
 - [x] **Zurücksetzen nimmt nur noch die eigenen Änderungen zurück**
   (03.11.2026). Journalfassung 2: Im Journal stehen die alten Werte der

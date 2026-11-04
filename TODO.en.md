@@ -7,37 +7,27 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
-- [ ] **Keep the mod loader up to date.** Asked for 2026-11-04, and here
-  there is a genuine gap: the mod loader updates the *mods* itself, but not
-  itself. It only checks and offers "Open Page"
-  (`_show_modloader_update_dialog` calls `OS.shell_open`) — downloading and
-  installing is manual. Result: this machine ran 3.2.1 on 2026-11-04 while
-  v3.4.2 had been out since 2026-10-06.
+- [ ] **Show the mod loader state in the interface.** The `spielraum
+  modloader` subcommand has been there since 0.8.0; the interface knows
+  nothing about it. `modloader.stand_lokal()` exists for this: it reads only
+  the installed version and the staging folder, so it does **not** hit the
+  network and does not hold up the window. Plus an "Install" button when
+  something is staged.
 
-  Technically unremarkable, because the installer shows how:
+  Do not forget: the button must do nothing while the game is running — the
+  file is in use then.
 
-  ```
-  https://github.com/ametrocavich/vostok-mod-loader/releases/latest/download/modloader.gd
-  https://api.github.com/repos/ametrocavich/vostok-mod-loader/releases/latest   (tag_name)
-  ```
+- [ ] **Hook up a second mod loader source.** `modloader.QUELLEN` knows one
+  so far, and it points at GitHub releases. The shape — read the version
+  from the file, fetch the latest from a URL — should hold, but it has been
+  tried on exactly one case. Only the second will show what is too rigid.
 
-  Fixed URLs, no key. The installed version sits in `MODLOADER_VERSION` in
-  the first handful of lines of `modloader.gd`.
-
-  **Check and download** automatically, in the background, and never hold up
-  the game start — no network means "not checked" and it starts as always.
-  **Install only on a button press**, for a reason stated in the loader
-  itself: on a version change it discards its hook cache, deletes its state
-  and resets `override.cfg` (`_static_reset_override_cfg`). A new version
-  can therefore change how it works with the 16 mods, and that should not
-  surprise anyone at the moment they wanted to play. **Rollback** through
-  the journal; the old file stays on disk.
-
-  Careful when implementing: the loader resetting `override.cfg` is only
-  harmless as long as the Vostok profile does not touch it (today it only
-  touches `Preferences.tres`). Add an `override.cfg` knob there and we get
-  the same conflict as with the keys on 2026-11-03: two programs, one file,
-  neither aware of the other.
+  Keep the warning in view: the Vostok loader resetting `override.cfg` on a
+  version change is only harmless as long as the profile does not touch that
+  file itself. The Vostok profile does not — it only touches
+  `Preferences.tres`. Add an `override.cfg` knob there and we get the same
+  conflict as with the keys on 2026-11-03: two programs, one file, neither
+  aware of the other.
 
 - [ ] **Record the mods alongside each measurement.** Established
   2026-11-03: measurements record the CPU governor, but not which mods ran
@@ -159,6 +149,15 @@ deleted but moved down, with the date they were completed.
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **Keep the mod loader up to date** (2026-11-04). `spielraum modloader`
+  checks and downloads on its own — during the game start, in its own
+  thread, so the network query cannot delay the start — but installs only on
+  request. Enabled per game with `[modloader] quelle = "vostok"`, off by
+  default because SPIELRaum touches the network nowhere else. The profile
+  holds a key, not a URL. Rollback goes through the backup, not the journal
+  — an installed loader should stay, crash or no crash. Background in
+  [docs/modloader.md](docs/modloader.md) (German).
 
 - [x] **Undoing only undoes our own changes now** (2026-11-03). Journal
   format 2: the journal records the old values of the keys we touched, not

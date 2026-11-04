@@ -36,6 +36,7 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -225,6 +226,13 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         for zeile in getan:
             print(f"Angepasst: {zeile}")
 
+        # Nach dem Mod Loader sehen – aber erst jetzt, unmittelbar vor dem
+        # Spiel, und in einem eigenen Faden. Eine Netzabfrage vor dem Start
+        # würde den Start um ihre Laufzeit verzögern, und das ist das eine,
+        # was sie nicht darf. So läuft sie, während das Spiel ohnehin lädt;
+        # das Ergebnis liegt für den nächsten Blick bereit.
+        _modloader_im_hintergrund(profil, spielordner)
+
         rueckgabe = _laufen_lassen(voller_befehl, laufumgebung, profil)
     except Exception as fehler:  # noqa: BLE001 – hier ist Weitermachen falsch
         print(f"Abbruch: {fehler}", file=sys.stderr)
@@ -242,6 +250,37 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         zustand.entfernen(profil.name)
 
     return rueckgabe
+
+
+def _modloader_im_hintergrund(profil: Profil, spielordner: Path | None) -> None:
+    """Prüfen und holen, ohne jemanden warten zu lassen.
+
+    Ein Tagfaden (``daemon=True``): Endet das Spiel, während die Abfrage noch
+    hängt, geht SPIELRaum trotzdem zu Ende. Ein Faden, der das Programm am
+    Leben hält, würde aus einer Höflichkeit eine Fessel machen.
+
+    Fehler werden geschluckt und nicht gemeldet. Das ist hier richtig und
+    sonst fast nie: Dieser Faden hat mit dem Spiel nichts zu tun, und eine
+    Netzmeldung mitten im Startprotokoll würde nur verunsichern. Was dabei
+    herauskam, erfährt man beim nächsten ``spielraum modloader``.
+    """
+    if not profil.modloader or spielordner is None:
+        return
+
+    from . import modloader as modloader_modul
+
+    quelle = modloader_modul.QUELLEN.get(profil.modloader)
+    if quelle is None:
+        return
+
+    def arbeiten() -> None:
+        try:
+            modloader_modul.pruefen(quelle, spielordner / quelle.datei)
+        except Exception:  # noqa: BLE001 – siehe Docstring
+            pass
+
+    threading.Thread(target=arbeiten, name="modloader-pruefen",
+                     daemon=True).start()
 
 
 def _fahrt_auswerten(laufende: "fahrt.Fahrt", variante: str, messen_in: Path,

@@ -21,11 +21,17 @@
   Zahlen, warum die ersten zehn Sekunden nicht zählen und wann ein
   Unterschied einer ist.
 
-## Entwürfe
+- [Die Messfahrt](messfahrt.md) – Varianten nacheinander messen, ohne dass
+  jemand ins Spielmenü muss. Seit Fassung 0.6.0 gebaut; das Papier
+  beschreibt den Ablauf und die Stelle, an der es schwierig wird.
 
-- [Die Messfahrt](messfahrt.md) – drei Varianten nacheinander messen, ohne
-  dass jemand ins Spielmenü muss. Noch nicht gebaut; das Papier beschreibt
-  den Ablauf und die Stelle, an der es schwierig wird.
+- [Tastenbelegung pro Spiel](tasten.md) – über keyd, auf Zeit. Und die
+  Falle, die am 23.10. und am 03.11.2026 zugebissen hat: Die Bewegung darf
+  nur auf **einer** Seite umgelegt werden.
+
+- [Den Mod Loader aktuell halten](modloader.md) – prüfen und herunterladen
+  von selbst, einbauen auf Verlangen. Warum das Einbauen ein eigener
+  Schritt ist.
 
 ## Noch zu schreiben
 

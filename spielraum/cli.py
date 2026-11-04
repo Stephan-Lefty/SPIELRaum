@@ -17,7 +17,7 @@ import os
 import subprocess
 import sys
 
-from . import __version__, profil, umgebung
+from . import __version__, profil, stellschrauben, umgebung
 
 
 def _umgebung_zeigen() -> int:
@@ -156,6 +156,10 @@ def _pruefen(datei: str) -> int:
             print(f"      {name}={wert}")
     if p.argumente:
         print(f"  Argumente:      {' '.join(p.argumente)}")
+    if p.tasten:
+        print(f"  Tasten:         {len(p.tasten)} Zuordnung(en)")
+    if p.modloader:
+        print(f"  Mod Loader:     {p.modloader} (prüft, baut nicht von selbst ein)")
     for kennung, aenderung in p.dateien.items():
         art = "zusammenführen" if aenderung.zusammenfuehren else "ERSETZEN"
         print(f"  Datei {kennung}: {aenderung.pfad} ({art})")
@@ -329,6 +333,85 @@ def _variante(args) -> int:
         print("Spiel liest seine Einstellungen nicht neu.")
         return 0
     except (varianten.VariantenFehler, FileNotFoundError) as fehler:
+        print(f"Geht nicht: {fehler}", file=sys.stderr)
+        return 1
+
+
+def _modloader(args) -> int:
+    """Den Mod Loader ansehen, einbauen oder zurücknehmen.
+
+    Ohne weitere Angabe wird geprüft und, falls es etwas Neueres gibt, auch
+    schon heruntergeladen – aber **nicht** eingebaut. Herunterladen ändert am
+    Spiel nichts; Einbauen lässt den Loader seinen Hook-Zwischenspeicher
+    verwerfen und kann das Zusammenspiel mit den Mods verändern. Deshalb ein
+    eigener Schritt und keine Nebenwirkung.
+    """
+    from . import modloader as modloader_modul
+
+    p = profil.finden(name=args.spiel) or profil.finden(
+        steam_app_id=int(args.spiel) if args.spiel.isdigit() else None)
+    if p is None:
+        print(f"Kein Profil für »{args.spiel}« gefunden.", file=sys.stderr)
+        return 1
+    if not p.modloader:
+        print(f"Für {p.name} ist kein Mod Loader im Profil eingetragen.")
+        print("\nDazu gehört in die Profildatei:\n")
+        print("  [modloader]")
+        print(f'  quelle = "{sorted(modloader_modul.QUELLEN)[0]}"')
+        return 1
+
+    quelle = modloader_modul.QUELLEN[p.modloader]
+    ordner, _ = _spiel_und_pfade(p)
+    if ordner is None:
+        print(f"{p.name} ist gerade nicht zu finden – liegt es noch auf der "
+              "Platte?", file=sys.stderr)
+        return 1
+    ziel = ordner / quelle.datei
+    sicherungen = stellschrauben.sicherungsordner(p.steam_app_id, p.name)
+
+    try:
+        if args.zurueck:
+            for zeile in modloader_modul.zuruecknehmen(quelle, ziel, sicherungen):
+                print(zeile)
+            print("\nDer nächste Start dauert länger – der Loader baut seinen")
+            print("Zwischenspeicher neu auf.")
+            return 0
+
+        stand = modloader_modul.pruefen(quelle, ziel, laden=not args.nur_pruefen)
+
+        print(quelle.name)
+        print(f"  installiert:  {stand.installiert or 'nicht gefunden'}")
+        print(f"  neueste:      {stand.neueste or 'nicht geprüft'}")
+        if stand.grund:
+            print(f"  nicht geprüft: {stand.grund}")
+
+        if not stand.vorhanden:
+            print(f"\nIn {ordner} liegt keine {quelle.datei}. SPIELRaum baut")
+            print("keinen Mod Loader von Null ein – dafür ist der Installer da.")
+            return 1
+        if not stand.neueste:
+            return 0
+        if not stand.veraltet:
+            print("\nAktuell, nichts zu tun.")
+            return 0
+
+        if args.einbauen:
+            for zeile in modloader_modul.einbauen(
+                    quelle, ziel, stand.neueste, sicherungen):
+                print(zeile)
+            print("\nDer nächste Start dauert länger: Der Loader verwirft bei")
+            print("einem Fassungswechsel seinen Zwischenspeicher und baut ihn")
+            print("neu auf. Zurück geht es mit")
+            print(f"  spielraum modloader {args.spiel} --zurueck")
+            return 0
+
+        if stand.bereit:
+            print(f"\nFassung {stand.neueste} liegt bereit. Einbauen mit")
+            print(f"  spielraum modloader {args.spiel} --einbauen")
+            print("\nDas Spiel sollte dabei geschlossen sein. Die alte Fassung")
+            print("wird gesichert, zurück geht es mit --zurueck.")
+        return 0
+    except modloader_modul.ModLoaderFehler as fehler:
         print(f"Geht nicht: {fehler}", file=sys.stderr)
         return 1
 
@@ -584,6 +667,27 @@ def main(argv: list[str] | None = None) -> int:
         help="nur anzeigen, was zurückgesetzt würde",
     )
 
+    modlader = unterbefehle.add_parser(
+        "modloader",
+        help="Den Mod Loader prüfen, einbauen oder zurücknehmen",
+        description="Prüft und lädt von selbst. Eingebaut wird nur auf "
+                    "Verlangen: Ein Fassungswechsel lässt den Loader seinen "
+                    "Zwischenspeicher verwerfen.",
+    )
+    modlader.add_argument("spiel", help="Name oder Steam-App-ID")
+    modlader.add_argument(
+        "--einbauen", action="store_true",
+        help="die bereitliegende Fassung in den Spielordner übernehmen",
+    )
+    modlader.add_argument(
+        "--zurueck", action="store_true",
+        help="die zuletzt gesicherte Fassung wieder einbauen",
+    )
+    modlader.add_argument(
+        "--nur-pruefen", dest="nur_pruefen", action="store_true",
+        help="nur die Fassungen vergleichen, nichts herunterladen",
+    )
+
     start = unterbefehle.add_parser(
         "starten",
         help="Ein Spiel mit seinem Profil starten",
@@ -618,6 +722,8 @@ def main(argv: list[str] | None = None) -> int:
         return _pruefen(args.datei)
     if args.aktion == "variante":
         return _variante(args)
+    if args.aktion == "modloader":
+        return _modloader(args)
     if args.aktion == "messlauf":
         return _messlauf(args)
     if args.aktion == "oberflaeche":
