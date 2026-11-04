@@ -31,12 +31,30 @@ fertig wurde.
   Zu tun: beim Messen Namen und Fassungen mitschreiben, im Befund anzeigen
   und beim Vergleich zweier Läufe warnen, wenn sie sich unterschieden haben.
 
-  **Nicht** zu tun: das Aktualisieren der Mods. Das kann der spielseitige
-  Mod Loader (`modloader.gd` 3.2.1) schon selbst – Reiter »Updates«, Knopf
-  »Check for Updates«, Herunterladen über `api.modworkshop.net`, dazu eine
-  Selbstprüfung. Derselbe Fall wie GameMode, siehe CLAUDE.md. Nur zwei Mods
-  kann auch er nicht prüfen, weil ihnen der `[updates]`-Abschnitt fehlt:
-  *El-Prime Armor Durability* und *MedicalDurability*.
+  Dazu darf SPIELRaum **anzeigen**, dass Mods veraltet sind – im Befund,
+  *bevor* das Spiel startet. Der Abgleich ist billig: 14 der 16 Mods nennen
+  ihre Nummer, und `api.modworkshop.net/mods/versions` nimmt bis zu 100 auf
+  einmal. Zwei Bedingungen: ein Schalter im Profil, **aus** als Vorgabe,
+  weil SPIELRaum sonst nirgends ins Netz greift – und die Abfrage darf den
+  Spielstart nie aufhalten. Ist das Netz weg, steht dort »nicht geprüft«,
+  und gestartet wird wie immer.
+
+  **Nicht** zu tun: das Herunterladen und Austauschen. Das kann der
+  spielseitige Mod Loader (`modloader.gd` 3.2.1) schon selbst – Reiter
+  »Updates«, Knopf »Check for Updates«, Download über
+  `api.modworkshop.net`, dazu eine Selbstprüfung. Und es ist der Teil, bei
+  dem etwas kaputtgeht: Er benennt beim Austauschen die Datei um
+  (`_derive_updated_filename` wertet dafür die HTTP-Kopfzeilen aus), achtet
+  über `priority` auf die Ladereihenfolge und verwirft seinen
+  Hook-Zwischenspeicher, wenn sich eine Fassung ändert. Das nachzubauen
+  heißt, sechzehn Mods aufs Spiel zu setzen, um einen Knopfdruck zu sparen.
+  Derselbe Fall wie GameMode, siehe CLAUDE.md.
+
+  Die Teilung also: SPIELRaum sagt es, der Mod Loader tut es.
+
+  Zwei Mods kann auch er nicht prüfen, weil ihnen der `[updates]`-Abschnitt
+  fehlt: *El-Prime Armor Durability* und *MedicalDurability*. Die bleiben
+  Handarbeit, unabhängig davon, was gebaut wird.
 
 - [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
   schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn

@@ -29,12 +29,27 @@ deleted but moved down, with the date they were completed.
   To do: record names and versions while measuring, show them in the report,
   and warn when two compared runs differ.
 
-  **Not** to do: updating the mods. The game's own mod loader
+  SPIELRaum may also **report** that mods are outdated — in the report pane,
+  *before* the game starts. The comparison is cheap: 14 of the 16 mods name
+  their id, and `api.modworkshop.net/mods/versions` takes up to 100 at once.
+  Two conditions: a profile switch, **off** by default, because SPIELRaum
+  touches the network nowhere else — and the query must never hold up the
+  game start. With no network it says "not checked" and starts as always.
+
+  **Not** to do: downloading and swapping. The game's own mod loader
   (`modloader.gd` 3.2.1) already does that — an "Updates" tab, a "Check for
   Updates" button, downloads via `api.modworkshop.net`, plus a self-check.
-  Same case as GameMode, see CLAUDE.md. Only two mods are beyond its reach
-  because they carry no `[updates]` section: *El-Prime Armor Durability* and
-  *MedicalDurability*.
+  And it is the part where things break: it renames the file when swapping
+  (`_derive_updated_filename` reads the HTTP headers for that), honours load
+  order via `priority`, and discards its hook cache when a version changes.
+  Rebuilding that means risking sixteen mods to save one button press. Same
+  case as GameMode, see CLAUDE.md.
+
+  So: SPIELRaum says it, the mod loader does it.
+
+  Two mods are beyond its reach because they carry no `[updates]` section:
+  *El-Prime Armor Durability* and *MedicalDurability*. Those stay manual
+  whatever gets built.
 
 - [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
   takes the highest 1 % low and declares a winner, even when the gap is
