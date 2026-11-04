@@ -172,10 +172,21 @@ class Fenster(QMainWindow):
         self.knopf_fahrt.clicked.connect(self._messfahrt)
         self.knopf_fahrt.setEnabled(False)
 
+        # Den Mod Loader einbauen. Erscheint benutzbar nur, wenn wirklich
+        # etwas Neueres heruntergeladen danebenliegt -- ein Knopf, der
+        # meistens nichts tut, ist schlimmer als keiner.
+        self.knopf_modloader = QPushButton("Mod Loader einbauen")
+        self.knopf_modloader.clicked.connect(self._modloader_einbauen)
+        self.knopf_modloader.setEnabled(False)
+        self.knopf_modloader.setToolTip(
+            "Übernimmt die heruntergeladene Fassung des Mod Loaders.\n"
+            "Die alte wird vorher gesichert.")
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
         knoepfe.addWidget(self.knopf_tasten)
         knoepfe.addWidget(self.knopf_fahrt)
+        knoepfe.addWidget(self.knopf_modloader)
         knoepfe.addStretch()
         knoepfe.addWidget(self.knopf_start)
 
@@ -249,6 +260,15 @@ class Fenster(QMainWindow):
         # Eine Messfahrt braucht mindestens zwei Varianten -- sonst gäbe es
         # nichts zu vergleichen.
         self.knopf_fahrt.setEnabled(bool(p and len(p.varianten) >= 2))
+
+        # Der Mod-Loader-Knopf gilt nur, wenn etwas Neueres bereitliegt.
+        quelle, stand = self._modloader_lage(p, spiel)
+        bereit = bool(stand and stand.veraltet and stand.bereit is not None)
+        self.knopf_modloader.setEnabled(bereit)
+        self.knopf_modloader.setText(
+            f"Mod Loader {stand.neueste} einbauen" if bereit
+            else "Mod Loader einbauen")
+
         self.befund.setHtml(self._bericht(spiel))
 
     # --- Messfahrt --------------------------------------------------------
@@ -424,6 +444,103 @@ class Fenster(QMainWindow):
 
     # --- Der Bericht ------------------------------------------------------
 
+    def _modloader_einbauen(self) -> None:
+        """Die bereitliegende Fassung übernehmen – nach einer Rückfrage.
+
+        Gefragt wird, weil der Loader bei einem Fassungswechsel seinen
+        Hook-Zwischenspeicher verwirft, seinen Zustand löscht und die
+        ``override.cfg`` zurücksetzt. Das kann das Zusammenspiel mit den
+        installierten Mods verändern. Wer darauf klickt, soll wissen, worauf.
+        """
+        from .. import modloader, stellschrauben
+
+        zeile = self.liste.currentRow()
+        if not 0 <= zeile < len(self.spiele):
+            return
+        spiel = self.spiele[zeile]
+        p = profil.finden(steam_app_id=spiel.app_id)
+        quelle, stand = self._modloader_lage(p, spiel)
+        if stand is None or not stand.veraltet or stand.bereit is None:
+            return
+
+        antwort = QMessageBox.question(
+            self, "Mod Loader einbauen",
+            f"{quelle.name}\n\n"
+            f"    installiert:  {stand.installiert}\n"
+            f"    einbauen:     {stand.neueste}\n\n"
+            "Die alte Fassung wird vorher gesichert; zurück geht es mit\n"
+            f"  spielraum modloader {p.steam_app_id or p.name} --zurueck\n\n"
+            "Der nächste Spielstart dauert länger: Der Loader verwirft bei "
+            "einem Fassungswechsel seinen Zwischenspeicher und baut ihn neu "
+            "auf. Läuft das Spiel gerade, behält es bis zum Neustart die "
+            "alte Fassung.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if antwort != QMessageBox.Yes:
+            return
+
+        ziel = spiel.ordner / quelle.datei
+        sicherungen = stellschrauben.sicherungsordner(p.steam_app_id, p.name)
+        try:
+            bericht = modloader.einbauen(quelle, ziel, stand.neueste, sicherungen)
+        except (modloader.ModLoaderFehler, OSError) as fehler:
+            QMessageBox.warning(self, "Geht nicht", str(fehler))
+            return
+
+        QMessageBox.information(self, "Eingebaut", "\n".join(bericht))
+        # Neu zeichnen, sonst steht im Befund noch die alte Fassung.
+        self._gewaehlt(zeile)
+
+    def _modloader_lage(self, p, spiel: steam.Spiel):
+        """Quelle und örtlicher Stand – oder zweimal ``None``.
+
+        Ohne Netz. ``stand_lokal`` liest die installierte Fassung aus der
+        Datei und sieht ins Zwischenlager; mehr braucht die Oberfläche
+        nicht, und mehr darf sie sich auch nicht nehmen: Eine Netzabfrage
+        beim Zeichnen eines Fensters friert es ein, bis die Antwort da ist.
+        """
+        from .. import modloader
+
+        if p is None or not p.modloader:
+            return None, None
+        quelle = modloader.QUELLEN.get(p.modloader)
+        if quelle is None:
+            return None, None
+        return quelle, modloader.stand_lokal(quelle, spiel.ordner / quelle.datei)
+
+    def _modloader_abschnitt(self, p, spiel: steam.Spiel) -> list[str]:
+        """Was im Befund über den Mod Loader steht."""
+        quelle, stand = self._modloader_lage(p, spiel)
+        if stand is None:
+            return []
+
+        teile = [f"<h3 style='color:{farben.GRAU_DUNKEL}'>Mod Loader</h3>"]
+        if not stand.vorhanden:
+            teile.append(
+                f"<p>In diesem Spielordner liegt keine <code>{quelle.datei}</code>. "
+                "SPIELRaum baut keinen Mod Loader von Null ein – dafür ist der "
+                "Installer des Loaders da.</p>")
+            return teile
+
+        teile.append(f"<p>{quelle.name}, Fassung <b>{stand.installiert}</b></p>")
+
+        if stand.veraltet and stand.bereit is not None:
+            teile.append(
+                f"<p style='background:#fff6e5;padding:8px;border-radius:5px'>"
+                f"<b>Fassung {stand.neueste} liegt bereit.</b><br>"
+                f"Heruntergeladen und geprüft – eingebaut ist sie noch nicht. "
+                f"Der Knopf unten übernimmt sie.</p>")
+        else:
+            # Bewusst keine Behauptung »aktuell«: Geprüft wird beim
+            # Spielstart, und wer lange nicht gespielt hat, hat lange nicht
+            # geprüft. Eine Oberfläche, die hier »aktuell« schreibt, sagt
+            # etwas, das sie nicht weiß.
+            teile.append(
+                f"<p style='color:{farben.GRAU_LEISE}'>Nichts Neueres "
+                f"heruntergeladen. Geprüft wird beim Spielstart; von Hand "
+                f"nachsehen mit <code>spielraum modloader "
+                f"{p.steam_app_id or p.name}</code>.</p>")
+        return teile
+
     def _bericht(self, spiel: steam.Spiel) -> str:
         p = profil.finden(steam_app_id=spiel.app_id)
         dreht = umgebung.platte_dreht(spiel.ordner)
@@ -514,6 +631,16 @@ class Fenster(QMainWindow):
                         f"<span style='color:{farben.GRAU_LEISE}'>– die ganze "
                         f"Belegung samt Maus, zum Ausdrucken</span></p>"
                     )
+
+            # --- Der Mod Loader
+            #
+            # Gelesen wird ausschließlich örtlich: installierte Fassung und
+            # Zwischenlager. Eine Netzabfrage beim Aufbau des Befundes würde
+            # das Fenster für die Dauer der Antwort einfrieren -- und bei
+            # einer abgelehnten Verbindung bis zur Zeitgrenze. Geholt wird
+            # beim Spielstart im Hintergrund, siehe starten.py.
+            if p.modloader:
+                teile.extend(self._modloader_abschnitt(p, spiel))
 
         # --- Läuft eine Messfahrt?
         #

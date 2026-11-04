@@ -7,16 +7,6 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
-- [ ] **Show the mod loader state in the interface.** The `spielraum
-  modloader` subcommand has been there since 0.8.0; the interface knows
-  nothing about it. `modloader.stand_lokal()` exists for this: it reads only
-  the installed version and the staging folder, so it does **not** hit the
-  network and does not hold up the window. Plus an "Install" button when
-  something is staged.
-
-  Do not forget: the button must do nothing while the game is running — the
-  file is in use then.
-
 - [ ] **Hook up a second mod loader source.** `modloader.QUELLEN` knows one
   so far, and it points at GitHub releases. The shape — read the version
   from the file, fetch the latest from a URL — should hold, but it has been
@@ -149,6 +139,18 @@ deleted but moved down, with the date they were completed.
   has not been looked up, only assumed.
 
 ## Done
+
+- [x] **The mod loader state is in the interface** (2026-11-04). The report
+  shows the installed version, an amber box when something is staged, and a
+  button that installs it after a confirmation. Reading is local only via
+  `stand_lokal()`; a test pins down that the report never touches the
+  network — a query while drawing would freeze the window.
+
+  One assumption from this TODO corrected along the way: "the button must do
+  nothing while the game is running — the file is in use then" is not true
+  on Linux. Writing is atomic — write beside, then rename — so the running
+  game keeps the handle it opened. It is not dangerous, merely ineffective
+  until the next start. The confirmation says so instead of forbidding it.
 
 - [x] **Keep the mod loader up to date** (2026-11-04). `spielraum modloader`
   checks and downloads on its own — during the game start, in its own

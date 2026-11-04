@@ -8,15 +8,6 @@ fertig wurde.
 
 ## Offen
 
-- [ ] **Den Mod-Loader-Stand in der Oberfläche zeigen.** Der Unterbefehl
-  `spielraum modloader` steht seit 0.8.0, die Oberfläche weiß nichts davon.
-  Dafür gedacht ist `modloader.stand_lokal()`: Es liest nur die installierte
-  Fassung und das Zwischenlager, fragt also **nicht** im Netz nach und hält
-  das Fenster nicht auf. Dazu ein Knopf »Einbauen«, wenn etwas bereitliegt.
-
-  Nicht vergessen: Der Knopf darf nichts tun, solange das Spiel läuft – die
-  Datei ist dann in Benutzung.
-
 - [ ] **Eine zweite Mod-Loader-Quelle einhängen.** `modloader.QUELLEN` kennt
   bisher eine, und sie zeigt auf GitHub-Veröffentlichungen. Die Form
   »Fassung aus der Datei lesen, neueste von einer Adresse holen« sollte
@@ -170,6 +161,20 @@ fertig wurde.
   nicht nachgesehen, nur vermutet.
 
 ## Erledigt
+
+- [x] **Der Mod-Loader-Stand steht in der Oberfläche** (04.11.2026). Im
+  Befund die eingebaute Fassung, ein orange hinterlegter Kasten wenn etwas
+  bereitliegt, und ein Knopf, der es nach einer Rückfrage übernimmt. Gelesen
+  wird nur örtlich über `stand_lokal()`; ein Test hält fest, dass der Befund
+  gar nicht erst ins Netz greift – eine Abfrage beim Zeichnen würde das
+  Fenster einfrieren.
+
+  Dabei eine Annahme aus diesem TODO korrigiert: »Der Knopf darf nichts tun,
+  solange das Spiel läuft – die Datei ist dann in Benutzung« stimmt unter
+  Linux nicht. Geschrieben wird atomar, also daneben und dann umbenannt; das
+  laufende Spiel behält seinen geöffneten Stand. Es ist nicht gefährlich,
+  nur wirkungslos bis zum nächsten Start. Die Rückfrage sagt das, statt es
+  zu verbieten.
 
 - [x] **Den Mod Loader aktuell halten** (04.11.2026). `spielraum modloader`
   prüft und lädt von selbst – beim Spielstart in einem eigenen Faden, damit

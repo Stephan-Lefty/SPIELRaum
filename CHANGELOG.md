@@ -7,6 +7,32 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.1] – 2026-11-04
+
+### Hinzugefügt
+
+- **Der Mod-Loader-Stand steht in der Oberfläche.** Im Befund die
+  eingebaute Fassung; liegt eine neuere heruntergeladen bereit, ein orange
+  hinterlegter Kasten und der Knopf **»Mod Loader 3.4.2 einbauen«**. Er
+  fragt vorher nach und nennt beide Fassungen, den Weg zurück und die
+  längere Ladezeit beim nächsten Start. Liegt nichts bereit, ist er grau.
+
+  Gelesen wird nur örtlich (`stand_lokal`): installierte Fassung und
+  Zwischenlager. Ein Test hält fest, dass der Befund **gar nicht erst** ins
+  Netz greift – eine Abfrage beim Zeichnen würde das Fenster einfrieren,
+  bis die Antwort da ist, und bei abgelehnter Verbindung bis zur
+  Zeitgrenze.
+
+  Dort steht deshalb auch nie »aktuell«: Geprüft wird beim Spielstart, und
+  wer lange nicht gespielt hat, hat lange nicht geprüft.
+
+### Berichtigt
+
+- **Einbauen bei laufendem Spiel ist nicht gefährlich**, anders als vorher
+  notiert. Geschrieben wird atomar – daneben, dann umbenennen –, das
+  laufende Spiel behält seinen geöffneten Stand. Es ist nur wirkungslos bis
+  zum nächsten Start, und die Rückfrage sagt das.
+
 ## [0.8.0] – 2026-11-04
 
 ### Hinzugefügt

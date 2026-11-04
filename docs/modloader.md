@@ -76,6 +76,27 @@ Holt die zuletzt gesicherte Fassung zurück.
 
 Mit `--nur-pruefen` wird nur verglichen, nichts geladen.
 
+## In der Oberfläche
+
+Im Befund steht, welche Fassung eingebaut ist. Liegt eine neuere im
+Zwischenlager, erscheint ein orange hinterlegter Kasten und der Knopf unten
+heißt »Mod Loader 3.4.2 einbauen«. Liegt nichts bereit, ist der Knopf grau –
+ein Knopf, der meistens nichts tut, ist schlimmer als keiner.
+
+Gelesen wird dabei **nur örtlich** (`modloader.stand_lokal`): die
+installierte Fassung aus der Datei und das Zwischenlager. Eine Netzabfrage
+beim Zeichnen eines Fensters würde es einfrieren, bis die Antwort da ist –
+und bei einer abgelehnten Verbindung bis zur Zeitgrenze. Ein Test hält fest,
+dass der Befund gar nicht erst ins Netz greift.
+
+Deshalb steht dort auch nie »aktuell«. Geprüft wird beim Spielstart; wer drei
+Wochen nicht gespielt hat, hat drei Wochen nicht geprüft. Eine Oberfläche,
+die in diesem Zustand »aktuell« schreibt, sagt etwas, das sie nicht weiß –
+dieselbe Haltung wie bei den Messungen.
+
+Der Knopf fragt vorher nach und nennt dabei beide Fassungen, den Weg zurück
+und die längere Ladezeit beim nächsten Start.
+
 ## Warum Einbauen ein eigener Schritt ist
 
 Herunterladen ist harmlos, Einbauen nicht. Bei einem Fassungswechsel
@@ -90,6 +111,12 @@ zurück, der schon steht, bevor man es wagt.
 
 Der erste Start nach einem Wechsel dauert länger, weil der Zwischenspeicher
 neu gebaut wird. Das ist normal und kein Fehler.
+
+**Einbauen während das Spiel läuft** ist nicht gefährlich, aber nutzlos:
+Geschrieben wird atomar, also daneben und dann umbenannt. Das laufende Spiel
+behält die alte Datei bis zum Beenden – es hat sie geöffnet, und die bleibt
+unter der Umbenennung bestehen. Gesagt wird das in der Rückfrage; verboten
+wird es nicht.
 
 ## Wann geprüft wird
 

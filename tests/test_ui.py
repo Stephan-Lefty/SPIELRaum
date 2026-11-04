@@ -128,6 +128,116 @@ def test_bericht_warnt_vor_drehender_platte(anwendung, tmp_path, monkeypatch):
     assert "Engpass" in html
 
 
+def _spiel_mit_loader(tmp_path, fassung="3.2.1"):
+    """Ein erfundenes Spiel samt modloader.gd und Profil."""
+    from spielraum import modloader, profil, steam
+
+    ordner = tmp_path / "spiel"
+    ordner.mkdir(exist_ok=True)
+    kopf = f'const MODLOADER_VERSION := "{fassung}"\n'
+    (ordner / "modloader.gd").write_text(
+        kopf + "# Füllung\n" * (modloader.MINDESTGROESSE // 11), encoding="utf-8")
+
+    p = profil.Profil(name="Loaderspiel", quelle=tmp_path / "x.toml",
+                      steam_app_id=999001)
+    p.modloader = "vostok"
+    spiel = steam.Spiel(app_id=999001, name="Loaderspiel", ordner=ordner,
+                        groesse=1, bibliothek=tmp_path)
+    return p, spiel
+
+
+def test_befund_zeigt_die_eingebaute_fassung(anwendung, tmp_path, monkeypatch):
+    from spielraum import umgebung
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "daten"))
+    umgebung.ermitteln.cache_clear()
+    p, spiel = _spiel_mit_loader(tmp_path)
+
+    html = "".join(Fenster()._modloader_abschnitt(p, spiel))
+    assert "Mod Loader" in html
+    assert "3.2.1" in html
+
+
+def test_befund_behauptet_nicht_aktuell(anwendung, tmp_path, monkeypatch):
+    """Ohne etwas im Zwischenlager darf dort nicht »aktuell« stehen.
+
+    Geprüft wird beim Spielstart. Wer drei Wochen nicht gespielt hat, hat
+    drei Wochen nicht geprüft – eine Oberfläche, die hier »aktuell« schreibt,
+    sagt etwas, das sie nicht weiß. Dieselbe Haltung wie bei den Messungen.
+    """
+    from spielraum import umgebung
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "daten"))
+    umgebung.ermitteln.cache_clear()
+    p, spiel = _spiel_mit_loader(tmp_path)
+
+    html = "".join(Fenster()._modloader_abschnitt(p, spiel))
+    assert "aktuell" not in html.lower()
+    assert "Nichts Neueres" in html
+
+
+def test_knopf_erst_wenn_etwas_bereitliegt(anwendung, tmp_path, monkeypatch):
+    """Ein Knopf, der meistens nichts tut, ist schlimmer als keiner."""
+    from unittest import mock
+
+    from spielraum import modloader, umgebung
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "daten"))
+    umgebung.ermitteln.cache_clear()
+    p, spiel = _spiel_mit_loader(tmp_path)
+    quelle = modloader.QUELLEN["vostok"]
+
+    _, stand = Fenster()._modloader_lage(p, spiel)
+    assert stand.veraltet is False, "ohne Zwischenlager gibt es nichts zu tun"
+
+    # Jetzt liegt eine neuere Fassung bereit.
+    neuer = ('const MODLOADER_VERSION := "3.4.2"\n'
+             + "# Füllung\n" * (modloader.MINDESTGROESSE // 11))
+    with mock.patch.object(modloader, "_holen", return_value=neuer.encode()):
+        modloader.herunterladen(quelle, "3.4.2")
+
+    _, stand = Fenster()._modloader_lage(p, spiel)
+    assert stand.veraltet is True
+    assert stand.bereit is not None
+    html = "".join(Fenster()._modloader_abschnitt(p, spiel))
+    assert "3.4.2 liegt bereit" in html
+
+
+def test_befund_fragt_nicht_im_netz(anwendung, tmp_path, monkeypatch):
+    """Der wichtigste Test an diesem Abschnitt.
+
+    Eine Netzabfrage beim Zeichnen friert das Fenster ein, bis die Antwort
+    da ist – und bei einer abgelehnten Verbindung bis zur Zeitgrenze. Der
+    Test fixiert nicht das Ergebnis, sondern dass gar nicht erst gefragt
+    wird.
+    """
+    from unittest import mock
+
+    from spielraum import modloader, umgebung
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "daten"))
+    umgebung.ermitteln.cache_clear()
+    p, spiel = _spiel_mit_loader(tmp_path)
+
+    with mock.patch.object(modloader, "_holen",
+                           side_effect=AssertionError("hat ins Netz gegriffen")):
+        f = Fenster()
+        f._modloader_abschnitt(p, spiel)
+        f._modloader_lage(p, spiel)
+
+
+def test_ohne_loader_im_profil_kein_abschnitt(anwendung, tmp_path):
+    from spielraum.ui.fenster import Fenster
+
+    p, spiel = _spiel_mit_loader(tmp_path)
+    p.modloader = ""
+    assert Fenster()._modloader_abschnitt(p, spiel) == []
+
+
 def test_tastenblatt_wird_gefunden(tmp_path, monkeypatch):
     """Das eigene Blatt zum Spiel, gesucht über den Spielnamen.
 
