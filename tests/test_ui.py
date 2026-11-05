@@ -274,7 +274,7 @@ def test_ohne_tastenblatt_kein_verweis(tmp_path, monkeypatch):
 def test_messfahrt_knopf_beachtet_die_profilauswahl(anwendung, tmp_path, monkeypatch):
     """Der dritte Weg in eine Messfahrt – und der, auf dem es niemand sah.
 
-    Am 04.11.2026 nahmen Kommandozeile und Oberfläche stur alle Varianten,
+    Am 05.11.2026 nahmen Kommandozeile und Oberfläche stur alle Varianten,
     während »messen.fahrt_varianten« nur für die automatisch begonnene Fahrt
     galt. Aus zwei angekündigten Läufen wurden vier, also vierzig Minuten
     Spielzeit statt zwanzig.

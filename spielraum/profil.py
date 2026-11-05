@@ -145,7 +145,7 @@ class Profil:
         Die **eine** Antwort auf diese Frage. Vorher stand sie an drei
         Stellen verschieden: ``starten.py`` wertete ``fahrt_varianten`` aus,
         ``cli.py --starten`` und die Oberfläche nahmen stur alle Varianten.
-        Folge am 04.11.2026: Eine von Hand begonnene Fahrt kündigte vier
+        Folge am 05.11.2026: Eine von Hand begonnene Fahrt kündigte vier
         Läufe zu je zehn Minuten an, obwohl im Profil zwei standen – vierzig
         Minuten Spielzeit statt zwanzig, ohne dass jemand danach gefragt
         hätte. Im Änderungsprotokoll zu 0.6.1 steht die Einschränkung ohne

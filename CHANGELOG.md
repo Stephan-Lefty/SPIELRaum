@@ -7,7 +7,7 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [0.8.3] – 2026-11-04
+## [0.8.3] – 2026-11-05
 
 ### Behoben
 
@@ -16,7 +16,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Profileintrag aus; `spielraum messfahrt --starten` und der Knopf in der
   Oberfläche nahmen stumm **alle** Varianten.
 
-  Aufgefallen am 04.11.2026: Im Profil von Road to Vostok stehen zwei
+  Aufgefallen am 05.11.2026: Im Profil von Road to Vostok stehen zwei
   Varianten, angekündigt wurden vier Läufe zu je zehn Minuten – vierzig
   Minuten Spielzeit statt zwanzig, ohne dass jemand danach gefragt hätte.
   Im Änderungsprotokoll zu 0.6.1 steht die Einschränkung ohne Vorbehalt;

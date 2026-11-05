@@ -257,7 +257,7 @@ def test_auswahl_muss_eine_liste_sein(tmp_path):
 
 # --- Welche Varianten gemessen werden --------------------------------------
 #
-# Der Fehler vom 04.11.2026: »messen.fahrt_varianten« galt nur für die Fahrt,
+# Der Fehler vom 05.11.2026: »messen.fahrt_varianten« galt nur für die Fahrt,
 # die von selbst beginnt. Von Hand begonnen -- über die Kommandozeile oder die
 # Oberfläche -- wurden stumm alle Varianten genommen. Im Profil standen zwei,
 # angekündigt wurden vier Läufe zu je zehn Minuten: vierzig Minuten Spielzeit
