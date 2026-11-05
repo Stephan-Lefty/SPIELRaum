@@ -234,6 +234,17 @@ Keywords=Spiel;Gaming;Steam;Proton;
 EINTRAG
 command -v update-desktop-database >/dev/null && \
     update-desktop-database "$MENUE" 2>/dev/null || true
+# Die Angaben für die Software-Verwaltung. Ohne sie kennt GNOME
+# Software, Discover oder pamac das Programm nicht - es erscheint dort
+# weder unter den installierten noch lässt es sich von dort entfernen.
+METADATEN="${XDG_DATA_HOME:-$HOME/.local/share}/metainfo"
+mkdir -p "$METADATEN"
+cp "$HIER/desktop/"*.metainfo.xml "$METADATEN/" 2>/dev/null || true
+# Unter KDE bliebe der Menüeintrag sonst bis zum nächsten Anmelden
+# unsichtbar. Anderswo läuft die Zeile ins Leere.
+command -v kbuildsycoca6 >/dev/null 2>&1 \
+    && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
+
 echo "Menue:   $MENUE/spielraum.desktop"
 
 # --- Profile mitgeben ------------------------------------------------------

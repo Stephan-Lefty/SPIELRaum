@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppStream-Metadaten. Ohne diese Datei kennen die Software-Verwaltungen
+  (GNOME Software, KDE Discover, Cinnamons Anwendungsverwaltung) das
+  Programm nicht - es taucht dort weder unter den installierten
+  Anwendungen auf noch lässt es sich von dort entfernen.
+-->
+<component type="desktop-application">
+  <id>de.stephanlefty.SPIELRaum</id>
+
+  <name>SPIELRaum</name>
+  <summary>Spiele starten, das System dafür herrichten, hinterher aufräumen</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer id="de.stephanlefty">
+    <name>Stephan Rösner</name>
+  </developer>
+
+  <description>
+    <p>
+      Ein Starter für Spiele, der das System vorher passend einstellt
+      und hinterher alles zurücksetzt - je Spiel ein eigenes Profil.
+    </p>
+    <p>
+      Gedacht für Rechner, die nicht nur zum Spielen da sind: Was fürs
+      Spiel abgeschaltet wird, ist danach wieder an.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">spielraum.desktop</launchable>
+
+  <!--
+    Das Symbol liegt unter seinem schlichten Namen im Symbolthema
+    (~/.local/share/icons/hicolor/<groesse>/apps/spielraum.png).
+  -->
+  <icon type="stock">spielraum</icon>
+
+  <categories>
+    <category>Game</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>Spiele</keyword>
+    <keyword>Starter</keyword>
+    <keyword>Profil</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/Stephan-Lefty/SPIELRaum</url>
+  <url type="bugtracker">https://github.com/Stephan-Lefty/SPIELRaum/issues</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.8.1" date="2026-11-05"/>
+  </releases>
+</component>
