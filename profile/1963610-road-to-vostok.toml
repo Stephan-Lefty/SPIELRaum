@@ -25,6 +25,35 @@
 # optimistisch - kurze Laeufe zeigen zu hohe Werte, siehe docs/messen.md.
 # Der Ausgeglichen-Lauf war mit 23,7 Minuten der verlaesslichste.
 #
+# -------------------------------------------------------------------
+# NACHGEMESSEN AM 05.11.2026 - und das Ergebnis widerspricht.
+# -------------------------------------------------------------------
+#
+#                    Optik          Leistung
+#   Mittel           47,8           49,2
+#   1-%-Tief         24,3           26,3
+#   Messdauer        46 min         21 min
+#
+# Statt 48 % Unterschied im Mittel sind es jetzt 2,9 %. Zwischen
+# "Beleuchtung Hoch mit MSAA 4x" und "Beleuchtung Niedrig ohne".
+#
+# Und selbst diese 2,9 % sind geschoent: Der Optik-Lauf dauerte mehr als
+# doppelt so lang, und lange Laeufe fallen niedriger aus.
+#
+# Was sich seit dem 01.10. geaendert hat: UVE (ein Mod, der eine eigene
+# Bildaufbereitung vorschaltet) ist aus, der Mod Loader steht auf 3.4.2,
+# die Mods sind andere. Welche dieser Aenderungen den Unterschied
+# einebnet, ist NICHT gemessen - und genau das ist der Punkt.
+#
+# Die Schlussfolgerung von oben gilt damit nicht mehr allgemein. Was
+# bleibt: Der Unterschied zwischen zwei Sitzungen ist groesser als der
+# zwischen zwei Varianten. Solange nicht mitgeschrieben wird, was sonst
+# lief - Mods, GPU-Temperatur, fremde Programme an der Karte -, misst
+# SPIELRaum vor allem den Tag. Siehe den offenen Punkt in TODO.md.
+#
+# Uebernommen wurde trotzdem Optik: Wenn beide Varianten gleich schnell
+# sind, nimmt man die schoenere.
+#
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
 #   lighting        3 -> 1     Beleuchtung Hoch   -> Niedrig
@@ -161,15 +190,15 @@ art  = "godot-tres"
 # nicht dagewesen ist, steht nicht als Vorgabe in einem Profil.
 
 [varianten.optik]
-beschreibung = "hübsch vor flüssig - gemessen: 41,3 Bilder/s, 1-%-Tief 15,1"
+beschreibung = "hübsch vor flüssig - 47,8 Bilder/s, 1-%-Tief 24,3 (05.11.2026, 46 min)"
 grafik = { lighting = 3, antialiasing = 3 }
 
 [varianten.ausgeglichen]
-beschreibung = "die Mitte - gemessen: 48,6 Bilder/s, 1-%-Tief 26,7"
+beschreibung = "die Mitte - 48,6 Bilder/s, 1-%-Tief 26,7 (01.10.2026)"
 grafik = { lighting = 2, antialiasing = 2 }
 
 [varianten.leistung]
-beschreibung = "flüssig vor hübsch - gemessen: 61,1 Bilder/s, 1-%-Tief 29,0"
+beschreibung = "flüssig vor hübsch - 49,2 Bilder/s, 1-%-Tief 26,3 (05.11.2026, 21 min)"
 grafik = { lighting = 1, antialiasing = 1 }
 
 # --- Stephans eigene Wahl, 01.10.2026 ----------------------------------
