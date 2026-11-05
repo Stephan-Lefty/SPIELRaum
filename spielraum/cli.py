@@ -478,7 +478,10 @@ def _messfahrt(args) -> int:
 
     # --- Neu beginnen
     if args.starten:
-        namen = list(p.varianten)
+        # Was im Profil unter »messen.fahrt_varianten« steht, gilt auch
+        # hier -- nicht nur für die Fahrt, die von selbst beginnt. »--nur«
+        # sticht es für diesen einen Aufruf.
+        namen = p.mess_varianten()
         if args.nur:
             gewuenscht = [n.strip() for n in args.nur.split(",") if n.strip()]
             unbekannt = [n for n in gewuenscht if n not in p.varianten]

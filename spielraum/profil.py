@@ -139,6 +139,25 @@ class Profil:
     # greift – und wer das nicht erwartet, soll es nicht ungefragt bekommen.
     modloader: str = ""
 
+    def mess_varianten(self) -> list[str]:
+        """Welche Varianten eine Messfahrt misst.
+
+        Die **eine** Antwort auf diese Frage. Vorher stand sie an drei
+        Stellen verschieden: ``starten.py`` wertete ``fahrt_varianten`` aus,
+        ``cli.py --starten`` und die Oberfläche nahmen stur alle Varianten.
+        Folge am 04.11.2026: Eine von Hand begonnene Fahrt kündigte vier
+        Läufe zu je zehn Minuten an, obwohl im Profil zwei standen – vierzig
+        Minuten Spielzeit statt zwanzig, ohne dass jemand danach gefragt
+        hätte. Im Änderungsprotokoll zu 0.6.1 steht die Einschränkung ohne
+        Vorbehalt; sie galt nur auf einem von drei Wegen.
+
+        Leere oder unbekannte Namen fallen heraus; bleibt nichts übrig,
+        gelten alle Varianten. Ein Tippfehler soll die Fahrt nicht
+        verhindern – er steht als Hinweis in ``warnungen()``.
+        """
+        gewaehlt = [n for n in self.fahrt_varianten if n in self.varianten]
+        return gewaehlt or list(self.varianten)
+
     def warnungen(self) -> list[str]:
         """Was am Profil zwar erlaubt, auf *diesem* Rechner aber wirkungslos ist.
 

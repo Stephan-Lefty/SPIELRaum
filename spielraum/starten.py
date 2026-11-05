@@ -128,8 +128,7 @@ def starten(profil: Profil, befehl: list[str], trocken: bool = False,
         # Akte, beginnt hier eine. Danach nie wieder von selbst -- die
         # abgeschlossene Akte bleibt als Merker liegen. Ohne den begänne
         # nach jedem Verwerfen sofort die nächste Fahrt.
-        auswahl = [n for n in profil.fahrt_varianten if n in profil.varianten] \
-            or list(profil.varianten)
+        auswahl = profil.mess_varianten()
         if (laufende_fahrt is None and profil.fahrt_automatisch
                 and len(auswahl) >= 2):
             laufende_fahrt = fahrt.Fahrt(

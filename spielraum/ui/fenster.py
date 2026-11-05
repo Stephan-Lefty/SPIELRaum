@@ -292,13 +292,16 @@ class Fenster(QMainWindow):
 
         if laufende is None:
             minuten = fahrt.MINDESTDAUER / 60
-            anzahl = len(p.varianten)
+            # Was im Profil unter »messen.fahrt_varianten« steht, gilt auch
+            # hier – siehe Profil.mess_varianten().
+            namen = p.mess_varianten()
+            anzahl = len(namen)
             antwort = QMessageBox.question(
                 self, "Messfahrt beginnen",
                 f"<b>{anzahl} Läufe zu je {minuten:.0f} Minuten.</b><br><br>"
                 f"Du spielst normal, SPIELRaum stellt zwischendurch um. "
                 f"Dauer insgesamt etwa {anzahl * minuten / 60:.1f} Stunden.<br><br>"
-                f"Gemessen wird: {', '.join(p.varianten)}<br><br>"
+                f"Gemessen wird: {', '.join(namen)}<br><br>"
                 f"Die Läufe müssen <b>getrennt</b> gespielt werden – ein Spiel "
                 f"liest seine Einstellungen nur beim Start. Zwischen zwei "
                 f"Läufen kann beliebig viel Zeit liegen.",
@@ -308,7 +311,7 @@ class Fenster(QMainWindow):
             import time as zeit
             laufende = fahrt.Fahrt(
                 spiel=p.name, steam_app_id=spiel.app_id,
-                varianten=list(p.varianten), angelegt=zeit.time())
+                varianten=namen, angelegt=zeit.time())
             fahrt.schreiben(laufende)
             self.befund.setHtml(self._bericht(spiel))
             QMessageBox.information(

@@ -269,3 +269,44 @@ def test_ohne_tastenblatt_kein_verweis(tmp_path, monkeypatch):
     spiel = steam.Spiel(app_id=999997, name="Gibt Es Nicht", ordner=tmp_path,
                         groesse=1, bibliothek=tmp_path)
     assert fenster._tastenblatt(spiel) is None
+
+
+def test_messfahrt_knopf_beachtet_die_profilauswahl(anwendung, tmp_path, monkeypatch):
+    """Der dritte Weg in eine Messfahrt – und der, auf dem es niemand sah.
+
+    Am 04.11.2026 nahmen Kommandozeile und Oberfläche stur alle Varianten,
+    während »messen.fahrt_varianten« nur für die automatisch begonnene Fahrt
+    galt. Aus zwei angekündigten Läufen wurden vier, also vierzig Minuten
+    Spielzeit statt zwanzig.
+    """
+    from PySide6.QtWidgets import QMessageBox
+
+    from spielraum import fahrt, steam
+    from spielraum.profil import Profil, Variante
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setattr(fahrt.umgebung, "daten_verzeichnis", lambda: tmp_path)
+
+    p = Profil(name="Testspiel", quelle=tmp_path / "x.toml", steam_app_id=4242)
+    p.varianten = {n: Variante(n, n, {}) for n in
+                   ("optik", "ausgeglichen", "leistung", "stephan")}
+    p.fahrt_varianten = ["optik", "leistung"]
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: p)
+
+    gezeigt = []
+    monkeypatch.setattr(QMessageBox, "question",
+                        lambda *a, **k: (gezeigt.append(a[2]), QMessageBox.Yes)[1])
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+
+    f = Fenster()
+    f.spiele = [steam.Spiel(app_id=4242, name="Testspiel", ordner=tmp_path,
+                            groesse=1, bibliothek=tmp_path)]
+    monkeypatch.setattr(f.liste, "currentRow", lambda: 0)
+    f._messfahrt()
+
+    akte = fahrt.lesen(4242)
+    assert akte is not None, "es wurde keine Fahrt angelegt"
+    assert akte.varianten == ["optik", "leistung"]
+    assert "2 Läufe" in gezeigt[0], gezeigt[0]
+    assert "ausgeglichen" not in gezeigt[0]

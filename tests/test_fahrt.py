@@ -253,3 +253,75 @@ def test_auswahl_muss_eine_liste_sein(tmp_path):
                     encoding="utf-8")
     with pytest.raises(profil.ProfilFehler):
         profil.laden(pfad)
+
+
+# --- Welche Varianten gemessen werden --------------------------------------
+#
+# Der Fehler vom 04.11.2026: »messen.fahrt_varianten« galt nur für die Fahrt,
+# die von selbst beginnt. Von Hand begonnen -- über die Kommandozeile oder die
+# Oberfläche -- wurden stumm alle Varianten genommen. Im Profil standen zwei,
+# angekündigt wurden vier Läufe zu je zehn Minuten: vierzig Minuten Spielzeit
+# statt zwanzig. Deshalb hat jeder der drei Wege hier einen eigenen Test.
+
+
+def _profil_mit_varianten(tmp_path, auswahl):
+    from spielraum.profil import Profil, Variante
+
+    p = Profil(name="Testspiel", quelle=tmp_path / "x.toml", steam_app_id=42)
+    p.varianten = {n: Variante(n, n, {}) for n in
+                   ("optik", "ausgeglichen", "leistung", "stephan")}
+    p.fahrt_varianten = list(auswahl)
+    return p
+
+
+def test_profil_nennt_nur_die_gewaehlten(tmp_path):
+    p = _profil_mit_varianten(tmp_path, ["optik", "leistung"])
+    assert p.mess_varianten() == ["optik", "leistung"]
+
+
+def test_ohne_auswahl_gelten_alle(tmp_path):
+    p = _profil_mit_varianten(tmp_path, [])
+    assert len(p.mess_varianten()) == 4
+
+
+def test_tippfehler_verhindert_die_fahrt_nicht(tmp_path):
+    """Ein unbekannter Name fällt heraus, er blockiert nicht.
+
+    Bleibt nichts übrig, gelten alle – sonst stünde man vor einer Fahrt,
+    die sich nicht beginnen lässt, und die Meldung dazu stünde woanders
+    (in ``warnungen()``).
+    """
+    p = _profil_mit_varianten(tmp_path, ["optik", "gibtsnicht"])
+    assert p.mess_varianten() == ["optik"]
+    p = _profil_mit_varianten(tmp_path, ["nurquatsch"])
+    assert len(p.mess_varianten()) == 4
+
+
+def test_kommandozeile_beachtet_die_auswahl(tmp_path, monkeypatch, capsys):
+    """Der Weg, auf dem der Fehler aufgefallen ist."""
+    from spielraum import cli, profil as profil_modul
+
+    p = _profil_mit_varianten(tmp_path, ["optik", "leistung"])
+    monkeypatch.setattr(profil_modul, "finden", lambda **k: p)
+    monkeypatch.setattr(cli.profil, "finden", lambda **k: p)
+
+    cli.main(["messfahrt", "42", "--starten"])
+    ausgabe = capsys.readouterr().out
+    assert "2 Läufe" in ausgabe, ausgabe
+    assert "ausgeglichen" not in ausgabe
+
+    akte = fahrt.lesen(42)
+    assert akte is not None and akte.varianten == ["optik", "leistung"]
+
+
+def test_nur_sticht_die_profilauswahl(tmp_path, monkeypatch, capsys):
+    """»--nur« gilt für diesen einen Aufruf, auch gegen das Profil."""
+    from spielraum import cli, profil as profil_modul
+
+    p = _profil_mit_varianten(tmp_path, ["optik", "leistung"])
+    monkeypatch.setattr(profil_modul, "finden", lambda **k: p)
+    monkeypatch.setattr(cli.profil, "finden", lambda **k: p)
+
+    cli.main(["messfahrt", "42", "--starten", "--nur", "optik,stephan"])
+    akte = fahrt.lesen(42)
+    assert akte is not None and akte.varianten == ["optik", "stephan"]
