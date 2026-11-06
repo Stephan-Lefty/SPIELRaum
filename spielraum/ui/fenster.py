@@ -17,8 +17,8 @@ import os
 import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QFont, QIcon
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QMainWindow, QMessageBox, QPushButton, QSplitter, QTextBrowser,
@@ -145,7 +145,19 @@ class Fenster(QMainWindow):
         self.liste.currentRowChanged.connect(self._gewaehlt)
 
         self.befund = QTextBrowser()
-        self.befund.setOpenExternalLinks(True)
+        # Verweise NICHT selbst verfolgen.
+        #
+        # ``setOpenExternalLinks(True)`` allein genügt nicht: Ein
+        # QTextBrowser hält eine ``file://``-Adresse für ein Dokument, das
+        # er selbst anzeigen kann, und lädt sie in sein eigenes Feld. Am
+        # 05.11.2026 stand deshalb beim Klick auf »Tastenblatt öffnen« der
+        # Rohtext der PDF im Befund – »%PDF-1.4 ReportLab Generated…«.
+        #
+        # Mit ``setOpenLinks(False)`` verfolgt er gar nichts mehr und
+        # meldet den Klick nur; geöffnet wird dann über das System, also
+        # mit dem Programm, das der Anwender für PDFs eingerichtet hat.
+        self.befund.setOpenLinks(False)
+        self.befund.anchorClicked.connect(QDesktopServices.openUrl)
 
         self.knopf_start = QPushButton("Über Steam starten")
         self.knopf_start.clicked.connect(self._starten)
@@ -629,8 +641,19 @@ class Fenster(QMainWindow):
 
                 blatt = _tastenblatt(spiel)
                 if blatt is not None:
+                    # Über QUrl zusammengesetzt, nicht von Hand: Der Pfad
+                    # zum Repository enthält hier ein Leerzeichen (»eigene
+                    # Daten«), und ein unkodiertes Leerzeichen macht aus
+                    # der Adresse eine ungültige. ``fromLocalFile`` setzt
+                    # auch die richtige Zahl Schrägstriche.
+                    # ``toString()`` ohne Angabe gibt die *hübsche* Form
+                    # zurück und dekodiert das Leerzeichen wieder – damit
+                    # wäre nichts gewonnen. FullyEncoded liefert die Form,
+                    # die in ein href gehört.
+                    ziel = QUrl.fromLocalFile(str(blatt)).toString(
+                        QUrl.ComponentFormattingOption.FullyEncoded)
                     teile.append(
-                        f"<p>📄 <a href='file://{blatt}'>Tastenblatt öffnen</a> "
+                        f"<p>📄 <a href='{ziel}'>Tastenblatt öffnen</a> "
                         f"<span style='color:{farben.GRAU_LEISE}'>– die ganze "
                         f"Belegung samt Maus, zum Ausdrucken</span></p>"
                     )

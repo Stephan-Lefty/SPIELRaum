@@ -310,3 +310,59 @@ def test_messfahrt_knopf_beachtet_die_profilauswahl(anwendung, tmp_path, monkeyp
     assert akte.varianten == ["optik", "leistung"]
     assert "2 Läufe" in gezeigt[0], gezeigt[0]
     assert "ausgeglichen" not in gezeigt[0]
+
+
+def test_tastenblatt_wird_nicht_im_befund_geoeffnet(anwendung, tmp_path, monkeypatch):
+    """Der Fehler vom 05.11.2026.
+
+    Ein Klick auf »Tastenblatt öffnen« lud die PDF **in den Befund** – dort
+    stand dann »%PDF-1.4 ReportLab Generated PDF document« als Rohtext.
+    ``setOpenExternalLinks(True)`` genügt nicht: Ein QTextBrowser hält eine
+    ``file://``-Adresse für ein Dokument, das er selbst anzeigen kann.
+
+    Der Test fixiert nicht das Aussehen, sondern die Abstinenz: Das Feld
+    darf Verweisen gar nicht erst folgen.
+    """
+    from spielraum.ui.fenster import Fenster
+
+    f = Fenster()
+    assert f.befund.openLinks() is False, \
+        "der Befund folgt Verweisen selbst – dann landet die PDF in ihm"
+
+
+def test_tastenblatt_adresse_vertraegt_leerzeichen(anwendung, tmp_path, monkeypatch):
+    """Der Pfad zu diesem Repository enthält ein Leerzeichen.
+
+    »/mnt/raid/eigene Daten/…« – unkodiert ist das keine gültige Adresse,
+    und der Klick ginge ins Leere. Beim Zusammensetzen von Hand fällt so
+    etwas erst auf dem Rechner auf, auf dem der Pfad anders aussieht.
+    """
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    ordner = tmp_path / "mit Leerzeichen" / "tastenblaetter"
+    ordner.mkdir(parents=True)
+    (ordner / "Road-to-Vostok-Tastenbelegung.pdf").write_bytes(b"%PDF-1.4\n")
+    monkeypatch.setattr(
+        fenster_modul, "__file__",
+        str(tmp_path / "mit Leerzeichen" / "x" / "y" / "z.py"))
+
+    p = profil_fuer_tasten(tmp_path)
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: p)
+    spiel = steam.Spiel(app_id=1963610, name="Road to Vostok", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+
+    html = Fenster()._bericht(spiel)
+    assert "Tastenblatt öffnen" in html, "der Verweis fehlt ganz"
+    assert "mit Leerzeichen" not in html or "%20" in html, \
+        "das Leerzeichen steht unkodiert in der Adresse"
+
+
+def profil_fuer_tasten(tmp_path):
+    from spielraum.profil import Profil
+
+    p = Profil(name="Road to Vostok", quelle=tmp_path / "x.toml",
+               steam_app_id=1963610)
+    p.tasten = {"insert": "r"}
+    return p

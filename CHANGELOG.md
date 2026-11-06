@@ -7,6 +7,27 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.4] – 2026-11-05
+
+### Behoben
+
+- **Das Tastenblatt wurde im Befund selbst geöffnet statt im PDF-Programm.**
+  Ein Klick auf »Tastenblatt öffnen« füllte das rechte Feld mit
+  `%PDF-1.4 ReportLab Generated PDF document…` – dem Rohtext der Datei.
+
+  `setOpenExternalLinks(True)` allein genügt nicht: Ein QTextBrowser hält
+  eine `file://`-Adresse für ein Dokument, das er selbst anzeigen kann.
+  Jetzt verfolgt er Verweise gar nicht mehr (`setOpenLinks(False)`) und
+  meldet den Klick nur; geöffnet wird über `QDesktopServices`, also mit
+  dem Programm, das der Anwender dafür eingerichtet hat.
+
+- **Leerzeichen im Pfad machten die Adresse ungültig.** Der Verweis wurde
+  von Hand als `file://{pfad}` zusammengesetzt. Liegt das Repository unter
+  »/mnt/raid/eigene Daten/…«, ist das keine gültige Adresse. Jetzt über
+  `QUrl.fromLocalFile`, und zwar mit `FullyEncoded` – die Vorgabe von
+  `toString()` dekodiert das Leerzeichen wieder, womit nichts gewonnen
+  wäre. Genau das hat der Test beim ersten Lauf gefangen.
+
 ## [0.8.3] – 2026-11-05
 
 ### Behoben
