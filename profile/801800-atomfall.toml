@@ -1,0 +1,83 @@
+# Atomfall – Tastenbelegung für die rechte Hand.
+#
+# Rebellions Asura-Engine, Windows-Bau unter Proton, 73,5 GB auf der SSD.
+#
+# ===================================================================
+# Hier wird NICHTS gemessen und NICHTS am Spiel verstellt.
+# ===================================================================
+#
+# Das Profil tut genau zwei Dinge: Tasten umlegen und den
+# Bildschirmschoner anhalten. Grafikeinstellungen fasst es nicht an --
+# Atomfall legt sie in einer Binaerdatei ab (user2.dat in der
+# Steam-Cloud, 1616 Bytes, nicht lesbar). Was SPIELRaum nicht lesen
+# kann, soll es auch nicht schreiben.
+#
+# --- Die Tastenbelegung ---------------------------------------------
+#
+# Dasselbe Muster wie bei Road to Vostok: Wer die Maus links fuehrt,
+# erreicht mit der rechten Hand nur den Bereich rechts von I/K/M.
+# keyd uebersetzt die dortigen Tasten in das, was Atomfall erwartet.
+#
+# WICHTIG: Das greift nur, solange Atomfall auf seinen VORGABEWERTEN
+# steht. Wer dort zusaetzlich umbelegt, hebt beide Seiten auf -- dann
+# tut weder die Pfeiltaste noch WASD etwas. Genau das ist bei Vostok
+# am 23.10. und am 03.11.2026 passiert und hat zwei Tage gekostet.
+# Entweder keyd uebersetzt, oder das Spiel ist umgebunden. Nie beides.
+#
+# Die Vorgabewerte stammen nicht aus dem Gedaechtnis, sondern aus
+# https://www.magicgameworld.com/atomfall-pc-keyboard-controls-guide/
+# (abgerufen 09.11.2026):
+#
+#   Move Up/Down/Left/Right  W S A D
+#   Jump/Traverse            Space
+#   Sprint                   Shift
+#   Crouch                   Ctrl
+#   Contextual Interact 1    E
+#   Contextual Interact 2    R
+#   Reload                   R
+#
+# Fuer das INVENTAR nennt die Quelle keine Taste. Deshalb fehlt hier
+# das Gegenstueck zu Vostoks "delete = tab" -- lieber eine Luecke als
+# eine geratene Zuordnung.
+
+[spiel]
+name         = "Atomfall"
+steam_app_id = 801800
+
+[system]
+# GameMode schadet nicht und greift, sobald die Polkit-Berechtigung
+# eingerichtet ist; siehe docs/gamemode.md.
+gamemode      = true
+nicht_stoeren = true
+
+[messen]
+# MangoHud laeuft mit, damit es ueberhaupt Zahlen gibt, wenn spaeter
+# einmal gemessen werden soll. Eine Messfahrt gibt es hier nicht --
+# dafuer braeuchte es Varianten, und die braeuchten eine
+# Einstellungsdatei, die sich lesen laesst.
+mangohud = true
+
+[tasten]
+# Bewegung
+up    = "w"
+down  = "s"
+left  = "a"
+right = "d"
+
+# Springen, Sprinten, Ducken.
+#
+# layer(shift) und layer(control) statt leftshift/leftcontrol: Sonst
+# schickt keyd nur den Tastencode, ohne ihn als Modifikator zu fuehren.
+# Beim Sprinten haelt man die Taste und bewegt sich gleichzeitig.
+pageup   = "space"
+pagedown = "layer(shift)"
+end      = "layer(control)"
+
+# Benutzen und Nachladen. Beide liegen bei Atomfall auf derselben
+# Seite der Tastatur wie die Bewegung, also muessen sie mit.
+home   = "e"
+insert = "r"
+
+# Inventar. Steht in der oben genannten Quelle nicht; im Spiel
+# nachgesehen am 09.11.2026 -- es ist Tab, wie bei Road to Vostok.
+delete = "tab"
