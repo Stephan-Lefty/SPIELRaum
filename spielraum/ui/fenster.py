@@ -143,6 +143,20 @@ class Fenster(QMainWindow):
 
         self.liste = QListWidget()
         self.liste.currentRowChanged.connect(self._gewaehlt)
+        # Auch ein Klick auf das BEREITS gewählte Spiel liest neu.
+        #
+        # ``currentRowChanged`` feuert nur bei einem Zeilenwechsel. Wer auf
+        # das ohnehin ausgewählte Spiel klickt, um den Befund aufzufrischen,
+        # bekam bis zum 09.11.2026 nichts – der Mod-Loader-Knopf blieb grau,
+        # obwohl im Zwischenlager längst eine neuere Fassung lag. Erst »Neu
+        # einlesen« half, weil das Leeren der Liste einen Zeilenwechsel
+        # erzwingt.
+        #
+        # Der Befund ist eine Momentaufnahme und fragt von sich aus nichts
+        # nach; genau deshalb friert das Fenster nie ein. Dann muss aber der
+        # naheliegende Griff – noch einmal draufklicken – auch wirken.
+        self.liste.itemClicked.connect(
+            lambda _: self._gewaehlt(self.liste.currentRow()))
 
         self.befund = QTextBrowser()
         # Verweise NICHT selbst verfolgen.

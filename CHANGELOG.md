@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.5] – 2026-11-09
+
+### Behoben
+
+- **Ein Klick auf das bereits gewählte Spiel liest jetzt neu.** Die Liste
+  hing nur an `currentRowChanged`, und das feuert ausschließlich bei einem
+  Zeilen*wechsel*. Wer auf das ohnehin ausgewählte Spiel klickte, um den
+  Befund aufzufrischen, bekam nichts – der Mod-Loader-Knopf blieb grau,
+  obwohl im Zwischenlager längst die Fassung 3.5.0 lag. Nur »Neu einlesen«
+  half, weil das Leeren der Liste einen Zeilenwechsel erzwingt.
+
+  Der Befund ist bewusst eine Momentaufnahme und fragt von sich aus nichts
+  nach – genau deshalb friert das Fenster nie ein. Dann muss aber der
+  naheliegende Griff, noch einmal draufzuklicken, auch wirken.
+
 ## [0.8.4] – 2026-11-05
 
 ### Behoben

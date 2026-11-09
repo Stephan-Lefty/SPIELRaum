@@ -366,3 +366,33 @@ def profil_fuer_tasten(tmp_path):
                steam_app_id=1963610)
     p.tasten = {"insert": "r"}
     return p
+
+
+def test_klick_auf_bereits_gewaehltes_spiel_liest_neu(anwendung, tmp_path, monkeypatch):
+    """Der Fehler vom 09.11.2026.
+
+    ``currentRowChanged`` feuert nur bei einem Zeilenwechsel. Wer auf das
+    ohnehin ausgewählte Spiel klickt, um den Befund aufzufrischen, bekam
+    nichts – der Mod-Loader-Knopf blieb grau, obwohl eine neuere Fassung
+    bereitlag. Erst »Neu einlesen« half, weil das Leeren der Liste einen
+    Zeilenwechsel erzwingt.
+
+    Geprüft wird die Verdrahtung, nicht das Ergebnis: Ein Klick auf einen
+    Eintrag muss ``_gewaehlt`` erreichen, auch wenn die Zeile dieselbe
+    bleibt.
+    """
+    from PySide6.QtWidgets import QListWidgetItem
+
+    from spielraum.ui.fenster import Fenster
+
+    f = Fenster()
+    f.liste.clear()
+    f.liste.addItem(QListWidgetItem("Testspiel"))
+    f.liste.setCurrentRow(0)
+
+    gerufen = []
+    monkeypatch.setattr(f, "_gewaehlt", lambda z: gerufen.append(z))
+
+    # Zeile bleibt 0 – ohne die itemClicked-Verbindung passiert hier nichts.
+    f.liste.itemClicked.emit(f.liste.item(0))
+    assert gerufen == [0], "ein Klick auf das gewählte Spiel liest nicht neu"
