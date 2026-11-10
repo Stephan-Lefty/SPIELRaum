@@ -75,6 +75,30 @@ deleted but moved down, with the date they were completed.
   *El-Prime Armor Durability* and *MedicalDurability*. Those stay manual
   whatever gets built.
 
+- [ ] **Two variants have to be measured for the same length.** The run only
+  checks the ten-minute minimum today. A 12.6-minute run against a 40-minute
+  one therefore counts as a valid comparison — and is not one.
+
+  Shown on 2026-11-10, cleanly isolated. Same variant, same settings, same
+  mod set, same machine, same day — only the duration differed:
+
+  ```
+  leistung, 12.6 minutes ..... 52.5 fps
+  leistung, 96   minutes ..... 49.4 fps     -6 %
+  ```
+
+  That measures what `docs/messen.md` has so far only asserted. And it
+  retroactively devalues part of our own run: `optik` ran 40 minutes,
+  `leistung` 12.6, and the reported 18 % lead contains this effect.
+
+  Possible routes: the run remembers the duration of the first counting lap
+  and discards later ones that deviate sharply. Or it evaluates only the
+  common opening stretch — 12.6 minutes from both laps instead of 12.6
+  against 40. The latter throws data away but is more honest.
+
+  Belongs with the tolerance-band point below: both times SPIELRaum reports
+  a difference that is none.
+
 - [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
   takes the highest 1 % low and declares a winner, even when the gap is
   noise. On 2026-11-03 `optik` (26.54) and `leistung` (26.31) were 0.9 %

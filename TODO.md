@@ -84,6 +84,33 @@ fertig wurde.
   fehlt: *El-Prime Armor Durability* und *MedicalDurability*. Die bleiben
   Handarbeit, unabhängig davon, was gebaut wird.
 
+- [ ] **Zwei Varianten müssen gleich lang gemessen werden.** Die Messfahrt
+  prüft heute nur die Mindestdauer von zehn Minuten. Ein Lauf über 12,6
+  Minuten gegen einen über 40 gilt damit als gültiger Vergleich – ist aber
+  keiner.
+
+  Belegt am 10.11.2026, und zwar sauber isoliert. Dieselbe Variante,
+  dieselben Einstellungen, derselbe Mod-Satz, derselbe Rechner, derselbe
+  Tag – nur die Dauer unterschied sich:
+
+  ```
+  leistung, 12,6 Minuten ..... 52,5 Bilder/s
+  leistung, 96   Minuten ..... 49,4 Bilder/s     -6 %
+  ```
+
+  Damit ist gemessen, was `docs/messen.md` bisher nur behauptet hat. Und es
+  entwertet rückwirkend einen Teil der eigenen Fahrt: `optik` lief 40
+  Minuten, `leistung` 12,6, und die gemeldeten 18 % Vorsprung enthalten
+  diesen Effekt.
+
+  Denkbare Wege: Die Fahrt merkt sich die Dauer des ersten zählenden Laufs
+  und verwirft spätere, die deutlich abweichen. Oder sie wertet nur das
+  gemeinsame Anfangsstück aus – 12,6 Minuten aus beiden Läufen statt 12,6
+  gegen 40. Letzteres verschenkt Daten, ist aber ehrlicher.
+
+  Gehört zum Toleranzband-Punkt darunter: Beide Male meldet SPIELRaum
+  einen Unterschied, der keiner ist.
+
 - [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
   schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn
   der Abstand Rauschen ist. Am 03.11.2026 lagen `optik` (26,54) und
