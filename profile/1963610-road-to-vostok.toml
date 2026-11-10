@@ -54,6 +54,38 @@
 # Uebernommen wurde trotzdem Optik: Wenn beide Varianten gleich schnell
 # sind, nimmt man die schoenere.
 #
+# -------------------------------------------------------------------
+# DRITTE FAHRT, 05. und 09.11.2026 - und jetzt ist der Abstand da.
+# -------------------------------------------------------------------
+#
+#                    Optik          Leistung
+#   Mittel           44,5           52,5
+#   1-%-Tief         23,5           22,9
+#   Messdauer        40 min         12,6 min
+#
+# 18 % im Mittel, bei gleichem 1-%-Tief. Uebernommen wurde Leistung.
+#
+# -------------------------------------------------------------------
+# UND DIE WICHTIGSTE ZAHL DES GANZEN PROFILS, 10.11.2026
+# -------------------------------------------------------------------
+#
+# Derselbe Lauf, dieselbe Variante, nur laenger gespielt:
+#
+#   Leistung, 12,6 Minuten ....... 52,5 Bilder/s
+#   Leistung, 96   Minuten ....... 49,4 Bilder/s      -6 %
+#
+# Keine andere Aenderung. Gleiche Einstellungen, gleicher Mod-Satz,
+# gleicher Rechner. Der Unterschied kommt allein aus der Messdauer.
+#
+# Damit ist belegt, was docs/messen.md bisher nur behauptet hat: Kurze
+# Laeufe zeigen zu hohe Werte. Und es relativiert die 18 % von oben --
+# der Optik-Lauf dauerte dreimal so lang wie der von Leistung. Echt
+# sind vermutlich eher 10 bis 12 %.
+#
+# Wer zwei Varianten vergleicht, muss sie GLEICH LANG messen. Das kann
+# die Messfahrt bisher nicht erzwingen; sie prueft nur die
+# Mindestdauer von zehn Minuten. Siehe den offenen Punkt in TODO.md.
+#
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
 #   lighting        3 -> 1     Beleuchtung Hoch   -> Niedrig
@@ -190,7 +222,7 @@ art  = "godot-tres"
 # nicht dagewesen ist, steht nicht als Vorgabe in einem Profil.
 
 [varianten.optik]
-beschreibung = "hübsch vor flüssig - 47,8 Bilder/s, 1-%-Tief 24,3 (05.11.2026, 46 min)"
+beschreibung = "hübsch vor flüssig - 44,5 Bilder/s, 1-%-Tief 23,5 (05.11.2026, 40 min)"
 grafik = { lighting = 3, antialiasing = 3 }
 
 [varianten.ausgeglichen]
@@ -198,7 +230,7 @@ beschreibung = "die Mitte - 48,6 Bilder/s, 1-%-Tief 26,7 (01.10.2026)"
 grafik = { lighting = 2, antialiasing = 2 }
 
 [varianten.leistung]
-beschreibung = "flüssig vor hübsch - 49,2 Bilder/s, 1-%-Tief 26,3 (05.11.2026, 21 min)"
+beschreibung = "flüssig vor hübsch - 49,4 Bilder/s, 1-%-Tief 22,2 (10.11.2026, 96 min)"
 grafik = { lighting = 1, antialiasing = 1 }
 
 # --- Stephans eigene Wahl, 01.10.2026 ----------------------------------
