@@ -124,6 +124,22 @@ deleted but moved down, with the date they were completed.
   They remain valid against each other — but they do not describe the game,
   only one of its two builds.
 
+  **The [Vulkan] vs [Compatibility] comparison is due 2026-11-13.** For it
+  to be worth anything it has to honour everything that went wrong today:
+
+  * **Same route, same duration.** The same path both times, both laps the
+    same length — otherwise it compares sessions, not renderers.
+  * **Nothing running alongside.** No OBS, no remote desktop. The CPU load
+    in the evaluation will show afterwards whether that held.
+  * **Overlay on "only during a measurement run"**, so it measures without
+    anything being in the picture.
+  * **The gap has to exceed 7.6 per cent**, otherwise it is not one — see
+    the point on route dependence below.
+
+  And the result has two halves: frame rate *and* looks. A renderer that
+  costs ten per cent and visibly improves the image is no loser. That is
+  the user's call, not the 1 % low's.
+
   **To do:** record the actual command line at start. It is right there —
   SPIELRaum assembles it itself and then throws it away. That would capture
   renderer, launch arguments and Proton version in one go — more than the

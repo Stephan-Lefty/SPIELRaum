@@ -130,6 +130,22 @@ fertig wurde.
   Untereinander bleiben sie gültig – aber sie beschreiben nicht das Spiel,
   sondern eine seiner zwei Fassungen.
 
+  **Der Vergleich [Vulkan] gegen [Compatibility] steht für den 13.11.2026
+  an.** Damit er etwas taugt, muss er alles einhalten, was heute schiefging:
+
+  * **Gleiche Strecke, gleiche Dauer.** Beides derselbe Weg, beide Läufe
+    gleich lang – sonst vergleicht man Sitzungen statt Renderer.
+  * **Nichts nebenher.** Kein OBS, keine Fernwartung. Die CPU-Last in der
+    Auswertung zeigt hinterher, ob das eingehalten wurde.
+  * **Anzeige auf »nur bei der Messfahrt«**, damit gemessen wird, ohne dass
+    etwas im Bild steht.
+  * **Der Abstand muss größer sein als 7,6 Prozent**, sonst ist er keiner –
+    siehe den Punkt zur Streckenabhängigkeit weiter unten.
+
+  Und das Ergebnis ist zweiteilig: Bildrate *und* Aussehen. Ein Renderer,
+  der zehn Prozent kostet und das Bild sichtbar besser macht, ist kein
+  Verlierer. Das entscheidet der Anwender, nicht das 1-%-Tief.
+
   **Zu tun:** Beim Start die tatsächliche Befehlszeile mitschreiben. Sie
   steht ohnehin da, SPIELRaum baut sie selbst zusammen; es wirft sie nur
   weg. Damit wären Renderer, Startargumente und Proton-Fassung in einem
