@@ -8,6 +8,46 @@ fertig wurde.
 
 ## Offen
 
+- [ ] **Warum wirken MangoHuds Tastenkürzel nicht?** Angefordert am
+  12.11.2026: die Anzeige im Spiel verschieben. MangoHud 0.8.4 kennt dafür
+  `toggle_hud_position` und `toggle_hud`, SPIELRaum setzt beide – bei Road to
+  Vostok tat sich nichts.
+
+  Ich hatte das als erledigt gemeldet, weil die Option in
+  `/usr/share/doc/mangohud/MangoHud.conf.example` steht. Nachgesehen war
+  damit die Schreibweise, nicht ob sie etwas tut. Derselbe halbe Schritt wie
+  bei `PROTON_USE_XALIA` am 09.11.2026.
+
+  Was ausgeschlossen ist:
+
+  * **Nicht die Schreibweise.** MangoHud nimmt die Zeilen ohne Klage an,
+    geprüft mit `vkcube` und derselben `MANGOHUD_CONFIG`.
+  * **Nicht ein fehlender Leseweg.** `libMangoHud.so` hängt an
+    `libwayland-client.so.0` und `libxkbcommon.so.0` und lädt
+    `libX11.so.6` bei Bedarf nach; die liegt auf diesem Rechner.
+
+  Was noch zu prüfen wäre, in dieser Reihenfolge:
+
+  1. Ob die Kürzel bei einem **nativen** Spiel greifen. Vostok läuft unter
+     Proton und damit als XWayland-Fenster; ein natives Wayland-Spiel würde
+     den anderen Weg nehmen. Das trennt »MangoHud kann nicht« von »unter
+     XWayland nicht«.
+  2. Ob **keyd** dazwischenkommt. Es greift das Tastaturgerät ab und schickt
+     über ein eigenes; ob MangoHud das sieht, ist ungeprüft. Eine Messung mit
+     zurückgenommener Belegung beantwortet es.
+  3. Ob **Steam** F12 abfängt – das ist seine Taste für Aufnahmen. Betrifft
+     nur `toggle_hud`, nicht das Verschieben.
+  4. Ob `PROTON_ENABLE_WAYLAND=1` hilft. Das ändert den Darstellungsweg des
+     ganzen Spiels und gehört deshalb hinter die anderen drei, nicht davor.
+
+  Bis dahin verspricht SPIELRaum die Kürzel nicht mehr und nennt nur `ecke`
+  im Profil. Gesetzt bleiben sie, weil sie nichts kosten.
+
+  **Und was stattdessen gebaut werden könnte:** Die Ecke in der Oberfläche
+  umschalten, statt die Profildatei zu öffnen. Wirkt erst beim nächsten
+  Start, löst aber das eigentliche Anliegen – die Anzeige steht im Weg und
+  soll woandershin.
+
 - [ ] **Eine zweite Mod-Loader-Quelle einhängen.** `modloader.QUELLEN` kennt
   bisher eine, und sie zeigt auf GitHub-Veröffentlichungen. Die Form
   »Fassung aus der Datei lesen, neueste von einer Adresse holen« sollte

@@ -109,14 +109,21 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
             # vor einem hellen Himmel kann man nicht lesen.
             f"background_alpha={profil.overlay_deckkraft}",
             "alpha=1.0",
-            # Die Anzeige im Spiel verschieben, ohne das Spiel zu beenden.
-            # MangoHud schaltet damit durch seine sechs Stellen; frei ziehen
-            # kann man sie nicht, das kennt MangoHud 0.8.4 nicht.
+            # Die Kürzel, mit denen MangoHud die Anzeige umstellen soll:
+            # F11 eine Stelle weiter, F12 ganz aus. Shift rechts, weil die
+            # linke Hand bei diesem Anwender an der Maus liegt.
             #
-            # Die Tasten stehen hier und nicht im Profil: Sie sind kein Wert,
-            # den ein Spiel anders braucht, sondern eine Bedienung, die
-            # überall gleich sein soll. Shift rechts, weil die linke Hand
-            # bei diesem Anwender an der Maus liegt.
+            # WARNUNG, 12.11.2026: Sie wirkten bei Road to Vostok nicht, und
+            # warum, ist ungeklärt. Belegt ist nur, dass es nicht an der
+            # Schreibweise liegt -- MangoHud nimmt die Zeilen ohne Klage an,
+            # geprüft mit vkcube. Beide Lesewege sind auch vorhanden: Die
+            # Bibliothek hängt an libwayland-client und libxkbcommon und
+            # lädt libX11.so.6 bei Bedarf nach, die liegt auf diesem Rechner.
+            #
+            # Sie bleiben trotzdem drin: Sie kosten nichts, und bei einem
+            # nativen Wayland-Spiel können sie durchaus greifen. Was SPIELRaum
+            # dazu *sagt*, ist aber zurückgenommen -- versprochen wird nur
+            # noch »ecke« im Profil. Offener Punkt in TODO.md.
             "toggle_hud_position=Shift_R+F11",
             "toggle_hud=Shift_R+F12",
         ]

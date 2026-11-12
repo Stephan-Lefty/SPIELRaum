@@ -7,6 +7,47 @@ deleted but moved down, with the date they were completed.
 
 ## Open
 
+- [ ] **Why do MangoHud's keybinds not work?** Asked for on 2026-11-12:
+  move the overlay while playing. MangoHud 0.8.4 has
+  `toggle_hud_position` and `toggle_hud` for that, SPIELRaum sets both — in
+  Road to Vostok nothing happened.
+
+  I had reported this as done because the option is listed in
+  `/usr/share/doc/mangohud/MangoHud.conf.example`. What that confirmed was
+  the spelling, not that it does anything. The same half step as with
+  `PROTON_USE_XALIA` on 2026-11-09.
+
+  Ruled out:
+
+  * **Not the spelling.** MangoHud accepts the lines without complaint,
+    checked with `vkcube` and the same `MANGOHUD_CONFIG`.
+  * **Not a missing input path.** `libMangoHud.so` links
+    `libwayland-client.so.0` and `libxkbcommon.so.0` and loads
+    `libX11.so.6` on demand; that one is present on this machine.
+
+  Still to check, in this order:
+
+  1. Whether the keybinds work in a **native** game. Vostok runs under
+     Proton and is therefore an XWayland window; a native Wayland game would
+     take the other path. That separates "MangoHud cannot" from "not under
+     XWayland".
+  2. Whether **keyd** gets in the way. It grabs the keyboard device and
+     emits through its own; whether MangoHud sees that is untested. A run
+     with the mapping withdrawn answers it.
+  3. Whether **Steam** swallows F12 — that is its screenshot key. Affects
+     only `toggle_hud`, not the move.
+  4. Whether `PROTON_ENABLE_WAYLAND=1` helps. That changes the display path
+     of the whole game and therefore belongs after the other three, not
+     before.
+
+  Until then SPIELRaum no longer promises the keybinds and names only `ecke`
+  in the profile. They stay set, because they cost nothing.
+
+  **And what could be built instead:** switching the corner from the
+  interface rather than editing the profile file. It only takes effect on the
+  next start, but it solves the actual problem — the overlay is in the way
+  and should go somewhere else.
+
 - [ ] **Hook up a second mod loader source.** `modloader.QUELLEN` knows one
   so far, and it points at GitHub releases. The shape — read the version
   from the file, fetch the latest from a URL — should hold, but it has been

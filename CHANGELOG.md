@@ -73,10 +73,18 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Die Schrift bleibt voll deckend – durchsichtige Zahlen vor einem hellen
   Himmel kann man nicht lesen.
 
-  Im Spiel schaltet **Shift rechts + F11** eine Stelle weiter und **Shift
-  rechts + F12** die Anzeige ganz aus. Frei mit der Maus ziehen geht
-  nicht; MangoHud 0.8.4 kennt das nicht, nachgesehen in
-  `/usr/share/doc/mangohud/MangoHud.conf.example`.
+  **Verschoben wird über `ecke` im Profil, nicht im laufenden Spiel.** Hier
+  stand zuerst, `Shift rechts + F11` schalte eine Stelle weiter. MangoHud
+  kennt die Option und SPIELRaum setzt sie auch – sie wirkte bei Road to
+  Vostok aber nicht. Nachgesehen war die Schreibweise, nicht ob sie etwas
+  tut; derselbe halbe Schritt wie bei `PROTON_USE_XALIA` am 09.11.2026.
+
+  Nicht die Ursache: die Schreibweise (MangoHud nimmt die Zeilen ohne Klage
+  an, geprüft mit `vkcube`) und fehlende Lesewege (die Bibliothek hängt an
+  `libwayland-client` und `libxkbcommon` und lädt `libX11.so.6` nach, die
+  vorhanden ist). Woran es liegt, ist offen und steht in TODO.md. Die
+  Kürzel bleiben gesetzt – sie kosten nichts –, versprochen werden sie
+  nicht.
 
 ### Geändert
 

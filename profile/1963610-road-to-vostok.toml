@@ -223,9 +223,9 @@ mangohud = true
 # Die Anzeige im Bild: ein Viertel deckend statt MangoHuds halber Vorgabe.
 # Angefordert am 12.11.2026 -- der Kasten verdeckte oben links zu viel.
 #
-# Im Spiel verschieben: Shift rechts + F11 schaltet eine Stelle weiter,
-# Shift rechts + F12 nimmt die Anzeige ganz weg. Frei ziehen kann man sie
-# nicht, das kennt MangoHud 0.8.4 nicht.
+# Verschieben geht nur hier ueber "ecke", nicht im laufenden Spiel.
+# MangoHuds Tastenkuerzel setzt SPIELRaum, sie wirkten am 12.11.2026 aber
+# nicht -- warum, ist ungeklaert, siehe den offenen Punkt in TODO.md.
 deckkraft = 0.25
 
 # Von selbst eine Messfahrt beginnen, sobald für dieses Spiel noch keine

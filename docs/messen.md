@@ -212,17 +212,27 @@ voll deckend – durchsichtige Zahlen vor einem hellen Himmel kann man nicht
 lesen. Bei `0` steht die Schrift ohne Kasten im Bild und bleibt lesbar, weil
 MangoHud die Buchstaben umrandet.
 
-**Im Spiel, ohne es zu beenden:**
+**Verschieben geht nur über das Profil, nicht im laufenden Spiel.**
 
-```
-Shift rechts + F11     eine Stelle weiter
-Shift rechts + F12     Anzeige aus und wieder an
-```
+Hier stand am 12.11.2026 kurz das Gegenteil: `Shift rechts + F11` schalte eine
+Stelle weiter. MangoHud 0.8.4 kennt diese Option, SPIELRaum setzt sie auch –
+sie wirkte bei Road to Vostok aber nicht. Nachgesehen war die Schreibweise der
+Option, nicht ob sie etwas tut. Das ist derselbe halbe Schritt wie bei
+`PROTON_USE_XALIA` am 09.11.2026.
 
-Frei mit der Maus ziehen geht nicht; MangoHud 0.8.4 kennt das nicht. Die
-Taste schaltet durch die sechs Stellen, die es kennt. Wer eine davon dauerhaft
-will, schreibt sie als `ecke` ins Profil – die Taste wirkt nur für die
-laufende Sitzung.
+Was dazu belegt ist:
+
+* An der Schreibweise liegt es nicht – MangoHud nimmt die Zeilen ohne Klage
+  an, geprüft mit `vkcube`.
+* An fehlenden Lesewegen auch nicht – die Bibliothek hängt an
+  `libwayland-client` und `libxkbcommon` und lädt `libX11.so.6` bei Bedarf
+  nach; die liegt auf diesem Rechner.
+* Woran es dann liegt: ungeklärt. Offener Punkt in [TODO.md](../TODO.md).
+
+Die Kürzel bleiben gesetzt, weil sie nichts kosten und bei einem nativen
+Wayland-Spiel durchaus greifen können. Versprochen wird sie nicht.
+
+Frei mit der Maus ziehen geht ohnehin nicht; das kennt MangoHud nicht.
 
 ## Die Aufnahmen aus dem Spiel
 

@@ -151,12 +151,16 @@ def _pruefen(datei: str) -> int:
     print(f"  GameMode:       {'ja' if p.gamemode else 'nein'}")
     print(f"  MangoHud:       {'ja' if p.mangohud else 'nein'}")
     if p.mangohud:
-        # Die Tasten gehören hierher und nicht nur in die Doku: Wer eine
-        # Anzeige im Weg hat, sucht nicht erst eine Datei zum Nachlesen.
         print(f"  Anzeige:        {p.overlay_ecke}, Deckkraft "
               f"{p.overlay_deckkraft:.0%}")
-        print(f"                  im Spiel verschieben: Shift rechts + F11,"
-              f" ganz aus: Shift rechts + F12")
+        # Hier stand am 12.11.2026 kurz, man könne die Anzeige im Spiel mit
+        # Shift rechts + F11 verschieben. MangoHud kennt die Option, aber
+        # sie wirkte auf diesem Rechner nicht, und warum, ist ungeklärt --
+        # siehe den offenen Punkt in TODO.md. Nachgesehen war die
+        # Schreibweise der Option, nicht ob sie etwas tut. Deshalb steht
+        # hier nur der Weg, der nachweislich greift.
+        print(f"                  verschieben über »ecke« im Profil "
+              f"(wirkt beim nächsten Start)")
     if p.variablen:
         print(f"  Umgebung:       {len(p.variablen)} Variable(n)")
         for name, wert in p.variablen.items():
