@@ -658,13 +658,31 @@ def test_umfang_schreibt_und_warnt_vor_dem_messverlust(anwendung, tmp_path,
         "der Verlust der Messung steht nicht in der Rückmeldung"
 
     # Und im Befund darf dann nicht mehr »jeder Lauf wird gemessen« stehen.
+    #
+    # Die Umgebung wird hier gestellt, nicht übernommen: Auf einem Rechner
+    # ohne MangoHud fällt die ganze Zeile weg, und der Test prüfte dann
+    # nichts. Genau so ist er am 12.11.2026 in der CI durchgefallen --
+    # lokal lag MangoHud, dort nicht.
+    #
+    # Und nicht auf »gemessen« prüfen: Der Satz »Noch nichts gemessen«
+    # steht weiter unten und hat mit der Anzeige nichts zu tun. Ein Test,
+    # der auf ein Wort trifft statt auf eine Aussage, trifft irgendwann
+    # das falsche.
     import re
     from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+
+    monkeypatch.setattr(
+        fenster_modul.umgebung, "ermitteln",
+        lambda: fenster_modul.umgebung.Umgebung(
+            familie="arch", name="Test Linux",
+            werkzeuge={"mangohud": "/usr/bin/mangohud"}))
+
     spiel = steam.Spiel(app_id=4242, name="Testspiel", ordner=tmp_path,
                         groesse=1, bibliothek=tmp_path)
     text = re.sub(r"<[^>]+>", " ", f._bericht(spiel))
-    if "gemessen" in text:
-        assert "nicht gemessen" in text
+    assert "es wird nicht gemessen" in text
+    assert "jeder Lauf wird gemessen" not in text
 
 
 def test_umfang_steht_schon_im_auswahltext(anwendung, tmp_path, monkeypatch):
