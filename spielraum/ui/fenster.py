@@ -815,7 +815,11 @@ class Fenster(QMainWindow):
             # Die Warnung steht vor dem Hinweis auf die Schwankung, nicht
             # dahinter: Sie ist der Grund, warum die Tabelle darueber
             # womoeglich nichts aussagt.
-            lasten = [k.cpu_last for k in gezeigt if k.cpu_last]
+            # Nur Läufe, die lange genug sind. Ohne das stützte sich die
+            # Warnung am 12.11.2026 auf einen Lauf von 13 Sekunden.
+            lasten = [k.cpu_last for k in gezeigt
+                      if k.cpu_last
+                      and k.dauer - k.ladezeit >= messen.MITLAEUFER_MINDESTZEIT]
             if len(lasten) >= 2 and max(lasten) - min(lasten) >= messen.MITLAEUFER_SPANNE:
                 teile.append(
                     f"<p style='color:{farben.ROT}'><b>Die CPU-Last der "

@@ -243,9 +243,9 @@ def test_unlesbare_cpu_zelle_verschiebt_die_zuordnung_nicht(tmp_path):
 def test_mitlaeufer_wird_beim_vergleich_gemeldet(tmp_path):
     """Der Fall vom 12.11.2026, in Zahlen nachgebaut."""
     sauber = messen.auswerten(messen.lesen(
-        log_schreiben(tmp_path, "sauber", [50.0] * 300, cpu=28.6)))
+        log_schreiben(tmp_path, "sauber", [50.0] * 6000, cpu=28.6)))
     mit_obs = messen.auswerten(messen.lesen(
-        log_schreiben(tmp_path, "obs", [41.0] * 300, cpu=68.9)))
+        log_schreiben(tmp_path, "obs", [41.0] * 6000, cpu=68.9)))
 
     warnung = messen.mitlaeufer_verdacht(sauber, mit_obs)
     assert warnung is not None
@@ -267,7 +267,7 @@ def test_die_drei_sauberen_laeufe_loesen_keine_warnung_aus(tmp_path):
     """
     kennzahlen = [
         messen.auswerten(messen.lesen(
-            log_schreiben(tmp_path, f"l{i}", [50.0] * 300, cpu=last)))
+            log_schreiben(tmp_path, f"l{i}", [50.0] * 6000, cpu=last)))
         for i, last in enumerate((26.1, 25.7, 28.6))
     ]
     for a in kennzahlen:
@@ -278,8 +278,32 @@ def test_die_drei_sauberen_laeufe_loesen_keine_warnung_aus(tmp_path):
 def test_ohne_cpu_last_keine_warnung(tmp_path):
     """Nicht mitgeschrieben heißt nicht verdächtig."""
     mit = messen.auswerten(messen.lesen(
-        log_schreiben(tmp_path, "mit", [50.0] * 300, cpu=70.0)))
+        log_schreiben(tmp_path, "mit", [50.0] * 6000, cpu=70.0)))
     ohne = messen.Kennzahlen(mittel=50.0, tief_1=50.0, tief_01=50.0,
-                             stichproben=300, dauer=30.0, verworfen=0)
+                             stichproben=6000, dauer=600.0, verworfen=0)
     assert messen.mitlaeufer_verdacht(mit, ohne) is None
     assert messen.mitlaeufer_verdacht(ohne, mit) is None
+
+
+def test_zu_kurze_laeufe_loesen_keine_warnung_aus(tmp_path):
+    """Der Fehler vom 12.11.2026, gefunden beim Nachsehen in der Oberfläche.
+
+    Die Warnung stützte sich auf einen Lauf von 13 Sekunden und meldete
+    42 Prozentpunkte, wo in den brauchbaren Läufen 32 lagen -- also genau
+    der Fehler, den sie verhindern soll: eine Zahl aus zu wenig Material.
+    """
+    # 130 Stichproben à 100 ms = 13 Sekunden, wie der echte Lauf.
+    kurz = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "kurz", [57.9] * 130, cpu=16.9)))
+    assert kurz is not None, "der Lauf soll auswertbar bleiben"
+    assert kurz.cpu_last == 16.9, "die CPU-Last wird trotzdem ausgewiesen"
+
+    lang = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "lang", [46.9] * 6000, cpu=59.1)))
+    assert messen.mitlaeufer_verdacht(kurz, lang) is None
+    assert messen.mitlaeufer_verdacht(lang, kurz) is None
+
+    # Zwei lange Läufe mit demselben Abstand sagen sehr wohl etwas.
+    auch_lang = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "auchlang", [48.4] * 6000, cpu=26.7)))
+    assert messen.mitlaeufer_verdacht(auch_lang, lang) is not None

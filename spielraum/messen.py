@@ -98,6 +98,23 @@ LAEUFT_AB = 5.0
 # einem Spiel der Mitläufer und beim nächsten der Normalfall sein.
 MITLAEUFER_SPANNE = 10.0
 
+# Wie lange ein Lauf gemessen sein muss, damit seine CPU-Last etwas über die
+# Sitzung sagt -- in Sekunden Spielzeit, nach Abzug der Ladezeit.
+#
+# Ohne diese Grenze stützte sich die Warnung am 12.11.2026 auf einen Lauf von
+# **13 Sekunden** und meldete 42 Prozentpunkte Unterschied, wo in den
+# brauchbaren Läufen 32 lagen. Also derselbe Fehler, den die Warnung
+# verhindern soll: eine Zahl aus zu wenig Material.
+#
+# Eine Minute ist ein Fußboden, keine hergeleitete Grenze. Begründung: Im
+# Lauf vom 12.11. schwankten die Minutenmittel der CPU-Last zwischen 36 und
+# 82 Prozent. Unterhalb einer Minute misst man eine Ladespitze oder einen
+# Dienst, der gerade fertig wird -- nicht, was während des Spielens lief.
+#
+# Nicht zu verwechseln mit ``fahrt.MINDESTDAUER`` (zehn Minuten). Das ist
+# die Grenze, ab der eine BILDRATE etwas aussagt, und sie ist höher.
+MITLAEUFER_MINDESTZEIT = 60.0
+
 
 @dataclass
 class Messung:
@@ -332,6 +349,10 @@ def mitlaeufer_verdacht(vorher: Kennzahlen, nachher: Kennzahlen,
     """
     if not vorher.cpu_last or not nachher.cpu_last:
         return None  # Nicht mitgeschrieben – dann gibt es nichts zu sagen.
+    # Zu kurz gemessen heißt: nichts zu sagen. Siehe MITLAEUFER_MINDESTZEIT.
+    for k in (vorher, nachher):
+        if k.dauer - k.ladezeit < MITLAEUFER_MINDESTZEIT:
+            return None
     abstand = abs(nachher.cpu_last - vorher.cpu_last)
     if abstand < spanne:
         return None

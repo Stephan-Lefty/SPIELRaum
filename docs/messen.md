@@ -172,6 +172,12 @@ hat. Und es stand die ganze Zeit in der Messdatei, Spalte `cpu_load`: 26 bis
 29 Prozent in den sauberen Läufen gegen 69 in diesem. Niemand hat
 hingesehen, und zwei falsche Schlüsse landeten im Repo, bevor es auffiel.
 
+Gewarnt wird erst ab einer Minute gemessener Spielzeit. Ohne diese Grenze
+stützte sich die Warnung auf einen Lauf von **13 Sekunden** – eine Zahl aus
+zu wenig Material, also genau der Fehler, den sie verhindern soll. Die
+CPU-Last steht für kurze Läufe weiter in der Liste, nur verglichen wird sie
+nicht.
+
 Die zehn Prozentpunkte sind eine Hausnummer aus vier Läufen, keine
 hergeleitete Schwelle; die Rechnung steht bei `messen.MITLAEUFER_SPANNE`.
 Verglichen wird nur die **Differenz zwischen zwei Läufen desselben Spiels** –

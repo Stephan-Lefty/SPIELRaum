@@ -38,6 +38,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Spalte schreibt MangoHud ohnehin mit. Fehlt sie, fällt nur diese eine
   Prüfung aus; eine Messung bleibt es trotzdem.
 
+  Gewarnt wird erst ab einer Minute gemessener Spielzeit. Ohne diese Grenze
+  stützte sich die Warnung beim ersten Nachsehen auf einen Lauf von
+  **13 Sekunden** und meldete 42 Prozentpunkte Unterschied, wo in den
+  brauchbaren Läufen 32 lagen – also genau der Fehler, den sie verhindern
+  soll: eine Zahl aus zu wenig Material. Die CPU-Last wird für kurze Läufe
+  weiter ausgewiesen, nur verglichen wird sie nicht.
+
 - **Ein Knopf zu den Aufnahmen aus dem Spiel.** Rechts neben »Mod Loader
   einbauen«, mit der Anzahl darauf. Steam legt die Bilder unter
   `userdata/<Konto>/760/remote/<App-ID>/screenshots` ab -- eine Stelle, die
