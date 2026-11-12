@@ -64,7 +64,27 @@ ARTEN = ("godot-cfg", "godot-tres")
 # das Mitschreiben. Deshalb steht die Folge in der Oberfläche direkt im
 # Auswahltext und nicht in einer Fußnote: Wer sie wegklickt, hat hinterher
 # keine Messung und erfährt es nie.
-OVERLAY_UMFAENGE = ("voll", "klein", "aus")
+#
+# »fahrt« ist der Ausweg aus diesem Widerspruch, vorgeschlagen am
+# 12.11.2026: beim gewöhnlichen Spielen unsichtbar, während einer Messfahrt
+# vollständig -- und gemessen wird in beiden Fällen.
+#
+# Das geht, weil MangoHud zwei verschiedene Dinge kennt, die beide wie
+# »aus« aussehen:
+#
+#   no_display                      hält Anzeige UND Mitschreiben an
+#   alpha=0, background_alpha=0     zeichnet weiter, nur durchsichtig --
+#                                   und protokolliert dabei: 60 Zeilen in
+#                                   derselben Probe gegen null
+#
+# Ob dabei wirklich nichts mehr zu sehen ist, ist NICHT geprüft: MangoHud
+# umrandet seine Schrift von sich aus (``text_outline`` steht in seiner
+# Beispielkonfiguration unkommentiert), und ob diese Umrandung die
+# Durchsichtigkeit mitmacht, ließ sich hier nicht nachstellen.
+# ``text_outline=0`` steht deshalb mit dabei. Ein Blick ins Spiel weiß
+# mehr als jede Vermutung -- siehe den Fehler mit den Tastenkürzeln vom
+# selben Tag.
+OVERLAY_UMFAENGE = ("voll", "klein", "fahrt", "aus")
 
 OVERLAY_ECKEN = (
     "top-left", "top-right", "middle-left", "middle-right",
@@ -133,8 +153,9 @@ class Profil:
     # Null ist erlaubt: Dann steht die Schrift ohne Kasten im Bild. Lesbar
     # bleibt sie, weil MangoHud die Buchstaben umrandet.
     overlay_deckkraft: float = 0.25
-    # Wie viel angezeigt wird: alles, nur die Bildrate, oder nichts.
-    # Siehe OVERLAY_UMFAENGE -- »aus« schaltet auch die Messung ab.
+    # Wie viel angezeigt wird: alles, nur die Bildrate, nur während einer
+    # Messfahrt, oder nichts. Siehe OVERLAY_UMFAENGE -- »aus« schaltet auch
+    # die Messung ab, »fahrt« nicht.
     overlay_umfang: str = "voll"
 
     # Von selbst eine Messfahrt beginnen, wenn für dieses Spiel noch keine

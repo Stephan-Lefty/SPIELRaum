@@ -53,6 +53,7 @@ OVERLAY_NAMEN = (
 OVERLAY_UMFANG_NAMEN = (
     ("voll", "alles"),
     ("klein", "nur Bilder/s"),
+    ("fahrt", "nur bei der Messfahrt"),
     ("aus", "nichts – misst dann auch nicht"),
 )
 
@@ -275,9 +276,11 @@ class Fenster(QMainWindow):
             self.anzeige_umfang.addItem(beschriftung, kennung)
         self.anzeige_umfang.setEnabled(False)
         self.anzeige_umfang.setToolTip(
-            "Wie viel im Bild steht.\n"
-            "»nichts« schaltet auch die Messung ab – MangoHud schreibt dann\n"
-            "nicht mit, nachgemessen am 12.11.2026.\n"
+            "Wie viel im Bild steht.\n\n"
+            "»nur bei der Messfahrt«: beim gewöhnlichen Spielen unsichtbar,\n"
+            "während einer Messfahrt vollständig – gemessen wird beides Mal.\n\n"
+            "»nichts« schaltet dagegen auch die Messung ab; MangoHud\n"
+            "schreibt dann nicht mit, nachgemessen am 12.11.2026.\n\n"
             "Gilt ab dem nächsten Start.")
         self.anzeige_umfang.currentIndexChanged.connect(self._umfang_gewaehlt)
 
@@ -427,11 +430,14 @@ class Fenster(QMainWindow):
     def _umfang_gewaehlt(self, zeile: int) -> None:
         """Den gewählten Umfang ins Profil schreiben."""
         def satz(name, spiel):
+            if self.anzeige_umfang.itemData(zeile) == "fahrt":
+                return ("Anzeige erscheint künftig nur bei einer Messfahrt, "
+                        "gemessen wird weiter")
             if self.anzeige_umfang.itemData(zeile) == "aus":
                 # Nicht nur melden, was gewählt wurde, sondern was es
                 # bedeutet. Wer die Anzeige wegnimmt, verliert die Messung
                 # mit -- und das steht sonst nirgends, wo er hinsieht.
-                return ("Anzeige bleibt aus – dann wird auch nicht gemessen")
+                return "Anzeige bleibt aus, dann wird auch nicht gemessen"
             return f"Anzeige zeigt künftig {name}"
 
         self._anzeige_schreiben(
@@ -848,6 +854,9 @@ class Fenster(QMainWindow):
                     was.append("<b>es wird nicht gemessen</b> – die Anzeige "
                                "steht auf »nichts«, und ohne sie schreibt "
                                "MangoHud nicht mit")
+                elif p.overlay_umfang == "fahrt":
+                    was.append("jeder Lauf wird gemessen – zu sehen ist die "
+                               "Anzeige aber nur während einer Messfahrt")
                 elif p.overlay_umfang == "klein":
                     was.append(f"jeder Lauf wird gemessen – Anzeige {stelle}, "
                                f"nur Bilder/s")

@@ -208,3 +208,33 @@ def test_crlf_bleibt_crlf(tmp_path):
     roh = datei.read_bytes()
     assert b"\r\n" in roh
     assert roh.count(b"\n") == roh.count(b"\r\n"), "ein Zeilenende wurde gewandelt"
+
+
+def test_pruefen_warnt_wenn_nicht_gemessen_wird(tmp_path, capsys):
+    """Bei »umfang = aus« steht »mangohud = true« im Profil und stimmt
+    trotzdem nicht mehr. Das darf die Kommandozeile nicht verschweigen --
+    sonst wartet jemand auf Messdateien, die nie entstehen.
+    """
+    from spielraum import cli
+
+    datei = tmp_path / "p.toml"
+    datei.write_text('[spiel]\nname = "T"\nsteam_app_id = 1\n\n'
+                     '[messen]\nmangohud = true\numfang = "aus"\n',
+                     encoding="utf-8")
+    assert cli._pruefen(str(datei)) == 0
+    ausgabe = capsys.readouterr().out
+    assert "nichts" in ausgabe
+    assert "nicht gemessen" in ausgabe
+
+
+def test_pruefen_warnt_nicht_bei_klein(tmp_path, capsys):
+    from spielraum import cli
+
+    datei = tmp_path / "p.toml"
+    datei.write_text('[spiel]\nname = "T"\nsteam_app_id = 1\n\n'
+                     '[messen]\nmangohud = true\numfang = "klein"\n',
+                     encoding="utf-8")
+    cli._pruefen(str(datei))
+    ausgabe = capsys.readouterr().out
+    assert "nur Bilder/s" in ausgabe
+    assert "nicht gemessen" not in ausgabe

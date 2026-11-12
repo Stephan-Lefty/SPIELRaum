@@ -105,9 +105,34 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
         # »aus« bleibt trotzdem wählbar: Wer die Anzeige wegwill, soll das
         # dürfen. Gesagt wird es dort, wo gewählt wird; in der Oberfläche
         # steht die Folge im Auswahltext selbst.
-        if profil.overlay_umfang == "aus":
+        # »fahrt«: Beim gewöhnlichen Spielen unsichtbar, bei einer Messfahrt
+        # vollständig. Vorgeschlagen am 12.11.2026, und der Ausweg aus dem
+        # Widerspruch darüber -- gemessen wird in beiden Fällen.
+        #
+        # Unsichtbar heißt hier NICHT no_display, sondern durchsichtig:
+        # alpha=0 zeichnet weiter und protokolliert dabei (60 Zeilen in der
+        # Probe), no_display tut beides nicht. text_outline=0 kommt dazu,
+        # weil MangoHud seine Schrift sonst umrandet -- ob die Umrandung
+        # die Durchsichtigkeit mitmacht, ließ sich hier nicht nachstellen.
+        #
+        # Woran eine Messfahrt zu erkennen ist: ``laeuft_bis``. Das setzt
+        # starten.py nur, wenn eine Fahrt läuft oder jemand ausdrücklich
+        # Minuten verlangt hat.
+        umfang = profil.overlay_umfang
+        if umfang == "fahrt":
+            umfang = "voll" if laeuft_bis is not None else "durchsichtig"
+
+        if umfang == "aus":
             anzeige = ["no_display=1"]
-        elif profil.overlay_umfang == "klein":
+        elif umfang == "durchsichtig":
+            anzeige = [
+                "fps",
+                f"position={profil.overlay_ecke}",
+                "alpha=0",
+                "background_alpha=0",
+                "text_outline=0",
+            ]
+        elif umfang == "klein":
             # fps_only verträgt sich laut MangoHud.conf.example
             # ausdrücklich nicht mit anderen Anzeigewerten. Deshalb steht
             # hier nur, wo es sitzt und wie deckend der Kasten ist.

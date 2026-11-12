@@ -460,3 +460,59 @@ def test_voll_bleibt_die_vorgabe(tmp_path, monkeypatch):
     assert "no_display" not in konf
     assert "fps_only" not in konf
     assert "gpu_temp" in konf
+
+
+# --- »fahrt«: unsichtbar beim Spielen, sichtbar bei der Messfahrt ----------
+#
+# Vorgeschlagen am 12.11.2026. Der Kniff: MangoHud kennt zwei Dinge, die
+# beide wie »aus« aussehen -- no_display hält auch das Mitschreiben an,
+# alpha=0 nicht. Mit vkcube gemessen: 60 protokollierte Zeilen bei alpha=0,
+# null bei no_display.
+
+
+def test_fahrt_ist_beim_gewoehnlichen_start_durchsichtig(tmp_path, monkeypatch):
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="fahrt")
+    konf = stellschrauben.umgebung_bauen(p, messen_in=tmp_path / "m")["MANGOHUD_CONFIG"]
+
+    assert "alpha=0" in konf
+    assert "background_alpha=0" in konf
+    # MangoHud umrandet seine Schrift von sich aus -- sonst bliebe ein Rest
+    # sichtbar, der alles zunichtemacht.
+    assert "text_outline=0" in konf
+    # Und das Entscheidende: no_display darf NICHT dastehen, sonst wird
+    # nicht mehr gemessen.
+    assert "no_display" not in konf
+    assert "autostart_log=1" in konf
+
+
+def test_fahrt_zeigt_waehrend_der_messfahrt_alles(tmp_path, monkeypatch):
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="fahrt")
+    konf = stellschrauben.umgebung_bauen(
+        p, messen_in=tmp_path / "m", laeuft_bis=9e9,
+        ueberschrift="SPIELRaum: Messfahrt 1/2")["MANGOHUD_CONFIG"]
+
+    assert "gpu_temp" in konf
+    assert "throttling_status" in konf
+    assert "alpha=0," not in konf, "bei der Messfahrt soll man etwas sehen"
+    assert "background_alpha=0.25" in konf
+    assert "autostart_log=1" in konf
+
+
+def test_fahrt_misst_in_beiden_faellen(tmp_path, monkeypatch):
+    """Der ganze Zweck dieses Umfangs. Ohne das wäre er nur ein anderes
+    Wort für »aus«."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="fahrt")
+    for laeuft_bis in (None, 9e9):
+        konf = stellschrauben.umgebung_bauen(
+            p, messen_in=tmp_path / "m", laeuft_bis=laeuft_bis)["MANGOHUD_CONFIG"]
+        assert "autostart_log=1" in konf
+        assert "log_interval=100" in konf

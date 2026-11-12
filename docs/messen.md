@@ -205,13 +205,39 @@ einem Viertel deckend:
 [messen]
 ecke      = "top-right"   # top/middle/bottom je links oder rechts
 deckkraft = 0.25          # 0 = kein Kasten, 1 = voll deckend
-umfang    = "voll"        # "voll", "klein" oder "aus"
+umfang    = "fahrt"       # "voll", "klein", "fahrt" oder "aus"
 ```
 
 **Zu verstellen ist das auch in der Oberfläche**, unten rechts neben
 »Anzeige:«. Zwei Felder: wo sie sitzt und wie viel sie zeigt. Beide
 schreiben ins Profil und wirken beim nächsten Spielstart – das steht auch in
 der Rückmeldung, damit niemand im laufenden Spiel darauf wartet.
+
+### »nur bei der Messfahrt« – unsichtbar spielen, trotzdem messen
+
+Die vermutlich nützlichste Einstellung, und sie kam vom Anwender: Beim
+gewöhnlichen Spielen ist nichts im Bild, beim Klick auf **Messfahrt** steht
+alles da. Gemessen wird in beiden Fällen.
+
+Möglich ist das, weil MangoHud zwei verschiedene Dinge kennt, die beide wie
+»aus« aussehen:
+
+```
+no_display                     hält Anzeige UND Mitschreiben an
+alpha=0, background_alpha=0    zeichnet weiter, nur durchsichtig –
+                               und protokolliert dabei
+```
+
+Gemessen am 12.11.2026 mit `vkcube`: 60 protokollierte Zeilen bei `alpha=0`,
+null bei `no_display`.
+
+**Was daran ungeprüft ist:** ob wirklich nichts zu sehen bleibt. MangoHud
+umrandet seine Schrift von sich aus, und ob diese Umrandung die
+Durchsichtigkeit mitmacht, ließ sich hier nicht nachstellen – ein
+Wayland-Fenster von außen abzulichten ging auf diesem Rechner nicht.
+`text_outline=0` steht deshalb mit dabei. Ein Blick ins Spiel beantwortet
+es in zwei Sekunden, und nach dem Fehler mit den Tastenkürzeln am selben Tag
+steht hier lieber eine offene Frage als eine zuversichtliche Behauptung.
 
 ### »aus« schaltet auch die Messung ab
 

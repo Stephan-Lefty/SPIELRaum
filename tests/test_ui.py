@@ -713,3 +713,37 @@ def test_spielwechsel_schreibt_auch_den_umfang_nicht(anwendung, tmp_path,
     for _ in range(3):
         f._gewaehlt(0)
     assert datei.read_bytes() == vorher
+
+
+def test_umfang_fahrt_sagt_dass_weiter_gemessen_wird(anwendung, tmp_path,
+                                                     monkeypatch):
+    """Der Unterschied zu »nichts« ist der ganze Punkt -- er muss dastehen."""
+    from spielraum import profil as profil_modul
+
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch)
+    f.anzeige_umfang.setCurrentIndex(f.anzeige_umfang.findData("fahrt"))
+
+    assert profil_modul.laden(datei).overlay_umfang == "fahrt"
+    assert "gemessen wird weiter" in f.unterzeile.text()
+    assert "nicht gemessen" not in f.unterzeile.text()
+
+
+def test_auswahlfelder_und_profilwerte_passen_zusammen(anwendung):
+    """Was die Oberfläche anbietet, muss das Profil auch annehmen.
+
+    Am 12.11.2026 stand »fahrt« im Auswahlfeld, aber noch nicht in
+    profil.OVERLAY_UMFAENGE. Das Ergebnis war kein Fehlschlag, sondern ein
+    **Hänger**: Die Schreibfunktion warf, die Oberfläche zeigte einen
+    modalen Fehldialog, und der Testlauf blieb stehen, bis ihn jemand
+    abbrach. Dieser Test findet dieselbe Lücke in Millisekunden.
+    """
+    from spielraum import profil as profil_modul
+    from spielraum.ui.fenster import OVERLAY_NAMEN, OVERLAY_UMFANG_NAMEN
+
+    assert {k for k, _ in OVERLAY_UMFANG_NAMEN} == set(profil_modul.OVERLAY_UMFAENGE)
+    assert {k for k, _ in OVERLAY_NAMEN} == set(profil_modul.OVERLAY_ECKEN)
+
+    # Und jede Beschriftung ist eigen -- zwei gleiche Einträge wären für
+    # den Anwender nicht zu unterscheiden.
+    beschriftungen = [b for _, b in OVERLAY_UMFANG_NAMEN]
+    assert len(set(beschriftungen)) == len(beschriftungen)

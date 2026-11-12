@@ -68,8 +68,20 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   danach gültig aussieht: dieselbe Falle wie bei der Vollsicherung am
   03.11.2026.
 
-  Die drei Umfänge heißen »alles«, »nur Bilder/s« und **»nichts – misst dann
-  auch nicht«**. Der Zusatz ist keine Floskel, sondern gemessen am
+  **»nur bei der Messfahrt« ist der nützlichste der vier Umfänge**, und der
+  Vorschlag kam vom Anwender: Beim gewöhnlichen Spielen ist nichts im Bild,
+  beim Klick auf **Messfahrt** steht alles da – gemessen wird in beiden
+  Fällen.
+
+  Möglich, weil MangoHud zwei Dinge kennt, die beide wie »aus« aussehen:
+  `no_display` hält Anzeige **und** Mitschreiben an, `alpha=0` zeichnet
+  weiter und protokolliert dabei. Mit `vkcube` gemessen: 60 Zeilen gegen
+  null. Ungeprüft bleibt, ob wirklich nichts zu sehen ist – MangoHud
+  umrandet seine Schrift, und das ließ sich hier nicht nachstellen;
+  `text_outline=0` steht mit dabei.
+
+  Die vier Umfänge heißen »alles«, »nur Bilder/s«, »nur bei der Messfahrt«
+  und **»nichts – misst dann auch nicht«**. Der Zusatz ist keine Floskel, sondern gemessen am
   12.11.2026 mit `vkcube`, zwei Durchgänge je Einstellung:
 
   ```

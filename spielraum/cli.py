@@ -150,17 +150,32 @@ def _pruefen(datei: str) -> int:
         print(f"  Engine:         {p.engine}")
     print(f"  GameMode:       {'ja' if p.gamemode else 'nein'}")
     print(f"  MangoHud:       {'ja' if p.mangohud else 'nein'}")
-    if p.mangohud:
-        print(f"  Anzeige:        {p.overlay_ecke}, Deckkraft "
-              f"{p.overlay_deckkraft:.0%}")
+    if p.mangohud and p.overlay_umfang == "aus":
+        # Der wichtigste Satz dieses Befehls, wenn er zutrifft: Ohne Anzeige
+        # schreibt MangoHud auch nicht mit, nachgemessen am 12.11.2026.
+        # »MangoHud: ja« steht eine Zeile darüber und stimmt trotzdem nicht
+        # mehr -- das darf die Kommandozeile nicht verschweigen.
+        #
+        # Stelle und Deckkraft stehen hier bewusst NICHT: Sie beschreiben
+        # etwas, das niemand sieht.
+        print("  Anzeige:        nichts – und damit wird auch nicht gemessen")
+    elif p.mangohud and p.overlay_umfang == "fahrt":
+        print(f"  Anzeige:        {p.overlay_ecke}, nur während einer "
+              f"Messfahrt zu sehen")
+        print("                  gemessen wird trotzdem jeder Lauf")
+    elif p.mangohud:
+        umfang = "nur Bilder/s" if p.overlay_umfang == "klein" else "alles"
+        print(f"  Anzeige:        {p.overlay_ecke}, {umfang}, "
+              f"Deckkraft {p.overlay_deckkraft:.0%}")
         # Hier stand am 12.11.2026 kurz, man könne die Anzeige im Spiel mit
         # Shift rechts + F11 verschieben. MangoHud kennt die Option, aber
         # sie wirkte auf diesem Rechner nicht, und warum, ist ungeklärt --
         # siehe den offenen Punkt in TODO.md. Nachgesehen war die
         # Schreibweise der Option, nicht ob sie etwas tut. Deshalb steht
         # hier nur der Weg, der nachweislich greift.
-        print(f"                  verschieben über »ecke« im Profil "
-              f"(wirkt beim nächsten Start)")
+        print("                  umstellbar in der Oberfläche oder über "
+              "»ecke«/»umfang«")
+        print("                  im Profil – wirkt beim nächsten Start")
     if p.variablen:
         print(f"  Umgebung:       {len(p.variablen)} Variable(n)")
         for name, wert in p.variablen.items():
