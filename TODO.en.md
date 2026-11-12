@@ -75,29 +75,44 @@ deleted but moved down, with the date they were completed.
   *El-Prime Armor Durability* and *MedicalDurability*. Those stay manual
   whatever gets built.
 
-- [ ] **Two variants have to be measured for the same length.** The run only
-  checks the ten-minute minimum today. A 12.6-minute run against a 40-minute
-  one therefore counts as a valid comparison — and is not one.
+- [ ] **Two runs only become comparable once the same route was walked.**
+  Equal measurement length is the minimum condition for that, not the
+  solution. All that gets checked today is the ten-minute minimum.
 
-  Shown on 2026-11-10, cleanly isolated. Same variant, same settings, same
-  mod set, same machine, same day — only the duration differed:
+  **Correction, 2026-11-12.** For two days this spot claimed that duration
+  alone costs 6 per cent — 52.5 fps over 12.6 minutes against 49.4 over 96.
+  That is refuted. A third run of the same variant made it testable: every
+  run was truncated to the same opening stretch and re-evaluated.
 
   ```
-  leistung, 12.6 minutes ..... 52.5 fps
-  leistung, 96   minutes ..... 49.4 fps     -6 %
+  Run                  full    cut to 36 min    cut to 12 min
+  optik    11-05       44.5         44.1             43.1
+  leistung 11-09       52.5         52.5             52.1
+  leistung 11-10       49.4         48.1             48.4
+  leistung 11-12       46.9         46.7             43.3
   ```
 
-  That measures what `docs/messen.md` has so far only asserted. And it
-  retroactively devalues part of our own run: `optik` ran 40 minutes,
-  `leistung` 12.6, and the reported 18 % lead contains this effect.
+  Same variant, same settings, same mod set, same machine, measured over the
+  same length — and anywhere between 43.3 and 52.1 frames, a **20 per cent
+  spread**. Duration explains none of it. Within each individual run the
+  number even gets *better* with length, not worse — the exact opposite of
+  the refuted claim.
 
-  Possible routes: the run remembers the duration of the first counting lap
-  and discards later ones that deviate sharply. Or it evaluates only the
-  common opening stretch — 12.6 minutes from both laps instead of 12.6
-  against 40. The latter throws data away but is more honest.
+  What is left is the route. The per-minute means for 11-12 are 51.7 / 37.0
+  / 27.8 for the first three minutes and 57.2 for the eleventh. Where the
+  player stands costs more than anything we have ever set; that matches the
+  74 % swing from [docs/messen.md](docs/messen.md) (German).
 
-  Belongs with the tolerance-band point below: both times SPIELRaum reports
-  a difference that is none.
+  So the harder thing is what needs doing: a comparison that accounts for
+  the route. A fixed circuit, a built-in benchmark lap, or sections of equal
+  GPU load pitted against each other. Until then the run may only give a
+  recommendation when the gap exceeds that spread — and so far it never has.
+  Which puts this with the tolerance-band point below.
+
+  And as a note to self: it was a single measurement with a plausible
+  explanation next to it. That exact thing had already gone wrong three
+  times in the preceding two weeks; this time it made it into the repo. An
+  explanation that fits only one measurement is not one.
 
 - [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
   takes the highest 1 % low and declares a winner, even when the gap is

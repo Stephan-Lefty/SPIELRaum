@@ -66,25 +66,34 @@
 # 18 % im Mittel, bei gleichem 1-%-Tief. Uebernommen wurde Leistung.
 #
 # -------------------------------------------------------------------
-# UND DIE WICHTIGSTE ZAHL DES GANZEN PROFILS, 10.11.2026
+# DIE WICHTIGSTE ZAHL DES GANZEN PROFILS, 12.11.2026
 # -------------------------------------------------------------------
 #
-# Derselbe Lauf, dieselbe Variante, nur laenger gespielt:
+# Hier stand zwei Tage lang, die Messdauer allein koste 6 Prozent:
+# 52,5 Bilder/s ueber 12,6 Minuten gegen 49,4 ueber 96. Falsch.
 #
-#   Leistung, 12,6 Minuten ....... 52,5 Bilder/s
-#   Leistung, 96   Minuten ....... 49,4 Bilder/s      -6 %
+# Ein dritter Lauf derselben Variante machte es pruefbar. Alle Laeufe
+# auf dasselbe Anfangsstueck gekuerzt und neu ausgewertet:
 #
-# Keine andere Aenderung. Gleiche Einstellungen, gleicher Mod-Satz,
-# gleicher Rechner. Der Unterschied kommt allein aus der Messdauer.
+#   Lauf                 ganz    auf 36 min    auf 12 min
+#   Optik    05.11.      44,5        44,1          43,1
+#   Leistung 09.11.      52,5        52,5          52,1
+#   Leistung 10.11.      49,4        48,1          48,4
+#   Leistung 12.11.      46,9        46,7          43,3
 #
-# Damit ist belegt, was docs/messen.md bisher nur behauptet hat: Kurze
-# Laeufe zeigen zu hohe Werte. Und es relativiert die 18 % von oben --
-# der Optik-Lauf dauerte dreimal so lang wie der von Leistung. Echt
-# sind vermutlich eher 10 bis 12 %.
+# Gleiche Variante, gleiche Einstellungen, gleicher Mod-Satz, gleicher
+# Rechner, gleich lang gemessen -- und 20 Prozent Spanne. Die Dauer
+# erklaert davon nichts; innerhalb jedes Laufs wird die Zahl ueber die
+# Laenge sogar besser, nicht schlechter.
 #
-# Wer zwei Varianten vergleicht, muss sie GLEICH LANG messen. Das kann
-# die Messfahrt bisher nicht erzwingen; sie prueft nur die
-# Mindestdauer von zehn Minuten. Siehe den offenen Punkt in TODO.md.
+# Uebrig bleibt die STRECKE. Minutenmittel des 12.11.: 51,7 / 37,0 /
+# 27,8 in den ersten drei Minuten, 57,2 in der elften. Wo der Spieler
+# steht, kostet mehr als alles, was wir hier je gestellt haben.
+#
+# Folge fuer dieses Profil: Die 18 % der dritten Fahrt sind kein
+# Messergebnis, sondern liegen innerhalb dieser Spanne. Leistung bleibt
+# uebernommen, weil es sich beim Spielen besser anfuehlt -- aber als
+# Vorliebe, nicht als Messwert. Siehe den offenen Punkt in TODO.md.
 #
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
@@ -230,7 +239,7 @@ beschreibung = "die Mitte - 48,6 Bilder/s, 1-%-Tief 26,7 (01.10.2026)"
 grafik = { lighting = 2, antialiasing = 2 }
 
 [varianten.leistung]
-beschreibung = "flüssig vor hübsch - 49,4 Bilder/s, 1-%-Tief 22,2 (10.11.2026, 96 min)"
+beschreibung = "flüssig vor hübsch - 46,9 bis 52,5 Bilder/s über drei Läufe (09. bis 12.11.2026)"
 grafik = { lighting = 1, antialiasing = 1 }
 
 # --- Stephans eigene Wahl, 01.10.2026 ----------------------------------

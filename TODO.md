@@ -84,32 +84,46 @@ fertig wurde.
   fehlt: *El-Prime Armor Durability* und *MedicalDurability*. Die bleiben
   Handarbeit, unabhängig davon, was gebaut wird.
 
-- [ ] **Zwei Varianten müssen gleich lang gemessen werden.** Die Messfahrt
-  prüft heute nur die Mindestdauer von zehn Minuten. Ein Lauf über 12,6
-  Minuten gegen einen über 40 gilt damit als gültiger Vergleich – ist aber
-  keiner.
+- [ ] **Vergleichbar sind zwei Läufe erst, wenn dieselbe Strecke gelaufen
+  wurde.** Die gleiche Messdauer ist dafür die Mindestbedingung, nicht die
+  Lösung. Geprüft wird heute nur die Mindestdauer von zehn Minuten.
 
-  Belegt am 10.11.2026, und zwar sauber isoliert. Dieselbe Variante,
-  dieselben Einstellungen, derselbe Mod-Satz, derselbe Rechner, derselbe
-  Tag – nur die Dauer unterschied sich:
+  **Korrektur vom 12.11.2026.** An dieser Stelle stand zwei Tage lang, die
+  Messdauer allein koste 6 Prozent – 52,5 Bilder/s über 12,6 Minuten gegen
+  49,4 über 96. Das ist widerlegt. Ein dritter Lauf derselben Variante
+  machte es prüfbar: Alle Läufe wurden auf dasselbe Anfangsstück gekürzt
+  und neu ausgewertet.
 
   ```
-  leistung, 12,6 Minuten ..... 52,5 Bilder/s
-  leistung, 96   Minuten ..... 49,4 Bilder/s     -6 %
+  Lauf                 ganz    auf 36 min    auf 12 min
+  optik    05.11.      44,5        44,1          43,1
+  leistung 09.11.      52,5        52,5          52,1
+  leistung 10.11.      49,4        48,1          48,4
+  leistung 12.11.      46,9        46,7          43,3
   ```
 
-  Damit ist gemessen, was `docs/messen.md` bisher nur behauptet hat. Und es
-  entwertet rückwirkend einen Teil der eigenen Fahrt: `optik` lief 40
-  Minuten, `leistung` 12,6, und die gemeldeten 18 % Vorsprung enthalten
-  diesen Effekt.
+  Gleiche Variante, gleiche Einstellungen, gleicher Mod-Satz, gleicher
+  Rechner, gleich lang gemessen – und zwischen 43,3 und 52,1 Bildern, also
+  **20 Prozent Spanne**. Die Dauer erklärt davon nichts. Innerhalb jedes
+  einzelnen Laufs wird die Zahl über die Länge sogar *besser*, nicht
+  schlechter – genau umgekehrt zur widerlegten Behauptung.
 
-  Denkbare Wege: Die Fahrt merkt sich die Dauer des ersten zählenden Laufs
-  und verwirft spätere, die deutlich abweichen. Oder sie wertet nur das
-  gemeinsame Anfangsstück aus – 12,6 Minuten aus beiden Läufen statt 12,6
-  gegen 40. Letzteres verschenkt Daten, ist aber ehrlicher.
+  Übrig bleibt die Strecke. Die Minutenmittel des 12.11. lauten 51,7 / 37,0
+  / 27,8 für die ersten drei Minuten und 57,2 für die elfte. Wo der Spieler
+  steht, kostet mehr als alles, was wir bisher gestellt haben; das deckt
+  sich mit den 74 % Schwankung aus [docs/messen.md](docs/messen.md).
 
-  Gehört zum Toleranzband-Punkt darunter: Beide Male meldet SPIELRaum
-  einen Unterschied, der keiner ist.
+  Zu tun ist deshalb das Schwerere: ein Vergleich, der die Strecke
+  berücksichtigt. Ein festgelegter Rundweg, ein eingebauter Vergleichslauf,
+  oder Abschnitte gleicher GPU-Last gegeneinander. Bis dahin darf die Fahrt
+  eine Empfehlung nur aussprechen, wenn der Abstand größer ist als diese
+  Spanne – und das war er bisher nie. Gehört damit zum Toleranzband-Punkt
+  darunter.
+
+  Und als Merkposten: Es war eine Einzelmessung mit einer plausiblen
+  Erklärung daneben. Genau das ist in den zwei Wochen davor schon dreimal
+  schiefgegangen, nur hat es diesmal den Weg ins Repo gefunden. Eine
+  Erklärung, die nur zu einer Messung passt, ist keine.
 
 - [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
   schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn
