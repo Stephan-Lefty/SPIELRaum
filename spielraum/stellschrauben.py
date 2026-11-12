@@ -103,6 +103,22 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
             "cpu_stats", "cpu_temp", "ram",
             "throttling_status",
             f"position={profil.overlay_ecke}",
+            # Der Kasten hinter der Anzeige. MangoHuds Vorgabe ist 0,5 und
+            # verdeckt damit ein Stück Bild; siehe profil.overlay_deckkraft.
+            # Die Schrift selbst bleibt voll deckend -- durchsichtige Zahlen
+            # vor einem hellen Himmel kann man nicht lesen.
+            f"background_alpha={profil.overlay_deckkraft}",
+            "alpha=1.0",
+            # Die Anzeige im Spiel verschieben, ohne das Spiel zu beenden.
+            # MangoHud schaltet damit durch seine sechs Stellen; frei ziehen
+            # kann man sie nicht, das kennt MangoHud 0.8.4 nicht.
+            #
+            # Die Tasten stehen hier und nicht im Profil: Sie sind kein Wert,
+            # den ein Spiel anders braucht, sondern eine Bedienung, die
+            # überall gleich sein soll. Shift rechts, weil die linke Hand
+            # bei diesem Anwender an der Maus liegt.
+            "toggle_hud_position=Shift_R+F11",
+            "toggle_hud=Shift_R+F12",
         ]
 
         if messen_in is not None:

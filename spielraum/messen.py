@@ -44,6 +44,7 @@ Deshalb schneidet ``auswerten`` eine Aufwärmzeit ab.
 from __future__ import annotations
 
 import csv
+import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -68,6 +69,35 @@ AUFWAERMEN = 5.0
 # Ruckler nicht zu verschlucken, und hoch genug, um Ladebilder zu erkennen.
 LAEUFT_AB = 5.0
 
+# Ab welchem Unterschied in der CPU-Last zwei Läufe nicht mehr vergleichbar
+# sind, in Prozentpunkten.
+#
+# Der Anlass, 12.11.2026: Während eines Messlaufs von Road to Vostok nahm
+# OBS auf und kodierte dabei auf dem Prozessor. Aufgefallen ist es nur, weil
+# die Aufnahme mitten im Lauf endete - danach sprang die Bildrate von 48,8
+# auf 57,7. Derselbe Streckenabschnitt gegen den Lauf zwei Tage davor
+# gerechnet: 17 Prozent. Mehr, als in diesem Projekt je eine Einstellung
+# gebracht hat. Die Messung war wertlos, und zwei daraus gezogene Schlüsse
+# standen schon im Repo, bevor es auffiel.
+#
+# Die Zahl kommt aus den vier Läufen, die es dazu gibt. Mittlere CPU-Last
+# über die ersten zwölf Minuten:
+#
+#   Optik    05.11. .... 26,1 %
+#   Leistung 09.11. .... 25,7 %
+#   Leistung 10.11. .... 28,6 %
+#   Leistung 12.11. .... 68,9 %   <- OBS
+#
+# Zwischen den drei sauberen Läufen liegen 2,9 Punkte, zum vierten 40. Zehn
+# Punkte liegen deutlich über dem einen und weit unter dem anderen. Das ist
+# keine hergeleitete Schwelle, sondern eine Hausnummer aus vier Läufen --
+# und sie steht hier, damit sie nachgerechnet werden kann.
+#
+# Wichtig: Verglichen wird nur die Differenz zwischen zwei Läufen DESSELBEN
+# Spiels. Ein absoluter Grenzwert wäre falsch - 70 % CPU-Last können bei
+# einem Spiel der Mitläufer und beim nächsten der Normalfall sein.
+MITLAEUFER_SPANNE = 10.0
+
 
 @dataclass
 class Messung:
@@ -76,6 +106,10 @@ class Messung:
     quelle: Path
     bilder: list[float] = field(default_factory=list)  # FPS je Stichprobe
     sekunden: list[float] = field(default_factory=list)  # elapsed, in Sekunden
+    # CPU-Last je Stichprobe, in Prozent. Leer, wenn das Protokoll die
+    # Spalte nicht hat - MangoHud lässt sich so einstellen. Fehlt sie, gibt
+    # es eben keine Mitläufer-Prüfung; ein Fehler ist das nicht.
+    cpu_last: list[float] = field(default_factory=list)
     metadaten: dict[str, str] = field(default_factory=dict)
 
     @property
@@ -104,6 +138,10 @@ class Kennzahlen:
     verworfen: int
     ladezeit: float = 0.0
     aussetzer: int = 0  # Stichproben ohne gerendertes Bild *nach* dem Laden
+    # Mittlere CPU-Last im Messfenster, in Prozent. 0.0 heißt »nicht
+    # mitgeschrieben«, nicht »Prozessor im Leerlauf« - ein Spiel mit
+    # 0 % CPU-Last gibt es nicht.
+    cpu_last: float = 0.0
 
     def __str__(self) -> str:
         text = (
@@ -122,8 +160,17 @@ class Kennzahlen:
         if self.aussetzer:
             # Ein Zehntel Sekunde je Stichprobe - die übliche Schrittweite.
             teile.append(f"{self.aussetzer / 10:.1f} s Aussetzer im Spiel")
-        if teile:
-            text += "\n      " + ", dazu ".join(teile)
+        zeile = ", dazu ".join(teile)
+
+        # Die CPU-Last hängt nicht an »dazu«: Ladezeit und Aussetzer sind
+        # Eigenschaften des Laufs, die CPU-Last ist der Hinweis darauf, ob
+        # der Lauf überhaupt etwas über das Spiel aussagt. Sie wird deshalb
+        # nur angehängt, nicht eingereiht.
+        if self.cpu_last:
+            zusatz = f"CPU-Last {self.cpu_last:.0f} %"
+            zeile = f"{zeile}, {zusatz}" if zeile else zusatz
+        if zeile:
+            text += "\n      " + zeile
         return text
 
 
@@ -154,6 +201,11 @@ def lesen(pfad: Path) -> Messung:
         except ValueError:
             return messung
 
+        # Die CPU-Last ist Beiwerk, nicht Voraussetzung: Fehlt die Spalte,
+        # wird weitergelesen. Sonst hinge die ganze Messung an einer
+        # MangoHud-Einstellung, die mit der Bildrate nichts zu tun hat.
+        cpu_spalte = spalten.index("cpu_load") if "cpu_load" in spalten else None
+
         for zeile in leser:
             if len(zeile) <= max(fps_spalte, zeit_spalte):
                 continue
@@ -166,6 +218,16 @@ def lesen(pfad: Path) -> Messung:
                 continue
             messung.bilder.append(fps)
             messung.sekunden.append(elapsed / 1_000_000_000)  # ns -> s
+
+            # Gleichlauf mit ``bilder`` ist hier Bedingung, nicht Zufall:
+            # ``auswerten`` schneidet über den Index. Eine fehlende oder
+            # unlesbare Zelle wird deshalb als -1 eingetragen und später
+            # übersprungen, nicht weggelassen.
+            if cpu_spalte is not None:
+                try:
+                    messung.cpu_last.append(float(zeile[cpu_spalte]))
+                except (ValueError, IndexError):
+                    messung.cpu_last.append(-1.0)
 
     return messung
 
@@ -219,11 +281,16 @@ def auswerten(messung: Messung, aufwaermen: float = AUFWAERMEN) -> Kennzahlen | 
     """
     beginn = ladezeit(messung) + aufwaermen
 
-    behalten = [
-        fps for fps, sekunde in zip(messung.bilder, messung.sekunden)
-        if sekunde > beginn
-    ]
+    # Über den Index, nicht über zip: Die CPU-Last muss aus demselben
+    # Fenster kommen wie die Bildraten. Rechnete sie über den ganzen Lauf,
+    # stünde die Ladephase mit darin - und genau dort ist die CPU-Last
+    # ohnehin hoch, ganz ohne Mitläufer.
+    stellen = [i for i, sekunde in enumerate(messung.sekunden) if sekunde > beginn]
+    behalten = [messung.bilder[i] for i in stellen]
     verworfen = len(messung.bilder) - len(behalten)
+
+    lasten = [messung.cpu_last[i] for i in stellen
+              if i < len(messung.cpu_last) and messung.cpu_last[i] >= 0]
 
     # Aussetzer *nach* dem Laden bleiben in der Statistik. Sie sind kein
     # Messfehler, sondern das Unangenehmste, was ein Spiel tun kann: Bei
@@ -247,7 +314,35 @@ def auswerten(messung: Messung, aufwaermen: float = AUFWAERMEN) -> Kennzahlen | 
         verworfen=verworfen,
         ladezeit=ladezeit(messung),
         aussetzer=aussetzer,
+        cpu_last=sum(lasten) / len(lasten) if lasten else 0.0,
     )
+
+
+def mitlaeufer_verdacht(vorher: Kennzahlen, nachher: Kennzahlen,
+                        spanne: float = MITLAEUFER_SPANNE) -> str | None:
+    """Liegen zwei Läufe in der CPU-Last so weit auseinander, dass der
+    Vergleich nichts taugt?
+
+    Gibt die Meldung zurück oder ``None``. SPIELRaum **sagt** es und
+    verwirft nichts von selbst: Es kann der Mitläufer gewesen sein, es kann
+    auch die Stelle im Spiel gewesen sein. Welches von beidem, weiß das
+    Protokoll nicht - und was es nicht weiß, soll es nicht entscheiden.
+
+    Siehe ``MITLAEUFER_SPANNE`` für die Herkunft der Zahl.
+    """
+    if not vorher.cpu_last or not nachher.cpu_last:
+        return None  # Nicht mitgeschrieben – dann gibt es nichts zu sagen.
+    abstand = abs(nachher.cpu_last - vorher.cpu_last)
+    if abstand < spanne:
+        return None
+    hoeher = "zweiten" if nachher.cpu_last > vorher.cpu_last else "ersten"
+    return (f"Achtung: Die CPU-Last unterscheidet sich um {abstand:.0f} "
+            f"Prozentpunkte ({vorher.cpu_last:.0f} % gegen "
+            f"{nachher.cpu_last:.0f} %). Beim {hoeher} Lauf lief vermutlich "
+            f"etwas mit – Bildschirmaufnahme, Fernwartung, ein zweites "
+            f"Spiel. Am 12.11.2026 kostete OBS auf diesem Rechner 17 % "
+            f"Bildrate, mehr als jede Einstellung je gebracht hat. Dieser "
+            f"Vergleich taugt dann nicht.")
 
 
 def laeufe(ordner: Path) -> list[Messung]:
@@ -292,4 +387,21 @@ def vergleichen(vorher: Kennzahlen, nachher: Kennzahlen) -> list[str]:
         else:
             urteil = f"{anteil:.1f} %"
         zeilen.append(f"  {was:12} {alt:6.1f}  ->  {neu:6.1f}   {urteil}")
+
+    # Die CPU-Last steht bewusst in derselben Tabelle wie die Bildraten,
+    # nicht in einer Fußnote. Sie ist der Grund, warum die Zahlen darüber
+    # womöglich nichts bedeuten - und was ein Ergebnis entwertet, gehört
+    # nicht unter das Ergebnis, sondern daneben.
+    if vorher.cpu_last and nachher.cpu_last:
+        zeilen.append(f"  {'CPU-Last':12} {vorher.cpu_last:6.1f}  ->  "
+                      f"{nachher.cpu_last:6.1f}   "
+                      f"{nachher.cpu_last - vorher.cpu_last:+.1f} Punkte")
+    warnung = mitlaeufer_verdacht(vorher, nachher)
+    if warnung:
+        # Umbruch hier und nicht beim Aufrufer: Die Warnung ist der
+        # laengste Satz, den dieses Modul ausgibt, und eine Zeile ueber
+        # 300 Zeichen liest im Terminal niemand.
+        zeilen.extend(textwrap.wrap(warnung, width=74,
+                                    initial_indent="  ",
+                                    subsequent_indent="  "))
     return zeilen

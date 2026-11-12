@@ -33,12 +33,19 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 from . import umgebung
 
-FAHRT_FASSUNG = 1
+FAHRT_FASSUNG = 2
+
+# Welche Fassungen noch gelesen werden. Fassung 1 kannte die CPU-Last pro
+# Lauf nicht; das ist ein fehlendes Feld, kein anderer Aufbau. Eine solche
+# Akte wegzuwerfen hieße, eine fertig gemessene Fahrt zu verlieren, weil
+# eine Spalte dazugekommen ist. Dieselbe Entscheidung wie beim
+# Zustandsjournal, siehe zustand.GELESENE_FASSUNGEN.
+GELESENE_FASSUNGEN = (1, 2)
 
 # Wie lange ein Lauf mindestens dauern muss, damit er zählt. Keine
 # Schikane, sondern Folge einer Messung vom 01.10.2026: Zwei Läufe
@@ -58,6 +65,11 @@ class Lauf:
     tief_1: float = 0.0
     tief_01: float = 0.0
     dauer: float = 0.0
+    # Mittlere CPU-Last im Messfenster, in Prozent. Nicht zum Bewerten,
+    # sondern zum Vergleichen: Weichen zwei Läufe hier stark ab, lief beim
+    # einen etwas mit, und der Vergleich taugt nicht. 0.0 heißt »nicht
+    # mitgeschrieben« - bei Akten aus Fassung 1 ist das der Normalfall.
+    cpu_last: float = 0.0
     # Warum ein Lauf nicht zählt. Leer heißt: er zählt.
     verworfen: str = ""
 
@@ -132,6 +144,31 @@ class Fahrt:
         zaehlende = [l for l in self.laeufe if l.zaehlt]
         return max(zaehlende, key=lambda l: l.tief_1) if zaehlende else None
 
+    def mitlaeufer_hinweis(self) -> str | None:
+        """Weichen die zählenden Läufe in der CPU-Last stark ab?
+
+        Dann wurden nicht zwei Varianten verglichen, sondern zwei
+        Rechnerzustände. Die Fahrt verwirft deswegen nichts -- sie sagt es.
+        Zum Hintergrund siehe ``messen.MITLAEUFER_SPANNE``.
+        """
+        from . import messen
+
+        lasten = {l.variante: l.cpu_last for l in self.laeufe
+                  if l.zaehlt and l.cpu_last}
+        if len(lasten) < 2:
+            return None
+        hoch = max(lasten, key=lambda n: lasten[n])
+        tief = min(lasten, key=lambda n: lasten[n])
+        abstand = lasten[hoch] - lasten[tief]
+        if abstand < messen.MITLAEUFER_SPANNE:
+            return None
+        return (f"Die Läufe sind in der CPU-Last {abstand:.0f} Prozentpunkte "
+                f"auseinander (»{tief}« {lasten[tief]:.0f} %, »{hoch}« "
+                f"{lasten[hoch]:.0f} %). Bei »{hoch}« lief vermutlich etwas "
+                f"mit – Bildschirmaufnahme, Fernwartung, ein zweites Spiel. "
+                f"Dann vergleicht diese Fahrt nicht zwei Varianten, sondern "
+                f"zwei Rechnerzustände. Den Lauf besser wiederholen.")
+
 
 # --- Auf der Platte --------------------------------------------------------
 
@@ -176,11 +213,21 @@ def lesen(app_id: int) -> Fahrt | None:
         roh = json.loads(pfad.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    if roh.get("fassung") != FAHRT_FASSUNG:
-        # Eine Akte aus einer anderen Fassung wird nicht geraten, sondern
-        # liegengelassen. Der Aufrufer meldet sie beim Aufräumen.
+    if roh.get("fassung") not in GELESENE_FASSUNGEN:
+        # Eine Akte aus einer unbekannten Fassung wird nicht geraten,
+        # sondern liegengelassen. Der Aufrufer meldet sie beim Aufräumen.
         return None
-    laeufe = [Lauf(**l) for l in roh.pop("laeufe", [])]
+    # Nur bekannte Felder übernehmen. Lauf(**l) würde an einem Feld
+    # scheitern, das eine neuere Fassung hinzufügt - und zwar mit einem
+    # TypeError mitten im Spielstart.
+    erlaubt = {f.name for f in fields(Lauf)}
+    laeufe = [Lauf(**{k: v for k, v in l.items() if k in erlaubt})
+              for l in roh.pop("laeufe", [])]
+    bekannt = {f.name for f in fields(Fahrt)} - {"laeufe"}
+    roh = {k: v for k, v in roh.items() if k in bekannt}
+    # Die Akte wird in der aktuellen Fassung weitergeführt, sobald sie
+    # das nächste Mal geschrieben wird.
+    roh["fassung"] = FAHRT_FASSUNG
     return Fahrt(**roh, laeufe=laeufe)
 
 

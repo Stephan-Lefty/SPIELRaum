@@ -311,6 +311,7 @@ def _fahrt_auswerten(laufende: "fahrt.Fahrt", variante: str, messen_in: Path,
             eintrag.tief_1 = kennzahlen.tief_1
             eintrag.tief_01 = kennzahlen.tief_01
             eintrag.dauer = kennzahlen.dauer
+            eintrag.cpu_last = kennzahlen.cpu_last
 
     laufende.vermerken(eintrag)
     fahrt.schreiben(laufende)

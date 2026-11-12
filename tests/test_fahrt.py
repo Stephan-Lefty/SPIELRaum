@@ -325,3 +325,91 @@ def test_nur_sticht_die_profilauswahl(tmp_path, monkeypatch, capsys):
     cli.main(["messfahrt", "42", "--starten", "--nur", "optik,stephan"])
     akte = fahrt.lesen(42)
     assert akte is not None and akte.varianten == ["optik", "stephan"]
+
+
+# --- Mitläufer in der Messfahrt --------------------------------------------
+
+
+def test_fahrt_meldet_weit_auseinanderliegende_cpu_last():
+    """Zwei Rechnerzustände sind keine zwei Varianten.
+
+    Nachgebaut mit den Werten vom 10. und 12.11.2026: 28,6 gegen 68,9
+    Prozent CPU-Last, weil bei einem Lauf OBS mitschnitt.
+    """
+    f = fahrt.Fahrt(spiel="Test", steam_app_id=1, varianten=["optik", "leistung"])
+    f.vermerken(fahrt.Lauf(variante="optik", messdatei="a.csv", mittel=49.4,
+                           tief_1=22.2, dauer=5767.0, cpu_last=28.6))
+    f.vermerken(fahrt.Lauf(variante="leistung", messdatei="b.csv", mittel=46.9,
+                           tief_1=17.4, dauer=2218.0, cpu_last=68.9))
+
+    hinweis = f.mitlaeufer_hinweis()
+    assert hinweis is not None
+    assert "40 Prozentpunkte" in hinweis
+    assert "»leistung«" in hinweis  # der Lauf mit der höheren Last
+    assert "wiederholen" in hinweis
+
+
+def test_fahrt_ohne_auffaelligkeit_schweigt():
+    f = fahrt.Fahrt(spiel="Test", steam_app_id=1, varianten=["optik", "leistung"])
+    f.vermerken(fahrt.Lauf(variante="optik", messdatei="a.csv", mittel=44.5,
+                           tief_1=23.5, dauer=2428.0, cpu_last=26.1))
+    f.vermerken(fahrt.Lauf(variante="leistung", messdatei="b.csv", mittel=52.5,
+                           tief_1=22.9, dauer=758.0, cpu_last=25.7))
+    assert f.mitlaeufer_hinweis() is None
+
+
+def test_fahrt_ohne_cpu_last_schweigt():
+    """Akten aus Fassung 1 kennen die Spalte nicht.
+
+    Ein stillschweigendes 0,0 darf nicht als »Prozessor im Leerlauf«
+    gelesen werden und einen Verdacht erzeugen, der aus nichts kommt.
+    """
+    f = fahrt.Fahrt(spiel="Test", steam_app_id=1, varianten=["optik", "leistung"])
+    f.vermerken(fahrt.Lauf(variante="optik", messdatei="a.csv", mittel=44.5,
+                           tief_1=23.5, dauer=2428.0))
+    f.vermerken(fahrt.Lauf(variante="leistung", messdatei="b.csv", mittel=52.5,
+                           tief_1=22.9, dauer=758.0, cpu_last=68.9))
+    assert f.mitlaeufer_hinweis() is None
+
+
+def test_akte_aus_fassung_1_bleibt_lesbar(tmp_path, monkeypatch):
+    """Sonst wäre eine fertig gemessene Fahrt verloren, weil eine Spalte
+    dazugekommen ist. Dieselbe Entscheidung wie beim Zustandsjournal."""
+    import json
+
+    monkeypatch.setattr(fahrt.umgebung, "daten_verzeichnis", lambda: tmp_path)
+    akte = {
+        "spiel": "Road to Vostok", "steam_app_id": 1963610,
+        "varianten": ["optik", "leistung"], "ausgangszustand": None,
+        "angelegt": 1.0, "abgeschlossen": True, "uebernommen": "",
+        "fassung": 1,
+        "laeufe": [{"variante": "optik", "messdatei": "a.csv", "mittel": 44.5,
+                    "tief_1": 23.5, "tief_01": 0.1, "dauer": 2428.0,
+                    "verworfen": ""}],
+    }
+    fahrt.akte_pfad(1963610).write_text(json.dumps(akte), encoding="utf-8")
+
+    gelesen = fahrt.lesen(1963610)
+    assert gelesen is not None
+    assert gelesen.laeufe[0].mittel == 44.5
+    assert gelesen.laeufe[0].cpu_last == 0.0  # nicht mitgeschrieben
+    assert gelesen.fassung == fahrt.FAHRT_FASSUNG  # wird fortgeschrieben
+
+
+def test_akte_mit_unbekanntem_feld_stuerzt_nicht_ab(tmp_path, monkeypatch):
+    """Eine Akte aus einer späteren Fassung soll nicht mitten im
+    Spielstart einen TypeError auslösen."""
+    import json
+
+    monkeypatch.setattr(fahrt.umgebung, "daten_verzeichnis", lambda: tmp_path)
+    akte = {
+        "spiel": "Test", "steam_app_id": 7, "varianten": ["a"],
+        "fassung": 2, "was_ganz_neues": 42,
+        "laeufe": [{"variante": "a", "messdatei": "x.csv", "mittel": 1.0,
+                    "kommt_erst_spaeter": True}],
+    }
+    fahrt.akte_pfad(7).write_text(json.dumps(akte), encoding="utf-8")
+
+    gelesen = fahrt.lesen(7)
+    assert gelesen is not None
+    assert gelesen.laeufe[0].mittel == 1.0

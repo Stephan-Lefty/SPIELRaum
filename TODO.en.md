@@ -80,13 +80,17 @@ deleted but moved down, with the date they were completed.
   jumps from 48.8 to 57.7 — the moment the recording ended, as a step in
   our own data.
 
-  That yields a task smaller than the `nvidia-smi` listing and one that
-  works **retroactively** on every stored run: carry the mean CPU load per
-  run and report it, and warn on a comparison when two runs differ sharply
-  in it. That would have thrown this run out before the evaluation instead
-  of after. `nvidia-smi` says *who* it was; `cpu_load` says *that* it was
-  someone — and that is the question deciding between a measurement and
-  none.
+  **The smaller part of this was built on 2026-11-12** (0.9.0): CPU load is
+  carried per run and reported, and on a comparison SPIELRaum warns when two
+  runs differ by more than ten percentage points. It works **retroactively**
+  on every stored run and would have thrown this one out before the
+  evaluation instead of after.
+
+  What stays open is the name listing via `nvidia-smi`. `cpu_load` says
+  *that* it was someone — the question deciding between a measurement and
+  none. It does not say who. And a co-user that only loads the GPU and not
+  the CPU goes unnoticed entirely; OBS was caught because it encoded on the
+  processor.
 
   SPIELRaum may also **report** that mods are outdated — in the report pane,
   *before* the game starts. The comparison is cheap: 14 of the 16 mods name

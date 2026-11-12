@@ -363,14 +363,24 @@ class Fenster(QMainWindow):
         beste = laufende.beste()
         tabelle = "<table cellpadding='4'>"
         tabelle += ("<tr><td><b>Variante</b></td><td><b>Mittel</b></td>"
-                    "<td><b>1-%-Tief</b></td></tr>")
+                    "<td><b>1-%-Tief</b></td><td><b>CPU</b></td></tr>")
         for l in laufende.laeufe:
             if not l.zaehlt:
                 continue
             fett = " style='font-weight:bold'" if beste and l is beste else ""
+            last = f"{l.cpu_last:.0f} %" if l.cpu_last else "–"
             tabelle += (f"<tr{fett}><td>{l.variante}</td>"
-                        f"<td>{l.mittel:.1f}</td><td>{l.tief_1:.1f}</td></tr>")
+                        f"<td>{l.mittel:.1f}</td><td>{l.tief_1:.1f}</td>"
+                        f"<td>{last}</td></tr>")
         tabelle += "</table>"
+
+        # Weichen die Laeufe in der CPU-Last stark ab, wurden nicht zwei
+        # Varianten verglichen, sondern zwei Rechnerzustaende. Das gehoert
+        # UEBER die Empfehlung -- darunter liest es keiner mehr.
+        hinweis = laufende.mitlaeufer_hinweis()
+        if hinweis:
+            tabelle += (f"<p style='color:{farben.ROT}'><b>Achtung:</b> "
+                        f"{hinweis}</p>")
 
         kasten = QMessageBox(self)
         kasten.setWindowTitle("Messfahrt abgeschlossen")
@@ -727,18 +737,43 @@ class Fenster(QMainWindow):
         else:
             teile.append("<table cellpadding='4'>")
             teile.append(f"<tr style='color:{farben.GRAU_LEISE}'><td>Lauf</td>"
-                         "<td>Mittel</td><td>1-%-Tief</td><td>Laden</td></tr>")
+                         "<td>Mittel</td><td>1-%-Tief</td><td>Laden</td>"
+                         "<td>CPU</td></tr>")
+            gezeigt = []
             for lauf in laeufe[-6:]:
                 k = messen.auswerten(lauf)
                 if k is None:
                     teile.append(f"<tr><td>{lauf.name[4:14]}</td>"
-                                 "<td colspan='3'>zu kurz für eine Aussage</td></tr>")
+                                 "<td colspan='4'>zu kurz für eine Aussage</td></tr>")
                     continue
+                gezeigt.append(k)
                 teile.append(
                     f"<tr><td>{lauf.name[4:]}</td><td><b>{k.mittel:.1f}</b></td>"
-                    f"<td>{k.tief_1:.1f}</td><td>{k.ladezeit:.0f} s</td></tr>"
+                    f"<td>{k.tief_1:.1f}</td><td>{k.ladezeit:.0f} s</td>"
+                    f"<td>{k.cpu_last:.0f} %</td></tr>"
+                    if k.cpu_last else
+                    f"<tr><td>{lauf.name[4:]}</td><td><b>{k.mittel:.1f}</b></td>"
+                    f"<td>{k.tief_1:.1f}</td><td>{k.ladezeit:.0f} s</td>"
+                    f"<td>–</td></tr>"
                 )
             teile.append("</table>")
+
+            # Die Warnung steht vor dem Hinweis auf die Schwankung, nicht
+            # dahinter: Sie ist der Grund, warum die Tabelle darueber
+            # womoeglich nichts aussagt.
+            lasten = [k.cpu_last for k in gezeigt if k.cpu_last]
+            if len(lasten) >= 2 and max(lasten) - min(lasten) >= messen.MITLAEUFER_SPANNE:
+                teile.append(
+                    f"<p style='color:{farben.ROT}'><b>Die CPU-Last der "
+                    f"Läufe liegt {max(lasten) - min(lasten):.0f} Prozentpunkte "
+                    f"auseinander</b> ({min(lasten):.0f} % bis "
+                    f"{max(lasten):.0f} %). Bei den höheren Läufen lief "
+                    f"vermutlich etwas mit – Bildschirmaufnahme, Fernwartung, "
+                    f"ein zweites Spiel. Am 12.11.2026 kostete OBS auf diesem "
+                    f"Rechner 17 % Bildrate, mehr als jede Einstellung je "
+                    f"gebracht hat. Solche Läufe taugen nicht zum "
+                    f"Vergleichen.</p>"
+                )
             teile.append(
                 f"<p style='color:{farben.GRAU_LEISE};font-size:9pt'>"
                 "Bildraten schwanken stark danach, wo im Spiel gemessen wurde – "

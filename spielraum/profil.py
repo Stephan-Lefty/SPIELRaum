@@ -108,6 +108,16 @@ class Profil:
     # Vorgabe oben links deckt sich bei manchen Spielen mit deren eigener
     # Anzeige.
     overlay_ecke: str = "top-left"
+    # Wie deckend der Kasten hinter der Anzeige ist, 0,0 bis 1,0.
+    #
+    # MangoHuds eigene Vorgabe ist 0,5 und steht damit als halbdeckender
+    # Balken im Bild. Bei Road to Vostok verdeckte das am 12.11.2026 die
+    # linke obere Ecke so weit, dass man das Spiel darunter nicht mehr sah.
+    # 0,25 lässt die Zahlen lesbar und das Spiel sichtbar.
+    #
+    # Null ist erlaubt: Dann steht die Schrift ohne Kasten im Bild. Lesbar
+    # bleibt sie, weil MangoHud die Buchstaben umrandet.
+    overlay_deckkraft: float = 0.25
 
     # Von selbst eine Messfahrt beginnen, wenn für dieses Spiel noch keine
     # läuft und noch keine abgeschlossen ist.
@@ -309,6 +319,17 @@ def laden(pfad: Path) -> Profil:
                 + ", ".join(OVERLAY_ECKEN)
             )
         profil.overlay_ecke = ecke
+    if (deckkraft := messen.get("deckkraft")) is not None:
+        # Bewusst auch int annehmen: »deckkraft = 0« ist in TOML ein
+        # Ganzzahlwert, und daran soll kein Profil scheitern.
+        if isinstance(deckkraft, bool) or not isinstance(deckkraft, (int, float)):
+            raise ProfilFehler(
+                "»messen.deckkraft« muss eine Zahl zwischen 0 und 1 sein.")
+        if not 0.0 <= float(deckkraft) <= 1.0:
+            raise ProfilFehler(
+                f"»messen.deckkraft« liegt bei {deckkraft}; möglich ist 0 "
+                f"(durchsichtig) bis 1 (deckend).")
+        profil.overlay_deckkraft = float(deckkraft)
 
     # [tasten] -- was die Spieltastatur schicken soll, solange dieses Spiel
     # läuft. Hier wird nur die Form geprüft (Text auf Text). Ob die Namen

@@ -73,3 +73,43 @@ def test_fehlender_name(tmp_path):
 def test_kaputtes_toml(tmp_path):
     with pytest.raises(profil.ProfilFehler, match="gültiges TOML"):
         profil.laden(schreiben(tmp_path, '[spiel\nname = "x"\n'))
+
+
+# --- messen.deckkraft ------------------------------------------------------
+
+
+def test_deckkraft_wird_gelesen(tmp_path):
+    datei = tmp_path / "p.toml"
+    datei.write_text(KOPF + "\n[messen]\ndeckkraft = 0.1\n", encoding="utf-8")
+    assert profil.laden(datei).overlay_deckkraft == 0.1
+
+
+def test_deckkraft_null_ist_erlaubt(tmp_path):
+    """In TOML ist »0« eine Ganzzahl. Daran darf kein Profil scheitern."""
+    datei = tmp_path / "p.toml"
+    datei.write_text(KOPF + "\n[messen]\ndeckkraft = 0\n", encoding="utf-8")
+    assert profil.laden(datei).overlay_deckkraft == 0.0
+
+
+def test_deckkraft_ausserhalb_des_bereichs_wird_abgewiesen(tmp_path):
+    """Lieber eine Fehlermeldung als eine Anzeige, die niemand sieht."""
+    datei = tmp_path / "p.toml"
+    datei.write_text(KOPF + "\n[messen]\ndeckkraft = 50\n", encoding="utf-8")
+    with pytest.raises(profil.ProfilFehler, match="0 .*bis 1"):
+        profil.laden(datei)
+
+
+def test_deckkraft_als_text_wird_abgewiesen(tmp_path):
+    datei = tmp_path / "p.toml"
+    datei.write_text(KOPF + '\n[messen]\ndeckkraft = "halb"\n', encoding="utf-8")
+    with pytest.raises(profil.ProfilFehler, match="Zahl"):
+        profil.laden(datei)
+
+
+def test_deckkraft_als_wahrheitswert_wird_abgewiesen(tmp_path):
+    """``True`` ist in Python eine 1 und würde sonst stillschweigend als
+    »voll deckend« durchgehen."""
+    datei = tmp_path / "p.toml"
+    datei.write_text(KOPF + "\n[messen]\ndeckkraft = true\n", encoding="utf-8")
+    with pytest.raises(profil.ProfilFehler, match="Zahl"):
+        profil.laden(datei)

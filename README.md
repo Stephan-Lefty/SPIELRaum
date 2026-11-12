@@ -174,6 +174,13 @@ reproduzierbare Szene, die die wenigsten Spiele hergeben. Was geht, ist ein
 Messbuch über die normalen Spielsitzungen – und damit ein echtes
 Vorher-Nachher statt »fühlt sich besser an«.
 
+**Und ein Hinweis, wenn der Vergleich nichts taugt.** SPIELRaum führt die
+CPU-Last jedes Laufs mit und meldet, wenn zwei verglichene Läufe darin weit
+auseinanderliegen. Anlass war der 12.11.2026: Während eines Messlaufs nahm
+OBS auf und kostete 17 Prozent Bildrate – mehr, als in diesem Projekt je
+eine Einstellung gebracht hat. Es stand die ganze Zeit in der Messdatei,
+nur hatte niemand hingesehen. Siehe [docs/messen.md](docs/messen.md).
+
 ## Was es hinterher wieder geraderückt
 
 Der schwierigste Teil ist nicht das Optimieren, sondern die Zusage, dass es

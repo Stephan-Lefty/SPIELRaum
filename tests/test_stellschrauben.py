@@ -354,3 +354,56 @@ def test_ohne_argumente_bleibt_der_befehl_unveraendert(eigene_ordner):
     profil.nicht_stoeren = False
 
     assert stellschrauben.befehl_umhuellen(profil, ["a", "b"]) == ["a", "b"]
+
+
+# --- Die Anzeige im Spiel --------------------------------------------------
+
+
+def _umgebung_mit_mangohud():
+    """Ein Rechner, auf dem MangoHud liegt.
+
+    Nicht die echte Umgebung: Sonst fielen diese Tests auf einem Rechner
+    ohne MangoHud aus und niemand merkte es.
+    """
+    return umgebung.Umgebung(familie="arch", name="Test Linux",
+                             werkzeuge={"mangohud": "/usr/bin/mangohud"})
+
+
+def test_deckkraft_landet_in_der_mangohud_konfiguration(tmp_path, monkeypatch):
+    """Angefordert am 12.11.2026: Die Anzeige verdeckte zu viel Bild."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_deckkraft=0.25)
+    werte = stellschrauben.umgebung_bauen(p)
+    assert "background_alpha=0.25" in werte["MANGOHUD_CONFIG"]
+    # Die Schrift bleibt deckend -- sonst liest man sie vor hellem Himmel
+    # nicht mehr.
+    assert "alpha=1.0" in werte["MANGOHUD_CONFIG"]
+
+
+def test_null_deckkraft_ist_erlaubt(tmp_path, monkeypatch):
+    """Ganz ohne Kasten. MangoHud umrandet die Schrift, also bleibt sie
+    lesbar -- und ``0`` darf nicht als »nicht gesetzt« durchfallen."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_deckkraft=0.0)
+    assert "background_alpha=0.0" in stellschrauben.umgebung_bauen(p)["MANGOHUD_CONFIG"]
+
+
+def test_tasten_zum_verschieben_sind_immer_dabei(tmp_path, monkeypatch):
+    """Verschieben im Spiel soll überall gleich gehen, auch im Messlauf.
+
+    MangoHud 0.8.4 kann die Anzeige nicht frei ziehen; es schaltet mit
+    einer Taste durch seine sechs Stellen. Nachgesehen in
+    /usr/share/doc/mangohud/MangoHud.conf.example.
+    """
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True)
+    for messordner in (None, tmp_path / "messungen"):
+        werte = stellschrauben.umgebung_bauen(p, messen_in=messordner)
+        assert "toggle_hud_position=Shift_R+F11" in werte["MANGOHUD_CONFIG"]
+        assert "toggle_hud=Shift_R+F12" in werte["MANGOHUD_CONFIG"]

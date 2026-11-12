@@ -57,6 +57,10 @@ nicht_stoeren = true
 # Einstellungsdatei, die sich lesen laesst.
 mangohud = true
 
+# Ein Viertel deckend, wie bei Road to Vostok. Verschieben im Spiel mit
+# Shift rechts + F11.
+deckkraft = 0.25
+
 [tasten]
 # Bewegung
 up    = "w"

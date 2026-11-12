@@ -137,6 +137,80 @@ glauben. Stehen zwei verglichene Läufe auf verschiedenen Reglern, weist
 SPIELRaum darauf hin – dann misst man womöglich den Regler und nicht die
 Änderung, die man untersuchen wollte.
 
+## Die CPU-Last verrät, ob jemand mitlief
+
+Seit dem 12.11.2026 führt SPIELRaum die mittlere CPU-Last jedes Laufs mit:
+
+```
+  RTV_2026-11-12_15-21-19, Taktregler powersave
+      46.9 Bilder/s im Mittel, 1-%-Tief 17.4, 0,1-%-Tief 0.1
+      Ladezeit 10 s, dazu 7.5 s Aussetzer im Spiel, CPU-Last 59 %
+```
+
+Sie steht nicht da, weil sie interessant wäre, sondern weil sie die Frage
+beantwortet, ob der Lauf überhaupt etwas über das Spiel aussagt. Liegen zwei
+verglichene Läufe mehr als zehn Prozentpunkte auseinander, sagt SPIELRaum es:
+
+```
+  CPU-Last       24.9  ->    59.1   +34.3 Punkte
+  Achtung: Die CPU-Last unterscheidet sich um 34 Prozentpunkte (25 % gegen
+  59 %). Beim zweiten Lauf lief vermutlich etwas mit …
+```
+
+**Der Anlass.** An diesem Tag nahm OBS während eines Messlaufs auf und
+kodierte dabei auf dem Prozessor. Aufgefallen ist es nur, weil die Aufnahme
+mitten im Lauf endete – danach sprang die Bildrate von 48,8 auf 57,7. Gegen
+denselben Streckenabschnitt zwei Tage davor gerechnet:
+
+```
+Minute  2-10, OBS läuft .....  39,1 gegen 47,2     -17,3 %
+Minute 11-12, OBS aus .......  56,0 gegen 53,8      +4,1 %
+```
+
+**17 Prozent** – mehr, als in diesem Projekt je eine Einstellung gebracht
+hat. Und es stand die ganze Zeit in der Messdatei, Spalte `cpu_load`: 26 bis
+29 Prozent in den sauberen Läufen gegen 69 in diesem. Niemand hat
+hingesehen, und zwei falsche Schlüsse landeten im Repo, bevor es auffiel.
+
+Die zehn Prozentpunkte sind eine Hausnummer aus vier Läufen, keine
+hergeleitete Schwelle; die Rechnung steht bei `messen.MITLAEUFER_SPANNE`.
+Verglichen wird nur die **Differenz zwischen zwei Läufen desselben Spiels** –
+ein absoluter Grenzwert wäre falsch, denn 70 Prozent CPU-Last können beim
+einen Spiel der Mitläufer und beim nächsten der Normalfall sein.
+
+SPIELRaum **sagt** es und verwirft nichts von selbst. Es kann der Mitläufer
+gewesen sein, es kann auch die Stelle im Spiel gewesen sein. Welches von
+beidem, weiß das Protokoll nicht – und was es nicht weiß, soll es nicht
+entscheiden.
+
+## Die Anzeige im Spiel
+
+Sie sitzt oben links, lässt sich pro Profil woanders hinlegen und ist zu
+einem Viertel deckend:
+
+```toml
+[messen]
+ecke      = "top-right"   # top/middle/bottom je links oder rechts
+deckkraft = 0.25          # 0 = kein Kasten, 1 = voll deckend
+```
+
+`deckkraft` betrifft nur den Kasten hinter den Zahlen. Die Schrift bleibt
+voll deckend – durchsichtige Zahlen vor einem hellen Himmel kann man nicht
+lesen. Bei `0` steht die Schrift ohne Kasten im Bild und bleibt lesbar, weil
+MangoHud die Buchstaben umrandet.
+
+**Im Spiel, ohne es zu beenden:**
+
+```
+Shift rechts + F11     eine Stelle weiter
+Shift rechts + F12     Anzeige aus und wieder an
+```
+
+Frei mit der Maus ziehen geht nicht; MangoHud 0.8.4 kennt das nicht. Die
+Taste schaltet durch die sechs Stellen, die es kennt. Wer eine davon dauerhaft
+will, schreibt sie als `ecke` ins Profil – die Taste wirkt nur für die
+laufende Sitzung.
+
 ## Wenn »zu kurz für eine Aussage« dasteht
 
 Nach der Aufwärmzeit müssen mindestens fünfzig Stichproben übrig bleiben. Bei

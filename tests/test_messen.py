@@ -14,12 +14,18 @@ KOPF = (
 )
 
 
-def log_schreiben(ordner, name, werte, abstand_ms=100):
-    """Ein Protokoll erzeugen; ``werte`` sind die Bildraten der Reihe nach."""
-    zeilen = [KOPF]
+def log_schreiben(ordner, name, werte, abstand_ms=100, cpu=20.0, kopf=KOPF):
+    """Ein Protokoll erzeugen; ``werte`` sind die Bildraten der Reihe nach.
+
+    ``cpu`` darf eine Zahl sein (gilt für alle Stichproben) oder eine Liste
+    gleicher Länge wie ``werte`` -- für die Fälle, in denen die CPU-Last
+    mitten im Lauf springt, weil ein Mitläufer aufhört.
+    """
+    zeilen = [kopf]
     for nummer, fps in enumerate(werte, start=1):
         elapsed = nummer * abstand_ms * 1_000_000  # ms -> ns
-        zeilen.append(f"{fps},16.0,20.0,50.0,{elapsed}\n")
+        last = cpu[nummer - 1] if isinstance(cpu, list) else cpu
+        zeilen.append(f"{fps},16.0,{last},50.0,{elapsed}\n")
     pfad = ordner / f"{name}.csv"
     pfad.write_text("".join(zeilen), encoding="utf-8")
     return pfad
@@ -173,3 +179,107 @@ def test_ladezeit_ohne_aussetzer_bleibt_lesbar(tmp_path):
     assert "Ladezeit" in text
     assert "Aussetzer" not in text
     assert ", dazu" not in text  # kein Komma ins Leere
+
+
+# --- Mitläufer erkennen ----------------------------------------------------
+#
+# Anlass: Am 12.11.2026 nahm OBS während eines Messlaufs von Road to Vostok
+# auf und kostete 17 % Bildrate. Die Messung war wertlos, aber es stand in
+# der Datei -- cpu_load 68,9 % gegen 26 bis 29 % in den sauberen Läufen.
+# Niemand hat hingesehen, und zwei falsche Schlüsse landeten im Repo.
+
+
+def test_cpu_last_kommt_aus_dem_messfenster_nicht_aus_dem_ganzen_lauf(tmp_path):
+    """Die Ladephase hat hohe CPU-Last, ganz ohne Mitläufer.
+
+    Rechnete die CPU-Last über den ganzen Lauf, wäre jedes Spiel mit
+    langer Ladezeit verdächtig.
+    """
+    werte = [2.81111e-05] * 240 + [50.0] * 300
+    lasten = [90.0] * 240 + [20.0] * 300
+    k = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "l", werte, cpu=lasten)))
+    assert k.cpu_last == 20.0
+
+
+def test_fehlende_cpu_spalte_ist_kein_fehler(tmp_path):
+    """Ohne die Spalte gibt es keine Prüfung -- aber sehr wohl eine Messung.
+
+    Sonst hinge die Bildrate an einer MangoHud-Einstellung, die mit ihr
+    nichts zu tun hat.
+    """
+    ohne = ("os,cpu,gpu,ram,kernel,driver,cpuscheduler\n"
+            "Test Linux,Test-Prozessor,Test-Grafik,32800000,6.0.0-test,,powersave\n"
+            "fps,frametime,gpu_load,elapsed\n")
+    pfad = tmp_path / "ohne.csv"
+    pfad.write_text(ohne + "".join(
+        f"50.0,16.0,50.0,{n * 100_000_000}\n" for n in range(1, 301)),
+        encoding="utf-8")
+    k = messen.auswerten(messen.lesen(pfad))
+    assert k is not None
+    assert k.mittel == 50.0
+    assert k.cpu_last == 0.0
+    assert "CPU-Last" not in str(k)
+
+
+def test_unlesbare_cpu_zelle_verschiebt_die_zuordnung_nicht(tmp_path):
+    """Eine kaputte Zelle darf die Listen nicht gegeneinander verrutschen
+    lassen -- ``auswerten`` schneidet über den Index."""
+    werte = [2.81111e-05] * 100 + [50.0] * 300
+    zeilen = [KOPF]
+    for nummer, fps in enumerate(werte, start=1):
+        # Jede zehnte Zelle ist Müll, und zwar in der Ladephase wie danach.
+        last = "" if nummer % 10 == 0 else (90.0 if nummer <= 100 else 20.0)
+        zeilen.append(f"{fps},16.0,{last},50.0,{nummer * 100_000_000}\n")
+    pfad = tmp_path / "kaputt.csv"
+    pfad.write_text("".join(zeilen), encoding="utf-8")
+
+    m = messen.lesen(pfad)
+    assert len(m.cpu_last) == len(m.bilder)  # Gleichlauf gewahrt
+    k = messen.auswerten(m)
+    assert k.cpu_last == 20.0  # nicht 90, nicht irgendwas dazwischen
+
+
+def test_mitlaeufer_wird_beim_vergleich_gemeldet(tmp_path):
+    """Der Fall vom 12.11.2026, in Zahlen nachgebaut."""
+    sauber = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "sauber", [50.0] * 300, cpu=28.6)))
+    mit_obs = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "obs", [41.0] * 300, cpu=68.9)))
+
+    warnung = messen.mitlaeufer_verdacht(sauber, mit_obs)
+    assert warnung is not None
+    assert "40 Prozentpunkte" in warnung
+    assert "zweiten" in warnung  # der mit der höheren Last
+
+    zeilen = "\n".join(messen.vergleichen(sauber, mit_obs))
+    assert "CPU-Last" in zeilen
+    assert "+40.3 Punkte" in zeilen
+    assert "Bildschirmaufnahme" in zeilen
+
+
+def test_die_drei_sauberen_laeufe_loesen_keine_warnung_aus(tmp_path):
+    """Zwischen 25,7 und 28,6 Prozent liegt keine Aussage.
+
+    Die echten Werte vom 05., 09. und 10.11.2026. Wäre die Schwelle so
+    knapp, dass diese drei sich gegenseitig verdächtigen, wäre sie
+    unbrauchbar.
+    """
+    kennzahlen = [
+        messen.auswerten(messen.lesen(
+            log_schreiben(tmp_path, f"l{i}", [50.0] * 300, cpu=last)))
+        for i, last in enumerate((26.1, 25.7, 28.6))
+    ]
+    for a in kennzahlen:
+        for b in kennzahlen:
+            assert messen.mitlaeufer_verdacht(a, b) is None
+
+
+def test_ohne_cpu_last_keine_warnung(tmp_path):
+    """Nicht mitgeschrieben heißt nicht verdächtig."""
+    mit = messen.auswerten(messen.lesen(
+        log_schreiben(tmp_path, "mit", [50.0] * 300, cpu=70.0)))
+    ohne = messen.Kennzahlen(mittel=50.0, tief_1=50.0, tief_01=50.0,
+                             stichproben=300, dauer=30.0, verworfen=0)
+    assert messen.mitlaeufer_verdacht(mit, ohne) is None
+    assert messen.mitlaeufer_verdacht(ohne, mit) is None

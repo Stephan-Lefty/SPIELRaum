@@ -86,13 +86,17 @@ fertig wurde.
   Bildrate springt von 48,8 auf 57,7 – der Moment, in dem die Aufnahme
   endete, als Treppenstufe in den eigenen Daten.
 
-  Daraus folgt eine Aufgabe, die kleiner ist als die Liste per `nvidia-smi`
-  und **rückwirkend** auf alle gespeicherten Läufe wirkt: Die CPU-Last pro
-  Lauf mitführen und ausgeben, und bei einem Vergleich warnen, wenn zwei
-  Läufe darin deutlich auseinanderliegen. Das hätte diesen Lauf vor der
-  Auswertung aussortiert, statt nach ihr. `nvidia-smi` sagt, *wer* es war;
-  `cpu_load` sagt, *dass* es jemand war – und das ist die Frage, die
-  zwischen einer Messung und keiner entscheidet.
+  **Der kleinere Teil davon ist am 12.11.2026 gebaut** (0.9.0): Die CPU-Last
+  wird pro Lauf mitgeführt und ausgegeben, und bei einem Vergleich warnt
+  SPIELRaum, wenn zwei Läufe darin mehr als zehn Prozentpunkte
+  auseinanderliegen. Das wirkt **rückwirkend** auf alle gespeicherten Läufe
+  und hätte diesen vor der Auswertung aussortiert statt nach ihr.
+
+  Offen bleibt die Namensliste über `nvidia-smi`. `cpu_load` sagt, *dass* es
+  jemand war – das ist die Frage, die zwischen einer Messung und keiner
+  entscheidet. Wer es war, sagt es nicht. Und ein Mitläufer, der nur die
+  Grafikkarte belastet und nicht den Prozessor, fällt so gar nicht auf;
+  OBS fiel auf, weil es auf dem Prozessor kodierte.
 
   Dazu darf SPIELRaum **anzeigen**, dass Mods veraltet sind – im Befund,
   *bevor* das Spiel startet. Der Abgleich ist billig: 14 der 16 Mods nennen

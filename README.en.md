@@ -121,6 +121,13 @@ This will not make it a self-tuner. That would need a reproducible scene,
 which few games offer. What it does give you is a logbook across ordinary play
 sessions — and with it a real before-and-after instead of "feels better".
 
+**And a warning when the comparison is worthless.** SPIELRaum carries the
+CPU load of every run and flags it when two compared runs differ sharply in
+it. The occasion was 2026-11-12: OBS was recording during a measured run and
+cost 17 per cent frame rate — more than any setting in this project has ever
+gained. It had been in the measurement file the whole time; nobody had
+looked. See [docs/messen.md](docs/messen.md) (German).
+
 **The first ten seconds do not count.** Measured on a twenty-second run: the
 mean is 102.3 frames per second once the warm-up is excluded, and 50.8 across
 the whole run. That is where the game compiles shaders and loads — measure it

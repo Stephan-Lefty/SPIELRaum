@@ -7,6 +7,60 @@ Alle nennenswerten Änderungen an SPIELRaum stehen hier.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.0] – 2026-11-12
+
+### Hinzugefügt
+
+- **Die CPU-Last jedes Laufs wird mitgeführt – und gemeldet, wenn zwei
+  Läufe darin weit auseinanderliegen.** Sie steht in `spielraum messungen`,
+  in der Befundtafel, in der Fahrtenakte und in der Tabelle am Ende einer
+  Messfahrt. Weichen zwei verglichene Läufe um mehr als zehn
+  Prozentpunkte ab, sagt SPIELRaum, dass der Vergleich nichts taugt.
+
+  Der Anlass: Am 12.11.2026 nahm OBS während eines Messlaufs von Road to
+  Vostok auf und kodierte dabei auf dem Prozessor. Aufgefallen ist es nur,
+  weil die Aufnahme mitten im Lauf endete – danach sprang die Bildrate von
+  48,8 auf 57,7 Bilder/s. Gegen denselben Streckenabschnitt zwei Tage
+  davor gerechnet, kostete die Aufnahme **17 Prozent**: mehr, als in
+  diesem Projekt je eine Einstellung gebracht hat.
+
+  Und es stand die ganze Zeit in der Messdatei, Spalte `cpu_load` – 26 bis
+  29 Prozent in den sauberen Läufen gegen 69 in diesem. Niemand hat
+  hingesehen, und zwei falsche Schlüsse landeten im Repo, bevor es
+  auffiel. Was sich aus den eigenen Daten ablesen lässt, soll nicht am
+  Hinsehen hängen.
+
+  SPIELRaum sagt es und verwirft nichts von selbst: Es kann der Mitläufer
+  gewesen sein, es kann auch die Stelle im Spiel gewesen sein. Welches von
+  beidem, weiß das Protokoll nicht.
+
+  Die Prüfung wirkt **rückwirkend** auf alle gespeicherten Läufe – die
+  Spalte schreibt MangoHud ohnehin mit. Fehlt sie, fällt nur diese eine
+  Prüfung aus; eine Messung bleibt es trotzdem.
+
+- **`messen.deckkraft` im Profil, und die Anzeige lässt sich im Spiel
+  verschieben.** Der Kasten hinter den Zahlen ist jetzt zu einem Viertel
+  deckend statt zu MangoHuds Hälfte; `deckkraft = 0` lässt ihn ganz weg.
+  Die Schrift bleibt voll deckend – durchsichtige Zahlen vor einem hellen
+  Himmel kann man nicht lesen.
+
+  Im Spiel schaltet **Shift rechts + F11** eine Stelle weiter und **Shift
+  rechts + F12** die Anzeige ganz aus. Frei mit der Maus ziehen geht
+  nicht; MangoHud 0.8.4 kennt das nicht, nachgesehen in
+  `/usr/share/doc/mangohud/MangoHud.conf.example`.
+
+### Geändert
+
+- **Die Fahrtenakte steht auf Fassung 2.** Eine Akte aus Fassung 1 wird
+  weiter gelesen und beim nächsten Schreiben fortgeschrieben – ihr fehlt
+  nur ein Feld, sie hat keinen anderen Aufbau. Sie wegzuwerfen hieße, eine
+  fertig gemessene Fahrt zu verlieren, weil eine Spalte dazugekommen ist.
+  Dieselbe Entscheidung wie beim Zustandsjournal.
+
+  Dabei behoben: Eine Akte mit einem unbekannten Feld löste bisher mitten
+  im Spielstart einen `TypeError` aus. Unbekannte Felder werden jetzt
+  weggefiltert.
+
 ## [0.8.5] – 2026-11-09
 
 ### Behoben

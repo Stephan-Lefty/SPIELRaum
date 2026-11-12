@@ -150,6 +150,13 @@ def _pruefen(datei: str) -> int:
         print(f"  Engine:         {p.engine}")
     print(f"  GameMode:       {'ja' if p.gamemode else 'nein'}")
     print(f"  MangoHud:       {'ja' if p.mangohud else 'nein'}")
+    if p.mangohud:
+        # Die Tasten gehören hierher und nicht nur in die Doku: Wer eine
+        # Anzeige im Weg hat, sucht nicht erst eine Datei zum Nachlesen.
+        print(f"  Anzeige:        {p.overlay_ecke}, Deckkraft "
+              f"{p.overlay_deckkraft:.0%}")
+        print(f"                  im Spiel verschieben: Shift rechts + F11,"
+              f" ganz aus: Shift rechts + F12")
     if p.variablen:
         print(f"  Umgebung:       {len(p.variablen)} Variable(n)")
         for name, wert in p.variablen.items():
@@ -527,6 +534,8 @@ def _messfahrt(args) -> int:
         if l and l.zaehlt:
             zeile = (f"  {name:14}  {l.mittel:5.1f} Bilder    "
                      f"1-%-Tief {l.tief_1:4.1f}    ✓")
+            if l.cpu_last:
+                zeile += f"    CPU {l.cpu_last:.0f} %"
         elif name == naechste:
             zeile = f"  {name:14}  {'—':>5}                        ← als Nächstes"
         else:
@@ -543,6 +552,12 @@ def _messfahrt(args) -> int:
         if beste:
             print(f"Alle Läufe erledigt. Am gleichmäßigsten lief »{beste.variante}« "
                   f"({beste.mittel:.1f} Bilder, 1-%-Tief {beste.tief_1:.1f}).")
+            # Der Hinweis steht VOR der Empfehlung, nicht danach. Was ein
+            # Ergebnis entwertet, liest sonst keiner mehr.
+            hinweis = laufende.mitlaeufer_hinweis()
+            if hinweis:
+                print()
+                print(f"Achtung: {hinweis}")
             print()
             print(f"Übernehmen:  spielraum messfahrt {args.spiel} "
                   f"--uebernehmen {beste.variante}")
