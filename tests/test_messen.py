@@ -5,6 +5,8 @@ am 30.09.2026): zwei Kopfzeilen mit Angaben zum Rechner, dann erst die
 Spaltennamen, und ``elapsed`` in Nanosekunden.
 """
 
+import pytest
+
 from spielraum import messen
 
 KOPF = (
@@ -64,7 +66,7 @@ def test_ladephase_wird_abgeschnitten(tmp_path):
 
     k = messen.auswerten(m, aufwaermen=5.0)
     assert k is not None
-    assert k.mittel == 50.0
+    assert k.mittel == pytest.approx(50.0)
     assert k.tief_1 == 50.0  # kein einziger Ladewert mehr drin
     assert 23 < k.ladezeit < 25
 
@@ -199,7 +201,7 @@ def test_cpu_last_kommt_aus_dem_messfenster_nicht_aus_dem_ganzen_lauf(tmp_path):
     lasten = [90.0] * 240 + [20.0] * 300
     k = messen.auswerten(messen.lesen(
         log_schreiben(tmp_path, "l", werte, cpu=lasten)))
-    assert k.cpu_last == 20.0
+    assert k.cpu_last == pytest.approx(20.0)
 
 
 def test_fehlende_cpu_spalte_ist_kein_fehler(tmp_path):
@@ -217,8 +219,8 @@ def test_fehlende_cpu_spalte_ist_kein_fehler(tmp_path):
         encoding="utf-8")
     k = messen.auswerten(messen.lesen(pfad))
     assert k is not None
-    assert k.mittel == 50.0
-    assert k.cpu_last == 0.0
+    assert k.mittel == pytest.approx(50.0)
+    assert k.cpu_last == pytest.approx(0.0)
     assert "CPU-Last" not in str(k)
 
 
@@ -237,7 +239,7 @@ def test_unlesbare_cpu_zelle_verschiebt_die_zuordnung_nicht(tmp_path):
     m = messen.lesen(pfad)
     assert len(m.cpu_last) == len(m.bilder)  # Gleichlauf gewahrt
     k = messen.auswerten(m)
-    assert k.cpu_last == 20.0  # nicht 90, nicht irgendwas dazwischen
+    assert k.cpu_last == pytest.approx(20.0)  # nicht 90, nichts dazwischen
 
 
 def test_mitlaeufer_wird_beim_vergleich_gemeldet(tmp_path):
@@ -296,7 +298,8 @@ def test_zu_kurze_laeufe_loesen_keine_warnung_aus(tmp_path):
     kurz = messen.auswerten(messen.lesen(
         log_schreiben(tmp_path, "kurz", [57.9] * 130, cpu=16.9)))
     assert kurz is not None, "der Lauf soll auswertbar bleiben"
-    assert kurz.cpu_last == 16.9, "die CPU-Last wird trotzdem ausgewiesen"
+    assert kurz.cpu_last == pytest.approx(16.9), \
+        "die CPU-Last wird trotzdem ausgewiesen"
 
     lang = messen.auswerten(messen.lesen(
         log_schreiben(tmp_path, "lang", [46.9] * 6000, cpu=59.1)))
