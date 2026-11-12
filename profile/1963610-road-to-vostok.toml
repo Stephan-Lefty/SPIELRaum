@@ -218,6 +218,11 @@ nicht_stoeren = true
 argumente = ["--rendering-driver", "vulkan"]
 
 [messen]
+# Wie viel im Bild steht: "voll", "klein" (nur Bilder/s) oder
+# "aus". ACHTUNG bei "aus": Dann wird auch NICHT GEMESSEN --
+# MangoHuds no_display haelt das Mitschreiben mit an, belegt am
+# 12.11.2026 mit vkcube (0 Zeilen gegen 55 bei den anderen).
+umfang = "voll"
 mangohud = true
 
 # Wo die Anzeige im Bild sitzt. In der Oberflaeche umstellbar

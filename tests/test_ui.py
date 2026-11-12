@@ -639,3 +639,59 @@ def test_ohne_profil_bleibt_das_feld_grau(anwendung, tmp_path, monkeypatch):
     f.liste.clear(); f.liste.addItem("Ohne Profil"); f.liste.setCurrentRow(0)
     f._gewaehlt(0)
     assert f.anzeige_ecke.isEnabled() is False
+
+
+def test_umfang_schreibt_und_warnt_vor_dem_messverlust(anwendung, tmp_path,
+                                                       monkeypatch):
+    """»nichts« schaltet auch die Messung ab -- das muss dastehen.
+
+    Belegt am 12.11.2026 mit vkcube: no_display ergab null protokollierte
+    Zeilen gegen 55 bei den anderen beiden Umfängen.
+    """
+    from spielraum import profil as profil_modul
+
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch)
+    f.anzeige_umfang.setCurrentIndex(f.anzeige_umfang.findData("aus"))
+
+    assert profil_modul.laden(datei).overlay_umfang == "aus"
+    assert "nicht gemessen" in f.unterzeile.text(), \
+        "der Verlust der Messung steht nicht in der Rückmeldung"
+
+    # Und im Befund darf dann nicht mehr »jeder Lauf wird gemessen« stehen.
+    import re
+    from spielraum import steam
+    spiel = steam.Spiel(app_id=4242, name="Testspiel", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    text = re.sub(r"<[^>]+>", " ", f._bericht(spiel))
+    if "gemessen" in text:
+        assert "nicht gemessen" in text
+
+
+def test_umfang_steht_schon_im_auswahltext(anwendung, tmp_path, monkeypatch):
+    """Die Folge gehört in die Auswahl, nicht in eine Fußnote danach.
+
+    Wer sie erst nach dem Klick liest, hat schon gewählt.
+    """
+    f, _ = _fenster_mit_profil(tmp_path, monkeypatch)
+    zeile = f.anzeige_umfang.findData("aus")
+    assert "misst" in f.anzeige_umfang.itemText(zeile).lower()
+
+
+def test_umfang_klein_ist_waehlbar_und_misst_weiter(anwendung, tmp_path,
+                                                    monkeypatch):
+    from spielraum import profil as profil_modul
+
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch)
+    f.anzeige_umfang.setCurrentIndex(f.anzeige_umfang.findData("klein"))
+    assert profil_modul.laden(datei).overlay_umfang == "klein"
+    assert "nicht gemessen" not in f.unterzeile.text()
+
+
+def test_spielwechsel_schreibt_auch_den_umfang_nicht(anwendung, tmp_path,
+                                                     monkeypatch):
+    """Dieselbe Sperre gilt für beide Felder."""
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch, ecke="bottom-right")
+    vorher = datei.read_bytes()
+    for _ in range(3):
+        f._gewaehlt(0)
+    assert datei.read_bytes() == vorher

@@ -43,6 +43,20 @@ OVERLAY_NAMEN = (
 )
 
 
+# Wie viel von der Anzeige im Bild steht.
+#
+# Bei »aus« steht die Folge IM Auswahltext und nicht in einer Fußnote:
+# MangoHuds no_display hält auch das Mitschreiben an -- belegt am 12.11.2026
+# mit vkcube, null protokollierte Zeilen gegen 55 bei den anderen beiden.
+# Wer die Anzeige wegklickt, hätte hinterher keine Messung und erführe es
+# nie. Also liest er es, bevor er wählt.
+OVERLAY_UMFANG_NAMEN = (
+    ("voll", "alles"),
+    ("klein", "nur Bilder/s"),
+    ("aus", "nichts – misst dann auch nicht"),
+)
+
+
 # Wie keyd die Tasten nennt und wie sie auf einer deutschen Tastatur
 # beschriftet sind. Nur die, die sich unterscheiden -- »w« heißt »w«.
 TASTENNAMEN = {
@@ -253,6 +267,20 @@ class Fenster(QMainWindow):
         self._ecke_wird_gesetzt = False
         self.beschriftung_ecke = QLabel("Anzeige:")
 
+        # Wie viel angezeigt wird. Angefordert am 12.11.2026, nachdem sich
+        # zeigte, dass MangoHuds Tastenkürzel hier nicht wirken -- auch das
+        # Ein- und Ausblenden lief über sie.
+        self.anzeige_umfang = QComboBox()
+        for kennung, beschriftung in OVERLAY_UMFANG_NAMEN:
+            self.anzeige_umfang.addItem(beschriftung, kennung)
+        self.anzeige_umfang.setEnabled(False)
+        self.anzeige_umfang.setToolTip(
+            "Wie viel im Bild steht.\n"
+            "»nichts« schaltet auch die Messung ab – MangoHud schreibt dann\n"
+            "nicht mit, nachgemessen am 12.11.2026.\n"
+            "Gilt ab dem nächsten Start.")
+        self.anzeige_umfang.currentIndexChanged.connect(self._umfang_gewaehlt)
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
         knoepfe.addWidget(self.knopf_tasten)
@@ -262,6 +290,7 @@ class Fenster(QMainWindow):
         knoepfe.addStretch()
         knoepfe.addWidget(self.beschriftung_ecke)
         knoepfe.addWidget(self.anzeige_ecke)
+        knoepfe.addWidget(self.anzeige_umfang)
         knoepfe.addWidget(self.knopf_start)
 
         links = QVBoxLayout()
@@ -325,6 +354,7 @@ class Fenster(QMainWindow):
             self.knopf_tasten.setEnabled(False)
             self.knopf_bilder.setEnabled(False)
             self.anzeige_ecke.setEnabled(False)
+            self.anzeige_umfang.setEnabled(False)
             return
         spiel = self.spiele[zeile]
         self.knopf_start.setEnabled(True)
@@ -347,6 +377,9 @@ class Fenster(QMainWindow):
         self.anzeige_ecke.setEnabled(bool(p and p.mangohud))
         gesucht = self.anzeige_ecke.findData(p.overlay_ecke if p else "top-left")
         self.anzeige_ecke.setCurrentIndex(max(0, gesucht))
+        self.anzeige_umfang.setEnabled(bool(p and p.mangohud))
+        gesucht = self.anzeige_umfang.findData(p.overlay_umfang if p else "voll")
+        self.anzeige_umfang.setCurrentIndex(max(0, gesucht))
         self._ecke_wird_gesetzt = False
 
         # Die Anzahl gehört auf den Knopf: Ein Knopf, der ein leeres Fenster
@@ -385,7 +418,28 @@ class Fenster(QMainWindow):
     # --- Die Stelle der Anzeige -------------------------------------------
 
     def _ecke_gewaehlt(self, zeile: int) -> None:
-        """Die gewählte Stelle ins Profil schreiben.
+        """Die gewählte Stelle ins Profil schreiben."""
+        self._anzeige_schreiben(
+            self.anzeige_ecke, zeile, profil.ecke_setzen,
+            lambda p: p.overlay_ecke,
+            lambda name, spiel: f"Anzeige steht künftig {name}")
+
+    def _umfang_gewaehlt(self, zeile: int) -> None:
+        """Den gewählten Umfang ins Profil schreiben."""
+        def satz(name, spiel):
+            if self.anzeige_umfang.itemData(zeile) == "aus":
+                # Nicht nur melden, was gewählt wurde, sondern was es
+                # bedeutet. Wer die Anzeige wegnimmt, verliert die Messung
+                # mit -- und das steht sonst nirgends, wo er hinsieht.
+                return ("Anzeige bleibt aus – dann wird auch nicht gemessen")
+            return f"Anzeige zeigt künftig {name}"
+
+        self._anzeige_schreiben(
+            self.anzeige_umfang, zeile, profil.umfang_setzen,
+            lambda p: p.overlay_umfang, satz)
+
+    def _anzeige_schreiben(self, feld, zeile, schreiber, lesen, satz) -> None:
+        """Einen Wert aus einem der beiden Felder ins Profil schreiben.
 
         Geschrieben wird in die Profildatei und nicht nur im Arbeitsspeicher
         gemerkt: Das Spiel startet in einem eigenen Prozess, der das Profil
@@ -401,24 +455,21 @@ class Fenster(QMainWindow):
         p = profil.finden(steam_app_id=spiel.app_id)
         if p is None:
             return
-        ecke = self.anzeige_ecke.itemData(zeile)
-        beschriftung = self.anzeige_ecke.itemText(zeile)
         try:
-            profil.ecke_setzen(p.quelle, ecke)
+            schreiber(p.quelle, feld.itemData(zeile))
         except (profil.ProfilFehler, OSError) as fehler:
             QMessageBox.warning(
                 self, "Geht nicht",
-                f"Die Stelle konnte nicht ins Profil geschrieben werden.\n\n"
-                f"{fehler}")
+                f"Die Einstellung konnte nicht ins Profil geschrieben "
+                f"werden.\n\n{fehler}")
             # Zurück auf den Wert, der in der Datei steht -- sonst zeigt das
             # Feld etwas an, was nirgends steht.
             self._ecke_wird_gesetzt = True
-            self.anzeige_ecke.setCurrentIndex(
-                max(0, self.anzeige_ecke.findData(p.overlay_ecke)))
+            feld.setCurrentIndex(max(0, feld.findData(lesen(p))))
             self._ecke_wird_gesetzt = False
             return
 
-        self.melden(f"Anzeige steht künftig {beschriftung} – wirkt beim "
+        self.melden(f"{satz(feld.itemText(zeile), spiel)} – wirkt beim "
                     f"nächsten Start von {spiel.name}.")
         self.befund.setHtml(self._bericht(spiel))
 
@@ -789,8 +840,20 @@ class Fenster(QMainWindow):
                 # Auswahlfeld unten verstellt, und ohne sie sieht man nach
                 # dem Umschalten nicht, dass etwas passiert ist.
                 stelle = dict(OVERLAY_NAMEN).get(p.overlay_ecke, p.overlay_ecke)
-                was.append(f"jeder Lauf wird gemessen – Anzeige {stelle}, "
-                           f"Deckkraft {p.overlay_deckkraft:.0%}")
+                if p.overlay_umfang == "aus":
+                    # Die wichtigste Zeile dieses Abschnitts: Ohne Anzeige
+                    # schreibt MangoHud auch nicht mit. Hier darf nicht
+                    # »jeder Lauf wird gemessen« stehen, denn das stimmt dann
+                    # nicht mehr.
+                    was.append("<b>es wird nicht gemessen</b> – die Anzeige "
+                               "steht auf »nichts«, und ohne sie schreibt "
+                               "MangoHud nicht mit")
+                elif p.overlay_umfang == "klein":
+                    was.append(f"jeder Lauf wird gemessen – Anzeige {stelle}, "
+                               f"nur Bilder/s")
+                else:
+                    was.append(f"jeder Lauf wird gemessen – Anzeige {stelle}, "
+                               f"Deckkraft {p.overlay_deckkraft:.0%}")
             teile.append("<ul>" + "".join(f"<li>{z}</li>" for z in was) + "</ul>")
             for warnung in p.warnungen():
                 teile.append(f"<p style='color:#b4690e'>{warnung}</p>")

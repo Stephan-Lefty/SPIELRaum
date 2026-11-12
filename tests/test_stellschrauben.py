@@ -407,3 +407,56 @@ def test_tasten_zum_verschieben_sind_immer_dabei(tmp_path, monkeypatch):
         werte = stellschrauben.umgebung_bauen(p, messen_in=messordner)
         assert "toggle_hud_position=Shift_R+F11" in werte["MANGOHUD_CONFIG"]
         assert "toggle_hud=Shift_R+F12" in werte["MANGOHUD_CONFIG"]
+
+
+def test_umfang_aus_schaltet_die_anzeige_ab(tmp_path, monkeypatch):
+    """Und damit auch die Messung -- siehe den Test darunter."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="aus")
+    konf = stellschrauben.umgebung_bauen(p, messen_in=tmp_path / "m")["MANGOHUD_CONFIG"]
+    assert "no_display=1" in konf
+    assert "fps," not in konf, "bei »aus« darf nichts angezeigt werden"
+    assert "gpu_temp" not in konf
+
+
+def test_umfang_klein_zeigt_nur_die_bildrate(tmp_path, monkeypatch):
+    """fps_only verträgt sich laut MangoHud.conf.example ausdrücklich nicht
+    mit anderen Anzeigewerten -- die dürfen also nicht danebenstehen."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="klein")
+    konf = stellschrauben.umgebung_bauen(p, messen_in=tmp_path / "m")["MANGOHUD_CONFIG"]
+    assert "fps_only=1" in konf
+    assert "gpu_temp" not in konf
+    assert "throttling_status" not in konf
+    assert "frame_timing" not in konf
+    # Stelle und Kasten gelten weiter.
+    assert "position=top-left" in konf
+    assert "background_alpha=0.25" in konf
+
+
+def test_umfang_klein_misst_weiter(tmp_path, monkeypatch):
+    """Belegt am 12.11.2026 mit vkcube: fps_only protokolliert, no_display
+    nicht. Deshalb muss »klein« die Protokollzeilen behalten."""
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True, overlay_umfang="klein")
+    konf = stellschrauben.umgebung_bauen(p, messen_in=tmp_path / "m")["MANGOHUD_CONFIG"]
+    assert "autostart_log=1" in konf
+    assert "log_interval=100" in konf
+
+
+def test_voll_bleibt_die_vorgabe(tmp_path, monkeypatch):
+    monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
+                        lambda: _umgebung_mit_mangohud())
+    p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
+               mangohud=True)
+    assert p.overlay_umfang == "voll"
+    konf = stellschrauben.umgebung_bauen(p)["MANGOHUD_CONFIG"]
+    assert "no_display" not in konf
+    assert "fps_only" not in konf
+    assert "gpu_temp" in konf

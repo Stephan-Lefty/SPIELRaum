@@ -40,8 +40,21 @@ fertig wurde.
   4. Ob `PROTON_ENABLE_WAYLAND=1` hilft. Das ändert den Darstellungsweg des
      ganzen Spiels und gehört deshalb hinter die anderen drei, nicht davor.
 
-  Bis dahin verspricht SPIELRaum die Kürzel nicht mehr und nennt nur `ecke`
-  im Profil. Gesetzt bleiben sie, weil sie nichts kosten.
+  Bis dahin verspricht SPIELRaum die Kürzel nicht mehr. Gesetzt bleiben sie,
+  weil sie nichts kosten.
+
+  **Der Ersatz ist am 12.11.2026 gebaut:** Zwei Felder in der Oberfläche,
+  unten rechts neben »Anzeige:« – wo sie sitzt und wie viel sie zeigt,
+  einschließlich »nichts«. Beides wirkt erst beim nächsten Start, löst aber
+  das eigentliche Anliegen. Offen bleibt nur noch, warum die Kürzel nicht
+  greifen.
+
+  Dabei nebenbei gemessen, und das gehört hierher, weil es fast schiefging:
+  **MangoHuds `no_display` hält auch das Mitschreiben an.** Zwei Durchgänge
+  mit `vkcube` – null protokollierte Zeilen gegen 55 bei den anderen beiden
+  Umfängen. Hätte ich das wie bei den Kürzeln angenommen statt gemessen,
+  wäre »Anzeige aus« eine Einstellung geworden, die stillschweigend jede
+  Messung verhindert.
 
   **Und was stattdessen gebaut werden könnte:** Die Ecke in der Oberfläche
   umschalten, statt die Profildatei zu öffnen. Wirkt erst beim nächsten

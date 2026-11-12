@@ -53,6 +53,54 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   soll: eine Zahl aus zu wenig Material. Die CPU-Last wird für kurze Läufe
   weiter ausgewiesen, nur verglichen wird sie nicht.
 
+- **Die Anzeige lässt sich in der Oberfläche umstellen** – wo sie sitzt und
+  wie viel sie zeigt. Zwei Felder unten rechts neben »Anzeige:«; sie
+  schreiben `ecke` und `umfang` in die Profildatei und wirken beim nächsten
+  Spielstart, was auch in der Rückmeldung dabeisteht.
+
+  Der Ersatz für MangoHuds Tastenkürzel, die hier nicht wirken.
+
+  Geschrieben wird **eine Zeile im Text**, nicht die Datei neu serialisiert.
+  Die Profile hier bestehen zu neun Zehnteln aus Begründung – das
+  Vostok-Profil hat 320 Kommentarzeichen auf 377 Zeilen –, und kein
+  TOML-Schreiber in der Standardbibliothek erhält Kommentare. Wer neu
+  serialisiert, löscht die Begründungen und merkt es nicht, weil die Datei
+  danach gültig aussieht: dieselbe Falle wie bei der Vollsicherung am
+  03.11.2026.
+
+  Die drei Umfänge heißen »alles«, »nur Bilder/s« und **»nichts – misst dann
+  auch nicht«**. Der Zusatz ist keine Floskel, sondern gemessen am
+  12.11.2026 mit `vkcube`, zwei Durchgänge je Einstellung:
+
+  ```
+  voll ............ 55 protokollierte Zeilen
+  nur Bilder/s .... 55 bis 60 Zeilen
+  aus .............  0 Zeilen
+  ```
+
+  MangoHuds `no_display` hält auch das Mitschreiben an. Wer die Anzeige
+  wegnimmt, verliert die Messung mit – und erführe es sonst nie, weil ein
+  Lauf ohne Protokoll genauso aussieht wie einer, der nie stattgefunden hat.
+  Deshalb steht die Folge im Auswahltext selbst, und im Befund dann »es wird
+  nicht gemessen« statt »jeder Lauf wird gemessen«. Wer nur weniger im Bild
+  will, nimmt »nur Bilder/s« – MangoHuds `fps_only`, Messung läuft weiter.
+
+  Dass hier gemessen statt angenommen wurde, ist die Lehre aus den
+  Tastenkürzeln vom selben Tag: Dort war die Option nachgesehen und die
+  Wirkung geraten.
+
+  Die Rückmeldung steht in der Unterzeile, nicht in einem Dialog. Wer die
+  sechs Stellen durchprobiert, klickt sonst sechsmal etwas weg.
+
+  Drei Fehler dabei gefunden und behoben, alle von Tests: Mit einem
+  Kommentar hinter dem Wert gab die Schreibfunktion den falschen alten Wert
+  zurück. `read_text` wandelt CRLF beim **Lesen** in LF – derselbe Fehler
+  wie am 09.11.2026 an Enshroudeds Einstellungsdatei, nur am anderen Ende.
+  Und `currentIndexChanged` feuert auch beim **Befüllen** des Feldes, womit
+  jeder Blick auf ein Spiel in dessen Profil geschrieben hätte: dieselbe
+  Falle wie bei `currentRowChanged` am 09.11.2026, nur in die andere
+  Richtung.
+
 - **Ein Knopf zu den Aufnahmen aus dem Spiel.** Rechts neben »Mod Loader
   einbauen«, mit der Anzahl darauf. Steam legt die Bilder unter
   `userdata/<Konto>/760/remote/<App-ID>/screenshots` ab -- eine Stelle, die

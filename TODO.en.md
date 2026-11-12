@@ -40,8 +40,20 @@ deleted but moved down, with the date they were completed.
      of the whole game and therefore belongs after the other three, not
      before.
 
-  Until then SPIELRaum no longer promises the keybinds and names only `ecke`
-  in the profile. They stay set, because they cost nothing.
+  Until then SPIELRaum no longer promises the keybinds. They stay set,
+  because they cost nothing.
+
+  **The replacement was built on 2026-11-12:** two fields in the interface,
+  bottom right next to "Anzeige:" — where the overlay sits and how much it
+  shows, including "nothing". Both only take effect on the next start, but
+  they solve the actual problem. What stays open is only why the keybinds do
+  not work.
+
+  Measured in passing, and it belongs here because it nearly went wrong:
+  **MangoHud's `no_display` also stops the logging.** Two runs with
+  `vkcube` — zero logged lines against 55 for the other two extents. Had I
+  assumed that the way I assumed the keybinds, "overlay off" would have
+  become a setting that silently prevents every measurement.
 
   **And what could be built instead:** switching the corner from the
   interface rather than editing the profile file. It only takes effect on the

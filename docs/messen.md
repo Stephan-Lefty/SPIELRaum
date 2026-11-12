@@ -205,7 +205,37 @@ einem Viertel deckend:
 [messen]
 ecke      = "top-right"   # top/middle/bottom je links oder rechts
 deckkraft = 0.25          # 0 = kein Kasten, 1 = voll deckend
+umfang    = "voll"        # "voll", "klein" oder "aus"
 ```
+
+**Zu verstellen ist das auch in der Oberfläche**, unten rechts neben
+»Anzeige:«. Zwei Felder: wo sie sitzt und wie viel sie zeigt. Beide
+schreiben ins Profil und wirken beim nächsten Spielstart – das steht auch in
+der Rückmeldung, damit niemand im laufenden Spiel darauf wartet.
+
+### »aus« schaltet auch die Messung ab
+
+Das ist der Grund, warum der Eintrag in der Oberfläche **»nichts – misst dann
+auch nicht«** heißt und nicht einfach »nichts«. Gemessen am 12.11.2026 mit
+`vkcube`, zwei Durchgänge je Einstellung, sonst alles gleich:
+
+```
+voll ............ 55 protokollierte Zeilen
+nur Bilder/s .... 55 bis 60 Zeilen
+aus .............  0 Zeilen
+```
+
+MangoHuds `no_display` hält also nicht nur die Anzeige an, sondern auch das
+Mitschreiben. Wer die Anzeige wegnimmt, verliert die Messung mit – und würde
+es sonst nie erfahren, weil ein Lauf ohne Protokoll genauso aussieht wie
+einer, der nie stattgefunden hat.
+
+Deshalb steht die Folge im Auswahltext selbst und nicht in einer Fußnote
+darunter: Wer sie erst nach dem Klick liest, hat schon gewählt. Im Befund
+steht dann **»es wird nicht gemessen«** statt »jeder Lauf wird gemessen«.
+
+**Wer nur weniger im Bild haben will, nimmt »nur Bilder/s«** – MangoHuds
+`fps_only`, eine Zahl statt zwölf Zeilen, und die Messung läuft weiter.
 
 `deckkraft` betrifft nur den Kasten hinter den Zahlen. Die Schrift bleibt
 voll deckend – durchsichtige Zahlen vor einem hellen Himmel kann man nicht

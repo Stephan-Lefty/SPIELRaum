@@ -51,6 +51,21 @@ ARTEN = ("godot-cfg", "godot-tres")
 
 # Wo MangoHud sein Overlay zeichnet. Die Liste stammt nicht aus dem
 # Gedächtnis, sondern aus der Bibliothek selbst (`strings libMangoHud.so`).
+# Wie viel von der Anzeige im Bild steht.
+#
+# »aus« ist kein Schönheitswert, sondern schaltet die MESSUNG mit ab --
+# belegt am 12.11.2026 mit vkcube, zwei Durchgänge je Einstellung:
+#
+#   voll ............ 55 Zeilen protokolliert
+#   nur Bilder/s .... 55 bis 60 Zeilen
+#   aus ............. 0 Zeilen
+#
+# MangoHuds ``no_display`` hält also nicht nur die Anzeige an, sondern auch
+# das Mitschreiben. Deshalb steht die Folge in der Oberfläche direkt im
+# Auswahltext und nicht in einer Fußnote: Wer sie wegklickt, hat hinterher
+# keine Messung und erfährt es nie.
+OVERLAY_UMFAENGE = ("voll", "klein", "aus")
+
 OVERLAY_ECKEN = (
     "top-left", "top-right", "middle-left", "middle-right",
     "bottom-left", "bottom-right",
@@ -118,6 +133,9 @@ class Profil:
     # Null ist erlaubt: Dann steht die Schrift ohne Kasten im Bild. Lesbar
     # bleibt sie, weil MangoHud die Buchstaben umrandet.
     overlay_deckkraft: float = 0.25
+    # Wie viel angezeigt wird: alles, nur die Bildrate, oder nichts.
+    # Siehe OVERLAY_UMFAENGE -- »aus« schaltet auch die Messung ab.
+    overlay_umfang: str = "voll"
 
     # Von selbst eine Messfahrt beginnen, wenn für dieses Spiel noch keine
     # läuft und noch keine abgeschlossen ist.
@@ -330,6 +348,14 @@ def laden(pfad: Path) -> Profil:
                 f"»messen.deckkraft« liegt bei {deckkraft}; möglich ist 0 "
                 f"(durchsichtig) bis 1 (deckend).")
         profil.overlay_deckkraft = float(deckkraft)
+    if (umfang := messen.get("umfang")) is not None:
+        umfang = _als_str(umfang, "messen.umfang")
+        if umfang not in OVERLAY_UMFAENGE:
+            raise ProfilFehler(
+                f"»{umfang}« ist kein Umfang für die Anzeige. Möglich: "
+                + ", ".join(OVERLAY_UMFAENGE)
+            )
+        profil.overlay_umfang = umfang
 
     # [tasten] -- was die Spieltastatur schicken soll, solange dieses Spiel
     # läuft. Hier wird nur die Form geprüft (Text auf Text). Ob die Namen
@@ -392,7 +418,30 @@ def ecke_setzen(pfad: Path, ecke: str) -> str:
             f"»{ecke}« ist keine Stelle, die MangoHud kennt. Möglich: "
             + ", ".join(OVERLAY_ECKEN)
         )
+    return _wert_setzen(pfad, "ecke", ecke)
 
+
+def umfang_setzen(pfad: Path, umfang: str) -> str:
+    """``messen.umfang`` ändern. Siehe ``ecke_setzen`` für das Verfahren.
+
+    Erinnerung an die Folge: ``"aus"`` hält auch das Mitschreiben an, siehe
+    ``OVERLAY_UMFAENGE``. Diese Funktion warnt nicht davor -- sie schreibt
+    nur, was ihr gesagt wird. Gewarnt wird dort, wo gewählt wird.
+    """
+    if umfang not in OVERLAY_UMFAENGE:
+        raise ProfilFehler(
+            f"»{umfang}« ist kein Umfang für die Anzeige. Möglich: "
+            + ", ".join(OVERLAY_UMFAENGE)
+        )
+    return _wert_setzen(pfad, "umfang", umfang)
+
+
+def _wert_setzen(pfad: Path, schluessel: str, wert: str) -> str:
+    """Einen Textwert im Abschnitt ``[messen]`` ändern, Kommentare erhalten.
+
+    Der Prüfteil steht beim jeweiligen Aufrufer: Hier soll nicht eine
+    wachsende Liste von Schlüsseln mit ihren erlaubten Werten entstehen.
+    """
     # ``newline=""`` ist hier Bedingung, nicht Vorsicht: ``read_text``
     # wandelt CRLF beim LESEN in LF, und dann steht in ``text`` nie ein
     # ``\r`` -- die Erkennung darunter liefe immer auf LF, und die Datei
@@ -415,8 +464,8 @@ def ecke_setzen(pfad: Path, ecke: str) -> str:
             continue
         if not in_messen or not blank or blank.startswith("#"):
             continue
-        schluessel = blank.split("=", 1)[0].strip()
-        if schluessel == "ecke":
+        gefunden = blank.split("=", 1)[0].strip()
+        if gefunden == schluessel:
             # Nur den Wert tauschen, alles rechts davon bleibt -- auch ein
             # Kommentar am Zeilenende.
             vorne, _, hinten = zeile.partition("=")
@@ -428,11 +477,11 @@ def ecke_setzen(pfad: Path, ecke: str) -> str:
             # .strip('"') an einer Zeichenkette, die hinten keines mehr hat,
             # weil der Kommentar dahinter steht.
             vorher = rest[0].strip().strip('"').strip("'")
-            zeilen[nummer] = f'{vorne}= "{ecke}"{kommentar}'
+            zeilen[nummer] = f'{vorne}= "{wert}"{kommentar}'
             _atomar(pfad, umbruch.join(zeilen))
             return vorher
 
-    neue_zeile = f'ecke = "{ecke}"'
+    neue_zeile = f'{schluessel} = "{wert}"'
     if messen_zeile is not None:
         zeilen.insert(messen_zeile + 1, neue_zeile)
     else:

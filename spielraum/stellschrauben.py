@@ -84,49 +84,76 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
     if profil.mangohud and umgebung.ermitteln().hat("mangohud"):
         werte["MANGOHUD"] = "1"
 
-        # Was im Bild stehen soll. Ohne diese Liste zeigt MangoHud nur die
-        # Bildrate -- und die allein sagt wenig. Die Auswahl folgt dem, was
-        # am 23.10.2026 bei Enshrouded tatsächlich den Unterschied machte:
+        # Wie viel im Bild steht, siehe profil.OVERLAY_UMFAENGE:
         #
-        #   gpu_temp          Der Hitzeschutz senkte in 11,2 % der Zeit den
-        #                     Takt. Ab 83 °C fängt das an.
-        #   throttling_status Sagt ausdrücklich, *dass* gedrosselt wird --
-        #                     sonst sieht man nur eine Bildrate, die ohne
-        #                     ersichtlichen Grund einbricht.
-        #   vram              Lag bei 97,8 % von 8 GB. Ob das stört, sieht
-        #                     man erst, wenn es danebensteht.
-        #   frame_timing      Ein Einbruch von 45 auf 5 Bilder dauert einen
-        #                     Wimpernschlag; im Mittelwert verschwindet er.
-        anzeige = [
-            "fps", "frametime", "frame_timing=1",
-            "gpu_stats", "gpu_temp", "gpu_power", "vram",
-            "cpu_stats", "cpu_temp", "ram",
-            "throttling_status",
-            f"position={profil.overlay_ecke}",
-            # Der Kasten hinter der Anzeige. MangoHuds Vorgabe ist 0,5 und
-            # verdeckt damit ein Stück Bild; siehe profil.overlay_deckkraft.
-            # Die Schrift selbst bleibt voll deckend -- durchsichtige Zahlen
-            # vor einem hellen Himmel kann man nicht lesen.
-            f"background_alpha={profil.overlay_deckkraft}",
-            "alpha=1.0",
-            # Die Kürzel, mit denen MangoHud die Anzeige umstellen soll:
-            # F11 eine Stelle weiter, F12 ganz aus. Shift rechts, weil die
-            # linke Hand bei diesem Anwender an der Maus liegt.
+        #   voll   alles, was unten aufgezählt ist
+        #   klein  nur die Bildrate -- MangoHuds fps_only
+        #   aus    no_display
+        #
+        # WICHTIG BEI »aus«: Dann wird AUCH NICHT GEMESSEN. Belegt am
+        # 12.11.2026 mit vkcube, zwei Durchgänge je Einstellung:
+        #
+        #   voll ............ 55 protokollierte Zeilen
+        #   nur Bilder/s .... 55 bis 60 Zeilen
+        #   aus ............. 0 Zeilen
+        #
+        # MangoHuds ``no_display`` hält also nicht nur die Anzeige an,
+        # sondern auch das Mitschreiben. Das ist keine Vermutung über
+        # MangoHud, sondern zweimal nachgemessen -- nachdem am selben Tag
+        # eine ungeprüfte Zusage zu den Tastenkürzeln zurückzunehmen war.
+        #
+        # »aus« bleibt trotzdem wählbar: Wer die Anzeige wegwill, soll das
+        # dürfen. Gesagt wird es dort, wo gewählt wird; in der Oberfläche
+        # steht die Folge im Auswahltext selbst.
+        if profil.overlay_umfang == "aus":
+            anzeige = ["no_display=1"]
+        elif profil.overlay_umfang == "klein":
+            # fps_only verträgt sich laut MangoHud.conf.example
+            # ausdrücklich nicht mit anderen Anzeigewerten. Deshalb steht
+            # hier nur, wo es sitzt und wie deckend der Kasten ist.
+            anzeige = [
+                "fps_only=1",
+                f"position={profil.overlay_ecke}",
+                f"background_alpha={profil.overlay_deckkraft}",
+                "alpha=1.0",
+            ]
+        else:
+            # Die Auswahl folgt dem, was am 23.10.2026 bei Enshrouded
+            # tatsächlich den Unterschied machte:
             #
-            # WARNUNG, 12.11.2026: Sie wirkten bei Road to Vostok nicht, und
-            # warum, ist ungeklärt. Belegt ist nur, dass es nicht an der
-            # Schreibweise liegt -- MangoHud nimmt die Zeilen ohne Klage an,
-            # geprüft mit vkcube. Beide Lesewege sind auch vorhanden: Die
-            # Bibliothek hängt an libwayland-client und libxkbcommon und
-            # lädt libX11.so.6 bei Bedarf nach, die liegt auf diesem Rechner.
-            #
-            # Sie bleiben trotzdem drin: Sie kosten nichts, und bei einem
-            # nativen Wayland-Spiel können sie durchaus greifen. Was SPIELRaum
-            # dazu *sagt*, ist aber zurückgenommen -- versprochen wird nur
-            # noch »ecke« im Profil. Offener Punkt in TODO.md.
-            "toggle_hud_position=Shift_R+F11",
-            "toggle_hud=Shift_R+F12",
-        ]
+            #   gpu_temp          Der Hitzeschutz senkte in 11,2 % der Zeit
+            #                     den Takt. Ab 83 °C fängt das an.
+            #   throttling_status Sagt ausdrücklich, *dass* gedrosselt wird
+            #                     -- sonst sieht man nur eine Bildrate, die
+            #                     ohne ersichtlichen Grund einbricht.
+            #   vram              Lag bei 97,8 % von 8 GB. Ob das stört,
+            #                     sieht man erst, wenn es danebensteht.
+            #   frame_timing      Ein Einbruch von 45 auf 5 Bilder dauert
+            #                     einen Wimpernschlag; im Mittel verschwindet
+            #                     er.
+            anzeige = [
+                "fps", "frametime", "frame_timing=1",
+                "gpu_stats", "gpu_temp", "gpu_power", "vram",
+                "cpu_stats", "cpu_temp", "ram",
+                "throttling_status",
+                f"position={profil.overlay_ecke}",
+                # Der Kasten hinter der Anzeige. MangoHuds Vorgabe ist 0,5
+                # und verdeckt damit ein Stück Bild; siehe
+                # profil.overlay_deckkraft. Die Schrift bleibt voll deckend
+                # -- durchsichtige Zahlen vor hellem Himmel liest niemand.
+                f"background_alpha={profil.overlay_deckkraft}",
+                "alpha=1.0",
+                # Die Kürzel, mit denen MangoHud die Anzeige umstellen soll.
+                # WARNUNG, 12.11.2026: Sie wirkten bei Road to Vostok nicht,
+                # und warum, ist ungeklärt. Nicht die Schreibweise (mit
+                # vkcube geprüft) und nicht ein fehlender Leseweg (die
+                # Bibliothek hängt an libwayland-client und libxkbcommon und
+                # lädt libX11.so.6 nach, die hier liegt). Sie bleiben drin,
+                # weil sie nichts kosten; versprochen werden sie nicht.
+                # Offener Punkt in TODO.md.
+                "toggle_hud_position=Shift_R+F11",
+                "toggle_hud=Shift_R+F12",
+            ]
 
         if messen_in is not None:
             messen_in.mkdir(parents=True, exist_ok=True)
