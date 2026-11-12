@@ -208,11 +208,19 @@ class Fenster(QMainWindow):
             "Übernimmt die heruntergeladene Fassung des Mod Loaders.\n"
             "Die alte wird vorher gesichert.")
 
+        # Die Aufnahmen aus dem Spiel. Steam legt sie an einer Stelle ab, die
+        # niemand errät -- userdata/<Konto>/760/remote/<App-ID>/screenshots.
+        # Der Knopf ersetzt also keine Funktion, er erspart das Suchen.
+        self.knopf_bilder = QPushButton("Aufnahmen")
+        self.knopf_bilder.clicked.connect(self._bilder_oeffnen)
+        self.knopf_bilder.setEnabled(False)
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
         knoepfe.addWidget(self.knopf_tasten)
         knoepfe.addWidget(self.knopf_fahrt)
         knoepfe.addWidget(self.knopf_modloader)
+        knoepfe.addWidget(self.knopf_bilder)
         knoepfe.addStretch()
         knoepfe.addWidget(self.knopf_start)
 
@@ -275,6 +283,7 @@ class Fenster(QMainWindow):
         if not 0 <= zeile < len(self.spiele):
             self.knopf_start.setEnabled(False)
             self.knopf_tasten.setEnabled(False)
+            self.knopf_bilder.setEnabled(False)
             return
         spiel = self.spiele[zeile]
         self.knopf_start.setEnabled(True)
@@ -287,6 +296,20 @@ class Fenster(QMainWindow):
         # nichts zu vergleichen.
         self.knopf_fahrt.setEnabled(bool(p and len(p.varianten) >= 2))
 
+        # Die Anzahl gehört auf den Knopf: Ein Knopf, der ein leeres Fenster
+        # öffnet, ist schlimmer als ein grauer. Steam legt den Ordner schon
+        # beim ersten Spielstart an, also sagt »Ordner da« noch nichts.
+        anzahl = steam.bilder_zaehlen(spiel.app_id)
+        self.knopf_bilder.setEnabled(anzahl > 0)
+        self.knopf_bilder.setText(
+            f"Aufnahmen ({anzahl})" if anzahl else "Aufnahmen")
+        self.knopf_bilder.setToolTip(
+            "Öffnet den Ordner, in dem Steam die Aufnahmen aus diesem Spiel "
+            "ablegt.\nMit F12 im Spiel entsteht eine."
+            if anzahl else
+            "Aus diesem Spiel liegt noch keine Aufnahme vor.\n"
+            "Im Spiel macht F12 eine.")
+
         # Der Mod-Loader-Knopf gilt nur, wenn etwas Neueres bereitliegt.
         quelle, stand = self._modloader_lage(p, spiel)
         bereit = bool(stand and stand.veraltet and stand.bereit is not None)
@@ -296,6 +319,37 @@ class Fenster(QMainWindow):
             else "Mod Loader einbauen")
 
         self.befund.setHtml(self._bericht(spiel))
+
+    # --- Aufnahmen --------------------------------------------------------
+
+    def _bilder_oeffnen(self) -> None:
+        """Den Ordner mit den Steam-Aufnahmen im Dateiverwalter öffnen.
+
+        Über ``QDesktopServices``, nicht über einen festen Programmnamen:
+        Unter KDE ist es Dolphin, unter GNOME Nautilus, und welcher
+        Dateiverwalter eingerichtet ist, weiß der Schreibtisch besser als
+        SPIELRaum. Dieselbe Entscheidung wie beim Tastenblatt am 05.11.2026.
+        """
+        zeile = self.liste.currentRow()
+        if not 0 <= zeile < len(self.spiele):
+            return
+        spiel = self.spiele[zeile]
+        ordner = steam.bilderordner(spiel.app_id)
+        if not ordner:
+            # Kann zwischen Anzeige und Klick passieren: Wer die Bilder in
+            # der Zwischenzeit woanders hinräumt, soll keine Fehlermeldung
+            # bekommen, sondern den Grund lesen.
+            QMessageBox.information(
+                self, "Keine Aufnahmen",
+                f"Für {spiel.name} liegt keine Aufnahme vor.\n\n"
+                f"Im Spiel macht F12 eine. Steam legt sie unter\n"
+                f"userdata/<Konto>/760/remote/{spiel.app_id}/screenshots ab.")
+            return
+
+        # Mehrere Ordner heißt: mehrere Steam-Konten auf diesem Rechner.
+        # Dann alle öffnen, statt sich für eines zu entscheiden.
+        for einer in ordner:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(einer)))
 
     # --- Messfahrt --------------------------------------------------------
 

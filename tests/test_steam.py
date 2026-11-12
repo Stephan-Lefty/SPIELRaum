@@ -91,3 +91,78 @@ def test_groesse_lesbar():
         bibliothek=steam.Path("/tmp"),
     )
     assert spiel.groesse_lesbar == "5,5 GB"
+
+
+# --- Die Aufnahmen aus den Spielen -----------------------------------------
+#
+# Steam legt sie unter userdata/<Konto>/760/remote/<App-ID>/screenshots ab.
+# Die 760 ist Steams eigene App-Nummer für die Aufnahmefunktion.
+
+
+def _bilderbaum(wurzel, konto, app_id, anzahl, endung="jpg"):
+    ordner = wurzel / "userdata" / str(konto) / "760" / "remote" / str(app_id) / "screenshots"
+    ordner.mkdir(parents=True, exist_ok=True)
+    for n in range(anzahl):
+        (ordner / f"{app_id}_2026111{n}.{endung}").write_bytes(b"\xff\xd8")
+    return ordner
+
+
+def test_bilderordner_wird_gefunden(tmp_path, monkeypatch):
+    wurzel = tmp_path / "Steam"
+    _bilderbaum(wurzel, 154920572, 1963610, 13)
+    monkeypatch.setattr(steam, "steam_wurzeln", lambda: [wurzel])
+
+    assert len(steam.bilderordner(1963610)) == 1
+    assert steam.bilder_zaehlen(1963610) == 13
+
+
+def test_verweis_auf_dieselbe_wurzel_zaehlt_nicht_doppelt(tmp_path, monkeypatch):
+    """Die Falle vom 12.11.2026.
+
+    ``~/.steam/steam`` ist auf diesem Rechner ein Verweis auf
+    ``~/.local/share/Steam``, und beide stehen in ``steam_wurzeln()``. Beim
+    ersten Versuch meldete SPIELRaum vierzig Aufnahmen, wo zwanzig lagen.
+    """
+    echt = tmp_path / "local" / "Steam"
+    _bilderbaum(echt, 154920572, 801800, 20)
+    verweis = tmp_path / "dotsteam"
+    verweis.parent.mkdir(parents=True, exist_ok=True)
+    verweis.symlink_to(echt, target_is_directory=True)
+    monkeypatch.setattr(steam, "steam_wurzeln", lambda: [verweis, echt])
+
+    assert len(steam.bilderordner(801800)) == 1
+    assert steam.bilder_zaehlen(801800) == 20
+
+
+def test_zwei_konten_geben_zwei_ordner(tmp_path, monkeypatch):
+    """Zwei Steam-Konten auf einem Rechner sind kein Fehler."""
+    wurzel = tmp_path / "Steam"
+    _bilderbaum(wurzel, 111, 1963610, 3)
+    _bilderbaum(wurzel, 222, 1963610, 4)
+    monkeypatch.setattr(steam, "steam_wurzeln", lambda: [wurzel])
+
+    assert len(steam.bilderordner(1963610)) == 2
+    assert steam.bilder_zaehlen(1963610) == 7
+
+
+def test_leerer_ordner_gilt_als_keiner(tmp_path, monkeypatch):
+    """Steam legt den Ordner schon beim ersten Spielstart an.
+
+    »Ordner vorhanden« sagt also nichts -- und ein Knopf, der ein leeres
+    Fenster öffnet, ist schlimmer als ein grauer.
+    """
+    wurzel = tmp_path / "Steam"
+    _bilderbaum(wurzel, 111, 1203620, 0)
+    monkeypatch.setattr(steam, "steam_wurzeln", lambda: [wurzel])
+
+    assert steam.bilderordner(1203620) == []
+    assert steam.bilder_zaehlen(1203620) == 0
+
+
+def test_ohne_userdata_kein_absturz(tmp_path, monkeypatch):
+    """Eine Steam-Wurzel, die es gar nicht gibt, ist der Normalfall:
+    ``steam_wurzeln()`` nennt vier Pfade, von denen höchstens einer stimmt."""
+    monkeypatch.setattr(steam, "steam_wurzeln",
+                        lambda: [tmp_path / "gibtsnicht", tmp_path / "leer"])
+    (tmp_path / "leer").mkdir()
+    assert steam.bilderordner(1963610) == []

@@ -396,3 +396,79 @@ def test_klick_auf_bereits_gewaehltes_spiel_liest_neu(anwendung, tmp_path, monke
     # Zeile bleibt 0 – ohne die itemClicked-Verbindung passiert hier nichts.
     f.liste.itemClicked.emit(f.liste.item(0))
     assert gerufen == [0], "ein Klick auf das gewählte Spiel liest nicht neu"
+
+
+# --- Der Knopf zu den Aufnahmen --------------------------------------------
+
+
+def test_aufnahmeknopf_bleibt_grau_ohne_bilder(anwendung, tmp_path, monkeypatch):
+    """Ein Knopf, der ein leeres Fenster öffnet, ist schlimmer als ein grauer.
+
+    Steam legt den Screenshot-Ordner schon beim ersten Spielstart an --
+    »Ordner vorhanden« ist deshalb kein Grund, den Knopf freizugeben.
+    """
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    spiel = steam.Spiel(app_id=1203620, name="Enshrouded", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 0)
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: None)
+
+    f = Fenster()
+    f.spiele = [spiel]
+    f._gewaehlt(0)
+    assert f.knopf_bilder.isEnabled() is False
+    assert f.knopf_bilder.text() == "Aufnahmen"
+
+
+def test_aufnahmeknopf_nennt_die_anzahl(anwendung, tmp_path, monkeypatch):
+    """Die Zahl steht auf dem Knopf, damit man vor dem Klick weiß, was kommt."""
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    spiel = steam.Spiel(app_id=1963610, name="Road to Vostok", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 13)
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: None)
+
+    f = Fenster()
+    f.spiele = [spiel]
+    f._gewaehlt(0)
+    assert f.knopf_bilder.isEnabled() is True
+    assert "13" in f.knopf_bilder.text()
+
+
+def test_aufnahmeknopf_oeffnet_den_ordner_nicht_im_befund(anwendung, tmp_path,
+                                                          monkeypatch):
+    """Dieselbe Falle wie beim Tastenblatt am 05.11.2026: Der Ordner gehört
+    in den Dateiverwalter, nicht in ein Textfeld.
+
+    Geprüft wird die Adresse, die SPIELRaum dem Schreibtisch übergibt --
+    und dass sie ein Leerzeichen im Pfad verträgt.
+    """
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    ordner = tmp_path / "mit Leerzeichen" / "screenshots"
+    ordner.mkdir(parents=True)
+    gerufen = []
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 2)
+    monkeypatch.setattr(fenster_modul.steam, "bilderordner", lambda app: [ordner])
+    monkeypatch.setattr(fenster_modul.QDesktopServices, "openUrl",
+                        lambda url: gerufen.append(url.toString()))
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: None)
+
+    f = Fenster()
+    f.spiele = [steam.Spiel(app_id=1963610, name="Road to Vostok",
+                            ordner=tmp_path, groesse=1, bibliothek=tmp_path)]
+    f.liste.addItem("Road to Vostok")
+    f.liste.setCurrentRow(0)
+    f._bilder_oeffnen()
+
+    assert len(gerufen) == 1, "der Ordner wurde nicht geöffnet"
+    assert gerufen[0].startswith("file://")
+    assert "mit%20Leerzeichen" in gerufen[0] or "mit Leerzeichen" in gerufen[0]

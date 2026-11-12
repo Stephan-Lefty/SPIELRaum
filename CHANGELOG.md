@@ -38,6 +38,20 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Spalte schreibt MangoHud ohnehin mit. Fehlt sie, fällt nur diese eine
   Prüfung aus; eine Messung bleibt es trotzdem.
 
+- **Ein Knopf zu den Aufnahmen aus dem Spiel.** Rechts neben »Mod Loader
+  einbauen«, mit der Anzahl darauf. Steam legt die Bilder unter
+  `userdata/<Konto>/760/remote/<App-ID>/screenshots` ab -- eine Stelle, die
+  niemand errät. Der Knopf ersetzt also keine Funktion, er erspart das
+  Suchen.
+
+  Er bleibt grau, wenn keine Aufnahme vorliegt: Steam legt den Ordner schon
+  beim ersten Spielstart an, »Ordner vorhanden« ist deshalb kein Grund, den
+  Knopf freizugeben. Geöffnet wird über den Schreibtisch, nicht über einen
+  festen Programmnamen -- unter KDE ist es Dolphin, unter GNOME Nautilus.
+
+  Mehrere Steam-Konten auf einem Rechner geben mehrere Ordner; dann gehen
+  alle auf, statt dass SPIELRaum sich für eines entscheidet.
+
 - **`messen.deckkraft` im Profil, und die Anzeige lässt sich im Spiel
   verschieben.** Der Kasten hinter den Zahlen ist jetzt zu einem Viertel
   deckend statt zu MangoHuds Hälfte; `deckkraft = 0` lässt ihn ganz weg.

@@ -130,6 +130,47 @@ def steam_wurzeln() -> list[Path]:
     ]
 
 
+def bilderordner(app_id: int) -> list[Path]:
+    """Wo Steam die Aufnahmen aus einem Spiel ablegt.
+
+    Der Aufbau ist nicht zu erraten, deshalb hier ausgeschrieben
+    (nachgesehen am 12.11.2026 an Steam unter Manjaro)::
+
+        <Steam>/userdata/<Konto-Nummer>/760/remote/<App-ID>/screenshots/
+
+    Die ``760`` ist Steams eigene App-Nummer für die Aufnahmefunktion, die
+    Konto-Nummer ist die Steam3-ID des angemeldeten Kontos. Daneben liegt
+    ein ``thumbnails``-Ordner mit den kleinen Vorschaubildern; der ist hier
+    nicht gemeint.
+
+    Mehrere Treffer sind möglich und kein Fehler: Wer zwei Steam-Konten auf
+    demselben Rechner hat, hat zwei Ordner. Zurückgegeben wird deshalb eine
+    Liste, und nur Ordner, die es wirklich gibt und in denen etwas liegt --
+    ein leerer Ordner entsteht schon beim ersten Start des Spiels, und ein
+    Knopf, der ein leeres Fenster öffnet, ist schlimmer als keiner.
+    """
+    # Auflösen und eindeutig machen, bevor gezählt wird: ``~/.steam/steam``
+    # ist auf diesem Rechner ein Verweis auf ``~/.local/share/Steam``, und
+    # beide stehen in ``steam_wurzeln()``. Ohne das kam derselbe Ordner
+    # zweimal vor und ``bilder_zaehlen`` meldete am 12.11.2026 vierzig
+    # Aufnahmen, wo zwanzig lagen. Dieselbe Falle wie bei ``bibliotheken()``.
+    eindeutig: dict[Path, None] = {}
+    for wurzel in steam_wurzeln():
+        konten = wurzel / "userdata"
+        if not konten.is_dir():
+            continue
+        for konto in sorted(konten.iterdir()):
+            ordner = konto / "760" / "remote" / str(app_id) / "screenshots"
+            if ordner.is_dir() and any(ordner.glob("*.jpg")):
+                eindeutig[ordner.resolve()] = None
+    return list(eindeutig)
+
+
+def bilder_zaehlen(app_id: int) -> int:
+    """Wie viele Aufnahmen es insgesamt gibt -- über alle Konten."""
+    return sum(len(list(o.glob("*.jpg"))) for o in bilderordner(app_id))
+
+
 def bibliotheken() -> list[Path]:
     """Alle Steam-Bibliotheken, auch die auf anderen Platten.
 

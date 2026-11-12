@@ -211,6 +211,27 @@ Taste schaltet durch die sechs Stellen, die es kennt. Wer eine davon dauerhaft
 will, schreibt sie als `ecke` ins Profil – die Taste wirkt nur für die
 laufende Sitzung.
 
+## Die Aufnahmen aus dem Spiel
+
+Steam legt sie an einer Stelle ab, die niemand errät:
+
+```
+~/.local/share/Steam/userdata/<Konto-Nummer>/760/remote/<App-ID>/screenshots/
+```
+
+Die `760` ist Steams eigene App-Nummer für die Aufnahmefunktion, die
+Konto-Nummer ist die Steam3-ID. Daneben liegt ein `thumbnails`-Ordner mit den
+Vorschaubildern.
+
+In der Oberfläche steht dafür rechts neben »Mod Loader einbauen« der Knopf
+**Aufnahmen**, mit der Anzahl darauf. Er bleibt grau, wenn keine vorliegt --
+Steam legt den Ordner schon beim ersten Spielstart an, »Ordner vorhanden«
+sagt also nichts. Im Spiel macht **F12** eine Aufnahme.
+
+Sucht man den Ordner von Hand, lohnt der Hinweis, dass `~/.steam/steam`
+meist nur ein Verweis auf `~/.local/share/Steam` ist. Beide Pfade führen zum
+selben Ordner; SPIELRaum löst das auf, damit es nicht doppelt zählt.
+
 ## Wenn »zu kurz für eine Aussage« dasteht
 
 Nach der Aufwärmzeit müssen mindestens fünfzig Stichproben übrig bleiben. Bei
