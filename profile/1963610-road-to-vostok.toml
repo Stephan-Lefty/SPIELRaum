@@ -4,6 +4,31 @@
 # GTX 1070 auf Wayland, seit dem 30.09.2026 auf einer SSD.
 #
 # ===================================================================
+# ALLE ZAHLEN HIER GELTEN FUER DEN COMPATIBILITY-RENDERER
+# ===================================================================
+#
+# Aufgefallen am 12.11.2026 beim Blick auf die laufende Prozessliste.
+# Steam hinterlegt fuer dieses Spiel ZWEI Startvarianten, und die
+# Argumente kommen ueber %command% mit, ohne dass sie irgendwo in
+# unseren Startoptionen oder in diesem Profil stuenden:
+#
+#   Road to Vostok [Vulkan]          --rendering-driver vulkan
+#   Road to Vostok [Compatibility]   --rendering-method mobile
+#
+# Gestartet wird die zweite. »mobile« ist in Godot der abgespeckte
+# Renderer: einfachere Beleuchtung, reduzierte Schatten, weniger
+# Nachbearbeitung. Nachgesehen in Steams appinfo.vdf, nicht geraten.
+#
+# Was das fuer die Zahlen unten heisst: Sie sind untereinander
+# gueltig, weil ALLE Laeufe auf »mobile« liefen -- aber sie gelten
+# nicht fuer dieses Spiel schlechthin, sondern fuer diese Variante.
+# Wer auf [Vulkan] umstellt, faengt bei null an.
+#
+# Damit ist es die dritte unaufgeschriebene Groesse an einem Tag,
+# nach den Mods und nach OBS. Genau dafuer gibt es den offenen Punkt
+# in TODO.md: Was zur Laufzeit sonst gilt, gehoert mitgeschrieben.
+#
+# ===================================================================
 # Der eine Hebel, der wirkt, sitzt IM Spiel - nicht daneben.
 # ===================================================================
 #

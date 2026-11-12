@@ -112,6 +112,30 @@ fertig wurde.
   Werkzeugliste), und sie beantwortet hinterher die Frage, die man sich
   sonst nicht mehr beantworten kann.
 
+  **Dritter Fall, 12.11.2026 – und der steht nirgends in unseren Dateien.**
+  Road to Vostok läuft seit jeher mit `--rendering-method mobile`, dem
+  abgespeckten Godot-Renderer. Das Argument steht weder in den
+  Steam-Startoptionen noch im Profil: Steam hinterlegt für dieses Spiel zwei
+  Startvarianten, und `%command%` bringt die Argumente der gewählten mit.
+
+  ```
+  Road to Vostok [Vulkan]          --rendering-driver vulkan
+  Road to Vostok [Compatibility]   --rendering-method mobile
+  ```
+
+  Nachgesehen in Steams `appinfo.vdf`. Aufgefallen ist es nur, weil die
+  laufende Prozessliste beim Spielstart zufällig vor Augen lag.
+
+  Alle bisherigen Messungen gelten damit für die Compatibility-Variante.
+  Untereinander bleiben sie gültig – aber sie beschreiben nicht das Spiel,
+  sondern eine seiner zwei Fassungen.
+
+  **Zu tun:** Beim Start die tatsächliche Befehlszeile mitschreiben. Sie
+  steht ohnehin da, SPIELRaum baut sie selbst zusammen; es wirft sie nur
+  weg. Damit wären Renderer, Startargumente und Proton-Fassung in einem
+  Zug erfasst – und das ist mehr, als die Mod-Liste und `nvidia-smi`
+  zusammen abdecken.
+
   **Zweiter belegter Fall, 12.11.2026 – und diesmal mit Zahl.** Während des
   Messlaufs nahm OBS auf. Dass es auffiel, liegt daran, dass die Aufnahme
   *mitten im Lauf* endete; derselbe Abschnitt gegen den Lauf vom 10.11.:

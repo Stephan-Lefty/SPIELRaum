@@ -106,6 +106,29 @@ deleted but moved down, with the date they were completed.
   `nvidia-smi` (already in the tool list), and it answers afterwards the
   question that otherwise cannot be answered at all.
 
+  **Third case, 2026-11-12 — and this one is in none of our files.** Road to
+  Vostok has always run with `--rendering-method mobile`, Godot's reduced
+  renderer. The argument is in neither the Steam launch options nor the
+  profile: Steam stores two launch configurations for this game, and
+  `%command%` carries the arguments of whichever is chosen.
+
+  ```
+  Road to Vostok [Vulkan]          --rendering-driver vulkan
+  Road to Vostok [Compatibility]   --rendering-method mobile
+  ```
+
+  Looked up in Steam's `appinfo.vdf`. It only came to light because the
+  running process list happened to be in view at game start.
+
+  Every measurement so far therefore describes the compatibility variant.
+  They remain valid against each other — but they do not describe the game,
+  only one of its two builds.
+
+  **To do:** record the actual command line at start. It is right there —
+  SPIELRaum assembles it itself and then throws it away. That would capture
+  renderer, launch arguments and Proton version in one go — more than the
+  mod list and `nvidia-smi` cover together.
+
   **Second confirmed case, 2026-11-12 — and this time with a number.** OBS
   was recording during the measured run. It only came to light because the
   recording stopped *mid-run*; the same stretch against the 11-10 run:
