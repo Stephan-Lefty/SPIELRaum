@@ -812,26 +812,24 @@ class Fenster(QMainWindow):
                 )
             teile.append("</table>")
 
-            # Die Warnung steht vor dem Hinweis auf die Schwankung, nicht
-            # dahinter: Sie ist der Grund, warum die Tabelle darueber
-            # womoeglich nichts aussagt.
-            # Nur Läufe, die lange genug sind. Ohne das stützte sich die
-            # Warnung am 12.11.2026 auf einen Lauf von 13 Sekunden.
-            lasten = [k.cpu_last for k in gezeigt
-                      if k.cpu_last
-                      and k.dauer - k.ladezeit >= messen.MITLAEUFER_MINDESTZEIT]
-            if len(lasten) >= 2 and max(lasten) - min(lasten) >= messen.MITLAEUFER_SPANNE:
-                teile.append(
-                    f"<p style='color:{farben.ROT}'><b>Die CPU-Last der "
-                    f"Läufe liegt {max(lasten) - min(lasten):.0f} Prozentpunkte "
-                    f"auseinander</b> ({min(lasten):.0f} % bis "
-                    f"{max(lasten):.0f} %). Bei den höheren Läufen lief "
-                    f"vermutlich etwas mit – Bildschirmaufnahme, Fernwartung, "
-                    f"ein zweites Spiel. Am 12.11.2026 kostete OBS auf diesem "
-                    f"Rechner 17 % Bildrate, mehr als jede Einstellung je "
-                    f"gebracht hat. Solche Läufe taugen nicht zum "
-                    f"Vergleichen.</p>"
-                )
+            # Gewarnt wird über die beiden JÜNGSTEN Läufe, nicht über die
+            # Spanne aller sechs -- und zwar nach einem Fehlalarm am
+            # 12.11.2026: Bei Enshrouded liegen die sauberen Läufe von 39
+            # bis 53 Prozent auseinander, bei Road to Vostok innerhalb von
+            # 2,9. Ein Höchst-gegen-Tiefst über sechs Läufe schlägt bei
+            # einem prozessorhungrigen Spiel also immer an, und eine
+            # Warnung, die immer kommt, liest nach der dritten keiner mehr.
+            #
+            # »Vergleich« heißt zwei Läufe. Dieselbe Entscheidung wie auf
+            # der Kommandozeile, die auch die letzten beiden nimmt. Die
+            # CPU-Last der älteren steht in der Tabelle darüber -- sichtbar
+            # bleibt sie, nur behauptet wird nichts über sie.
+            brauchbar = [k for k in gezeigt if k.cpu_last
+                         and k.dauer - k.ladezeit >= messen.MITLAEUFER_MINDESTZEIT]
+            warnung = (messen.mitlaeufer_verdacht(brauchbar[-2], brauchbar[-1])
+                       if len(brauchbar) >= 2 else None)
+            if warnung:
+                teile.append(f"<p style='color:{farben.ROT}'>{warnung}</p>")
             teile.append(
                 f"<p style='color:{farben.GRAU_LEISE};font-size:9pt'>"
                 "Bildraten schwanken stark danach, wo im Spiel gemessen wurde – "

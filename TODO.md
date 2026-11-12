@@ -92,6 +92,18 @@ fertig wurde.
   auseinanderliegen. Das wirkt **rückwirkend** auf alle gespeicherten Läufe
   und hätte diesen vor der Auswertung aussortiert statt nach ihr.
 
+  **Die zehn Prozentpunkte sind an einem Spiel kalibriert.** Bei Road to
+  Vostok liegen die sauberen Läufe innerhalb von 2,9 Punkten, bei
+  Enshrouded von 38,9 bis 53,0 – vierzehn Punkte, ganz ohne Mitläufer. Für
+  ein prozessorhungriges Spiel ist die Schwelle also womöglich zu eng.
+  Deshalb wird nur ein Paar verglichen und nicht Höchst gegen Tiefst über
+  viele Läufe; sonst hätte Enshrouded bei jedem Blick gewarnt.
+
+  Richtig wäre eine Spanne **pro Spiel**: Was bei diesem Spiel normal
+  schwankt, sagen seine eigenen Läufe. Dafür braucht es mehrere saubere
+  Läufe je Spiel, und die sind nur da, wo schon gemessen wurde. Bis dahin
+  bleibt die Zahl eine Hausnummer, und sie steht als solche im Kommentar.
+
   Offen bleibt die Namensliste über `nvidia-smi`. `cpu_load` sagt, *dass* es
   jemand war – das ist die Frage, die zwischen einer Messung und keiner
   entscheidet. Wer es war, sagt es nicht. Und ein Mitläufer, der nur die

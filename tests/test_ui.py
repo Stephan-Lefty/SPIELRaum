@@ -472,3 +472,73 @@ def test_aufnahmeknopf_oeffnet_den_ordner_nicht_im_befund(anwendung, tmp_path,
     assert len(gerufen) == 1, "der Ordner wurde nicht geöffnet"
     assert gerufen[0].startswith("file://")
     assert "mit%20Leerzeichen" in gerufen[0] or "mit Leerzeichen" in gerufen[0]
+
+
+# --- Die Mitläufer-Warnung in der Befundtafel ------------------------------
+
+KOPF_CSV = (
+    "os,cpu,gpu,ram,kernel,driver,cpuscheduler\n"
+    "Test Linux,Test-Prozessor,Test-Grafik,32800000,6.0.0-test,,powersave\n"
+    "fps,frametime,cpu_load,gpu_load,elapsed\n"
+)
+
+
+def _messlauf_schreiben(ordner, name, fps, cpu, stichproben=6000):
+    """Ein Protokoll von zehn Minuten – über der Mindestzeit."""
+    ordner.mkdir(parents=True, exist_ok=True)
+    zeilen = [KOPF_CSV]
+    for n in range(1, stichproben + 1):
+        zeilen.append(f"{fps},16.0,{cpu},50.0,{n * 100_000_000}\n")
+    (ordner / f"{name}.csv").write_text("".join(zeilen), encoding="utf-8")
+
+
+def _befund_fuer(tmp_path, monkeypatch, laeufe):
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+    import re
+
+    messordner = tmp_path / "messungen"
+    for name, fps, cpu in laeufe:
+        _messlauf_schreiben(messordner / "4242", name, fps, cpu)
+    monkeypatch.setattr(fenster_modul.stellschrauben, "messordner",
+                        lambda: messordner)
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: None)
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 0)
+
+    spiel = steam.Spiel(app_id=4242, name="Testspiel", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    html = Fenster()._bericht(spiel)
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+
+
+def test_befund_warnt_wenn_der_juengste_lauf_auffaellt(anwendung, tmp_path,
+                                                       monkeypatch):
+    """Der Fall vom 12.11.2026: Beim letzten Lauf schnitt OBS mit."""
+    text = _befund_fuer(tmp_path, monkeypatch, [
+        ("a_2026-11-10_10-00-00", 49.4, 25.0),
+        ("b_2026-11-12_10-00-00", 46.9, 59.0),
+    ])
+    assert "CPU-Last unterscheidet sich" in text
+    assert "34 Prozentpunkte" in text
+
+
+def test_befund_warnt_nicht_wegen_eines_alten_laufs(anwendung, tmp_path,
+                                                    monkeypatch):
+    """Der Fehlalarm vom 12.11.2026, gefunden beim Durchtesten.
+
+    Die erste Fassung nahm Höchst gegen Tiefst über sechs Läufe. Bei
+    Enshrouded liegen die sauberen Läufe von 39 bis 53 Prozent auseinander
+    -- also schlug die Warnung dort immer an. Eine Warnung, die immer kommt,
+    liest nach der dritten niemand mehr.
+
+    Gewarnt wird deshalb über die beiden jüngsten Läufe, wie auf der
+    Kommandozeile. Der auffällige alte Lauf steht weiter in der Tabelle.
+    """
+    text = _befund_fuer(tmp_path, monkeypatch, [
+        ("a_2026-11-06_10-00-00", 48.8, 82.0),   # der auffällige, aber alt
+        ("b_2026-11-10_10-00-00", 27.5, 49.8),
+        ("c_2026-11-10_11-00-00", 23.6, 53.0),   # die beiden jüngsten:
+    ])                                           # 3,2 Punkte Unterschied
+    assert "CPU-Last unterscheidet sich" not in text
+    assert "82" in text, "der auffällige Lauf soll in der Tabelle stehen"

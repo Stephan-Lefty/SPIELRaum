@@ -86,6 +86,18 @@ deleted but moved down, with the date they were completed.
   on every stored run and would have thrown this one out before the
   evaluation instead of after.
 
+  **The ten percentage points are calibrated on one game.** For Road to
+  Vostok the clean runs sit within 2.9 points; for Enshrouded they span
+  38.9 to 53.0 — fourteen points, with no co-user at all. So the threshold
+  may be too tight for a CPU-hungry game. That is why only a *pair* gets
+  compared rather than highest against lowest across many runs; otherwise
+  Enshrouded would have warned on every look.
+
+  The right answer is a spread **per game**: what varies normally for this
+  game is told by its own runs. That needs several clean runs per game, and
+  those exist only where measuring already happened. Until then the number
+  stays a rough figure, and it is labelled as one in the code.
+
   What stays open is the name listing via `nvidia-smi`. `cpu_load` says
   *that* it was someone — the question deciding between a measurement and
   none. It does not say who. And a co-user that only loads the GPU and not

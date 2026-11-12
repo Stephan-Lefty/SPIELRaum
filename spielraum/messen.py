@@ -96,6 +96,15 @@ LAEUFT_AB = 5.0
 # Wichtig: Verglichen wird nur die Differenz zwischen zwei Läufen DESSELBEN
 # Spiels. Ein absoluter Grenzwert wäre falsch - 70 % CPU-Last können bei
 # einem Spiel der Mitläufer und beim nächsten der Normalfall sein.
+#
+# Und noch eine Grenze, am selben Tag beim Durchtesten gefunden: Nicht nur
+# die Höhe, auch die SPANNE ist je Spiel verschieden. Bei Road to Vostok
+# liegen die sauberen Läufe innerhalb von 2,9 Punkten, bei Enshrouded von
+# 38,9 bis 53,0 - vierzehn Punkte, ganz ohne Mitläufer. Diese zehn Punkte
+# sind also an einem Spiel kalibriert und für ein prozessorhungriges Spiel
+# womöglich zu eng. Deshalb wird nur ein PAAR verglichen und nicht Höchst
+# gegen Tiefst über viele Läufe; sonst schlägt es bei Enshrouded immer an.
+# Der offene Punkt dazu steht in TODO.md.
 MITLAEUFER_SPANNE = 10.0
 
 # Wie lange ein Lauf gemessen sein muss, damit seine CPU-Last etwas über die

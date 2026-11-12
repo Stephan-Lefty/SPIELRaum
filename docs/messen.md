@@ -172,6 +172,13 @@ hat. Und es stand die ganze Zeit in der Messdatei, Spalte `cpu_load`: 26 bis
 29 Prozent in den sauberen Läufen gegen 69 in diesem. Niemand hat
 hingesehen, und zwei falsche Schlüsse landeten im Repo, bevor es auffiel.
 
+Verglichen werden die beiden **jüngsten** Läufe, nicht alle gezeigten. Was
+bei einem Spiel normal schwankt, ist je Spiel verschieden: Bei Road to Vostok
+liegen die sauberen Läufe innerhalb von 2,9 Prozentpunkten, bei Enshrouded
+von 38,9 bis 53,0. Eine Warnung über Höchst gegen Tiefst käme dort bei jedem
+Blick – und eine Warnung, die immer kommt, liest nach der dritten niemand
+mehr.
+
 Gewarnt wird erst ab einer Minute gemessener Spielzeit. Ohne diese Grenze
 stützte sich die Warnung auf einen Lauf von **13 Sekunden** – eine Zahl aus
 zu wenig Material, also genau der Fehler, den sie verhindern soll. Die

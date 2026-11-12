@@ -38,6 +38,14 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Spalte schreibt MangoHud ohnehin mit. Fehlt sie, fällt nur diese eine
   Prüfung aus; eine Messung bleibt es trotzdem.
 
+  Gewarnt wird über die beiden **jüngsten** Läufe, nicht über die Spanne
+  aller gezeigten. Die erste Fassung nahm Höchst gegen Tiefst über sechs
+  Läufe und warnte damit bei Enshrouded bei jedem Blick: Dessen saubere
+  Läufe liegen von 38,9 bis 53,0 Prozent auseinander, bei Road to Vostok
+  sind es 2,9. Eine Warnung, die immer kommt, liest nach der dritten
+  niemand mehr. Die CPU-Last der älteren Läufe steht weiter in der
+  Tabelle – sichtbar bleibt sie, behauptet wird nur nichts über sie.
+
   Gewarnt wird erst ab einer Minute gemessener Spielzeit. Ohne diese Grenze
   stützte sich die Warnung beim ersten Nachsehen auf einen Lauf von
   **13 Sekunden** und meldete 42 Prozentpunkte Unterschied, wo in den
