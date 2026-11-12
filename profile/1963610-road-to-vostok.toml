@@ -66,34 +66,66 @@
 # 18 % im Mittel, bei gleichem 1-%-Tief. Uebernommen wurde Leistung.
 #
 # -------------------------------------------------------------------
-# DIE WICHTIGSTE ZAHL DES GANZEN PROFILS, 12.11.2026
+# DIE WICHTIGSTE ZAHL DES GANZEN PROFILS, 12.11.2026:
+# EIN MITLAEUFER KOSTET MEHR ALS JEDE VARIANTE
 # -------------------------------------------------------------------
 #
-# Hier stand zwei Tage lang, die Messdauer allein koste 6 Prozent:
-# 52,5 Bilder/s ueber 12,6 Minuten gegen 49,4 ueber 96. Falsch.
+# Am 12.11.2026 lief waehrend des Messlaufs OBS mit und nahm auf. Der
+# Lauf ist damit als Messung wertlos -- aber er ist der beste Beleg,
+# den dieses Profil hat, und zwar weil die Aufnahme MITTEN IM LAUF
+# endete. Dasselbe Spiel, dieselbe Variante, derselbe Abschnitt,
+# verglichen gegen den Lauf vom 10.11.:
 #
-# Ein dritter Lauf derselben Variante machte es pruefbar. Alle Laeufe
-# auf dasselbe Anfangsstueck gekuerzt und neu ausgewertet:
+#   Minute  2-10, OBS laeuft .....  39,1 gegen 47,2     -17,3 %
+#   Minute 11-12, OBS aus ........  56,0 gegen 53,8      +4,1 %
+#
+# 17 Prozent. Das ist mehr als der Abstand zwischen Optik und Leistung
+# und mehr als alles, was in diesem Profil je eingestellt wurde.
+#
+# Zu sehen ist es in der CPU-Last, Spalte cpu_load, die MangoHud
+# ohnehin mitschreibt -- die GPU-Last aendert sich dabei fast nicht,
+# OBS kodierte auf dem Prozessor:
+#
+#   Minute 10 .... CPU 81,8 %   48,8 Bilder/s
+#   Minute 11 .... CPU 38,3 %   57,7 Bilder/s   <- Aufnahme endet
+#
+# Mittel der ersten zwoelf Minuten, alle vier Laeufe:
+#
+#   Optik    05.11. .... CPU 26,1 %
+#   Leistung 09.11. .... CPU 25,7 %
+#   Leistung 10.11. .... CPU 28,6 %
+#   Leistung 12.11. .... CPU 68,9 %   <- Mitlaeufer, eindeutig
+#
+# Ein Mitlaeufer ist also aus den eigenen Messdateien erkennbar, auch
+# rueckwirkend. Genau das ist der offene Punkt in TODO.md; dies ist
+# nach RustDesk am 04.11.2026 der zweite belegte Fall.
+#
+# -------------------------------------------------------------------
+# WAS DAMIT ZUR MESSDAUER OFFEN BLEIBT
+# -------------------------------------------------------------------
+#
+# Hier stand am 10.11. zuerst, die Messdauer allein koste 6 Prozent
+# (52,5 ueber 12,6 Minuten gegen 49,4 ueber 96), und am 12.11. dann
+# das Gegenteil. Beides war zu schnell geschrieben. Richtig ist:
+#
+# Belegt ist, dass die Zahl INNERHALB eines Laufs ueber die Laenge
+# nicht faellt. Dieselben Laeufe auf ihr eigenes Anfangsstueck
+# gekuerzt, die beiden mit Mitlaeufer-Verdacht weggelassen:
 #
 #   Lauf                 ganz    auf 36 min    auf 12 min
 #   Optik    05.11.      44,5        44,1          43,1
 #   Leistung 09.11.      52,5        52,5          52,1
 #   Leistung 10.11.      49,4        48,1          48,4
-#   Leistung 12.11.      46,9        46,7          43,3
 #
-# Gleiche Variante, gleiche Einstellungen, gleicher Mod-Satz, gleicher
-# Rechner, gleich lang gemessen -- und 20 Prozent Spanne. Die Dauer
-# erklaert davon nichts; innerhalb jedes Laufs wird die Zahl ueber die
-# Laenge sogar besser, nicht schlechter.
+# Nicht belegt ist dagegen, woher der Abstand zwischen dem 09. und
+# dem 10.11. kommt. Auf gleiche zwoelf Minuten gekuerzt bleiben 52,1
+# gegen 48,4, also 7,6 Prozent -- der Abstand war von Anfang an da und
+# ist damit keine Sache der Dauer. Zwei Sitzungen, zwei Strecken,
+# eine Erklaerung: Das war der Fehler, nicht die Richtung.
 #
-# Uebrig bleibt die STRECKE. Minutenmittel des 12.11.: 51,7 / 37,0 /
-# 27,8 in den ersten drei Minuten, 57,2 in der elften. Wo der Spieler
-# steht, kostet mehr als alles, was wir hier je gestellt haben.
-#
-# Folge fuer dieses Profil: Die 18 % der dritten Fahrt sind kein
-# Messergebnis, sondern liegen innerhalb dieser Spanne. Leistung bleibt
-# uebernommen, weil es sich beim Spielen besser anfuehlt -- aber als
-# Vorliebe, nicht als Messwert. Siehe den offenen Punkt in TODO.md.
+# Folge fuer dieses Profil: Die 18 % der dritten Fahrt sind grosser
+# als diese 7,6 Prozent und bleiben damit ein brauchbares Ergebnis.
+# Leistung bleibt uebernommen. Siehe den offenen Punkt in TODO.md.
 #
 # Geaendert wurde in Preferences.tres (vom Spiel selbst verwaltet):
 #
@@ -239,7 +271,7 @@ beschreibung = "die Mitte - 48,6 Bilder/s, 1-%-Tief 26,7 (01.10.2026)"
 grafik = { lighting = 2, antialiasing = 2 }
 
 [varianten.leistung]
-beschreibung = "flüssig vor hübsch - 46,9 bis 52,5 Bilder/s über drei Läufe (09. bis 12.11.2026)"
+beschreibung = "flüssig vor hübsch - 48,4 bis 52,5 Bilder/s, zwei saubere Läufe (09./10.11.2026)"
 grafik = { lighting = 1, antialiasing = 1 }
 
 # --- Stephans eigene Wahl, 01.10.2026 ----------------------------------

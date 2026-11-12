@@ -53,6 +53,41 @@ deleted but moved down, with the date they were completed.
   `nvidia-smi` (already in the tool list), and it answers afterwards the
   question that otherwise cannot be answered at all.
 
+  **Second confirmed case, 2026-11-12 — and this time with a number.** OBS
+  was recording during the measured run. It only came to light because the
+  recording stopped *mid-run*; the same stretch against the 11-10 run:
+
+  ```
+  minutes  2-10, OBS running ....  39.1 against 47.2     -17.3 %
+  minutes 11-12, OBS off ........  56.0 against 53.8      +4.1 %
+  ```
+
+  **17 per cent** — more than the gap between `optik` and `leistung`, and
+  more than any setting in this project has ever gained.
+
+  And the decisive part: **it is already in the measurement files.** OBS
+  encoded on the CPU, so the `cpu_load` column shows it outright while GPU
+  load barely moves. Means over the first twelve minutes:
+
+  ```
+  optik    11-05 .... CPU 26.1 %
+  leistung 11-09 .... CPU 25.7 %
+  leistung 11-10 .... CPU 28.6 %
+  leistung 11-12 .... CPU 68.9 %   <- co-user, unmistakable
+  ```
+
+  In minute 11 CPU load drops from 81.8 to 38.3 per cent and the frame rate
+  jumps from 48.8 to 57.7 — the moment the recording ended, as a step in
+  our own data.
+
+  That yields a task smaller than the `nvidia-smi` listing and one that
+  works **retroactively** on every stored run: carry the mean CPU load per
+  run and report it, and warn on a comparison when two runs differ sharply
+  in it. That would have thrown this run out before the evaluation instead
+  of after. `nvidia-smi` says *who* it was; `cpu_load` says *that* it was
+  someone — and that is the question deciding between a measurement and
+  none.
+
   SPIELRaum may also **report** that mods are outdated — in the report pane,
   *before* the game starts. The comparison is cheap: 14 of the 16 mods name
   their id, and `api.modworkshop.net/mods/versions` takes up to 100 at once.
@@ -79,40 +114,43 @@ deleted but moved down, with the date they were completed.
   Equal measurement length is the minimum condition for that, not the
   solution. All that gets checked today is the ten-minute minimum.
 
-  **Correction, 2026-11-12.** For two days this spot claimed that duration
-  alone costs 6 per cent — 52.5 fps over 12.6 minutes against 49.4 over 96.
-  That is refuted. A third run of the same variant made it testable: every
-  run was truncated to the same opening stretch and re-evaluated.
+  **Corrected twice on 2026-11-12 — and that is the actual lesson here.**
+  From 11-10 this spot claimed duration alone costs 6 per cent (52.5 fps
+  over 12.6 minutes against 49.4 over 96). Then it claimed the opposite,
+  on the strength of a third run. But that third run had OBS recording
+  alongside and is worthless as a measurement. Both versions were written
+  too fast.
+
+  All that holds up is this: within a run, the number does not drop with
+  length. The same runs truncated to their own opening stretch, the one
+  with a co-user left out:
 
   ```
   Run                  full    cut to 36 min    cut to 12 min
   optik    11-05       44.5         44.1             43.1
   leistung 11-09       52.5         52.5             52.1
   leistung 11-10       49.4         48.1             48.4
-  leistung 11-12       46.9         46.7             43.3
   ```
 
-  Same variant, same settings, same mod set, same machine, measured over the
-  same length — and anywhere between 43.3 and 52.1 frames, a **20 per cent
-  spread**. Duration explains none of it. Within each individual run the
-  number even gets *better* with length, not worse — the exact opposite of
-  the refuted claim.
+  What stays open is where the gap between 11-09 and 11-10 comes from. Cut
+  to the same twelve minutes, 52.1 against 48.4 remains — 7.6 per cent. The
+  gap was there from the start and is therefore not a matter of duration.
+  Two sessions, two routes, one explanation: that was the flaw in the first
+  version.
 
-  What is left is the route. The per-minute means for 11-12 are 51.7 / 37.0
-  / 27.8 for the first three minutes and 57.2 for the eleventh. Where the
-  player stands costs more than anything we have ever set; that matches the
-  74 % swing from [docs/messen.md](docs/messen.md) (German).
+  So there are two things to do. The easy one: enforce equal duration, or
+  truncate to the common opening stretch — `messen.auswerten` can already
+  do it, only the call is missing. The hard one: a comparison that accounts
+  for the route, say a fixed circuit or sections of equal GPU load pitted
+  against each other. Until then 7.6 per cent is the figure below which no
+  difference is a difference — which puts a number on the tolerance-band
+  point below.
 
-  So the harder thing is what needs doing: a comparison that accounts for
-  the route. A fixed circuit, a built-in benchmark lap, or sections of equal
-  GPU load pitted against each other. Until then the run may only give a
-  recommendation when the gap exceeds that spread — and so far it never has.
-  Which puts this with the tolerance-band point below.
-
-  And as a note to self: it was a single measurement with a plausible
-  explanation next to it. That exact thing had already gone wrong three
-  times in the preceding two weeks; this time it made it into the repo. An
-  explanation that fits only one measurement is not one.
+  And as a note to self: both wrong versions came out of **one**
+  measurement with a plausible explanation next to it. That exact thing had
+  already gone wrong three times in the preceding two weeks. An explanation
+  that fits only one measurement is not one — and neither is a correction
+  built on an unvetted measurement.
 
 - [ ] **The measurement run needs a tolerance band.** `fahrt.beste()` simply
   takes the highest 1 % low and declares a winner, even when the gap is

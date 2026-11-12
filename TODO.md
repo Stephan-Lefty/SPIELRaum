@@ -59,6 +59,41 @@ fertig wurde.
   Werkzeugliste), und sie beantwortet hinterher die Frage, die man sich
   sonst nicht mehr beantworten kann.
 
+  **Zweiter belegter Fall, 12.11.2026 – und diesmal mit Zahl.** Während des
+  Messlaufs nahm OBS auf. Dass es auffiel, liegt daran, dass die Aufnahme
+  *mitten im Lauf* endete; derselbe Abschnitt gegen den Lauf vom 10.11.:
+
+  ```
+  Minute  2-10, OBS läuft .....  39,1 gegen 47,2     -17,3 %
+  Minute 11-12, OBS aus .......  56,0 gegen 53,8      +4,1 %
+  ```
+
+  **17 Prozent** – mehr als der Abstand zwischen `optik` und `leistung` und
+  mehr als alles, was in diesem Projekt je an Einstellungen gewonnen wurde.
+
+  Und das Entscheidende: **Es steht schon in den Messdateien.** OBS kodierte
+  auf dem Prozessor, die Spalte `cpu_load` zeigt es unmittelbar, die
+  GPU-Last dagegen kaum. Mittel der ersten zwölf Minuten:
+
+  ```
+  optik    05.11. .... CPU 26,1 %
+  leistung 09.11. .... CPU 25,7 %
+  leistung 10.11. .... CPU 28,6 %
+  leistung 12.11. .... CPU 68,9 %   <- Mitläufer, eindeutig
+  ```
+
+  In Minute 11 fällt die CPU-Last von 81,8 auf 38,3 Prozent und die
+  Bildrate springt von 48,8 auf 57,7 – der Moment, in dem die Aufnahme
+  endete, als Treppenstufe in den eigenen Daten.
+
+  Daraus folgt eine Aufgabe, die kleiner ist als die Liste per `nvidia-smi`
+  und **rückwirkend** auf alle gespeicherten Läufe wirkt: Die CPU-Last pro
+  Lauf mitführen und ausgeben, und bei einem Vergleich warnen, wenn zwei
+  Läufe darin deutlich auseinanderliegen. Das hätte diesen Lauf vor der
+  Auswertung aussortiert, statt nach ihr. `nvidia-smi` sagt, *wer* es war;
+  `cpu_load` sagt, *dass* es jemand war – und das ist die Frage, die
+  zwischen einer Messung und keiner entscheidet.
+
   Dazu darf SPIELRaum **anzeigen**, dass Mods veraltet sind – im Befund,
   *bevor* das Spiel startet. Der Abgleich ist billig: 14 der 16 Mods nennen
   ihre Nummer, und `api.modworkshop.net/mods/versions` nimmt bis zu 100 auf
@@ -88,42 +123,43 @@ fertig wurde.
   wurde.** Die gleiche Messdauer ist dafür die Mindestbedingung, nicht die
   Lösung. Geprüft wird heute nur die Mindestdauer von zehn Minuten.
 
-  **Korrektur vom 12.11.2026.** An dieser Stelle stand zwei Tage lang, die
-  Messdauer allein koste 6 Prozent – 52,5 Bilder/s über 12,6 Minuten gegen
-  49,4 über 96. Das ist widerlegt. Ein dritter Lauf derselben Variante
-  machte es prüfbar: Alle Läufe wurden auf dasselbe Anfangsstück gekürzt
-  und neu ausgewertet.
+  **Zweimal berichtigt am 12.11.2026 – und das ist der eigentliche
+  Lerninhalt.** Hier stand ab dem 10.11., die Messdauer allein koste
+  6 Prozent (52,5 Bilder/s über 12,6 Minuten gegen 49,4 über 96). Dann
+  stand hier das Gegenteil, gestützt auf einen dritten Lauf. Dieser dritte
+  Lauf hatte aber OBS mitlaufen und ist als Messung wertlos. Beide
+  Fassungen waren zu schnell geschrieben.
+
+  Belastbar ist nur das: Innerhalb eines Laufs fällt die Zahl über die
+  Länge nicht. Dieselben Läufe auf ihr eigenes Anfangsstück gekürzt, der
+  Lauf mit Mitläufer weggelassen:
 
   ```
   Lauf                 ganz    auf 36 min    auf 12 min
   optik    05.11.      44,5        44,1          43,1
   leistung 09.11.      52,5        52,5          52,1
   leistung 10.11.      49,4        48,1          48,4
-  leistung 12.11.      46,9        46,7          43,3
   ```
 
-  Gleiche Variante, gleiche Einstellungen, gleicher Mod-Satz, gleicher
-  Rechner, gleich lang gemessen – und zwischen 43,3 und 52,1 Bildern, also
-  **20 Prozent Spanne**. Die Dauer erklärt davon nichts. Innerhalb jedes
-  einzelnen Laufs wird die Zahl über die Länge sogar *besser*, nicht
-  schlechter – genau umgekehrt zur widerlegten Behauptung.
+  Offen bleibt, woher der Abstand zwischen dem 09. und dem 10.11. kommt.
+  Auf gleiche zwölf Minuten gekürzt bleiben 52,1 gegen 48,4, also
+  7,6 Prozent – der Abstand war von Anfang an da und ist damit keine Sache
+  der Dauer. Zwei Sitzungen, zwei Strecken, eine Erklärung: Das war der
+  Fehler an der ersten Fassung.
 
-  Übrig bleibt die Strecke. Die Minutenmittel des 12.11. lauten 51,7 / 37,0
-  / 27,8 für die ersten drei Minuten und 57,2 für die elfte. Wo der Spieler
-  steht, kostet mehr als alles, was wir bisher gestellt haben; das deckt
-  sich mit den 74 % Schwankung aus [docs/messen.md](docs/messen.md).
+  Zu tun ist also zweierlei. Das Leichte: gleiche Dauer erzwingen, oder
+  auf das gemeinsame Anfangsstück kürzen – `messen.auswerten` kann das
+  schon, es fehlt nur der Aufruf. Das Schwere: ein Vergleich, der die
+  Strecke berücksichtigt, etwa ein festgelegter Rundweg oder Abschnitte
+  gleicher GPU-Last gegeneinander. Bis dahin ist 7,6 Prozent die
+  Hausnummer, unter der kein Unterschied ein Unterschied ist – was den
+  Toleranzband-Punkt darunter in eine Zahl fasst.
 
-  Zu tun ist deshalb das Schwerere: ein Vergleich, der die Strecke
-  berücksichtigt. Ein festgelegter Rundweg, ein eingebauter Vergleichslauf,
-  oder Abschnitte gleicher GPU-Last gegeneinander. Bis dahin darf die Fahrt
-  eine Empfehlung nur aussprechen, wenn der Abstand größer ist als diese
-  Spanne – und das war er bisher nie. Gehört damit zum Toleranzband-Punkt
-  darunter.
-
-  Und als Merkposten: Es war eine Einzelmessung mit einer plausiblen
-  Erklärung daneben. Genau das ist in den zwei Wochen davor schon dreimal
-  schiefgegangen, nur hat es diesmal den Weg ins Repo gefunden. Eine
-  Erklärung, die nur zu einer Messung passt, ist keine.
+  Und als Merkposten: Beide Fehlfassungen entstanden aus **einer**
+  Messung mit einer plausiblen Erklärung daneben. Genau das ist in den
+  zwei Wochen davor schon dreimal schiefgegangen. Eine Erklärung, die nur
+  zu einer Messung passt, ist keine – und eine Berichtigung auf Grundlage
+  einer ungeprüften Messung ist auch keine.
 
 - [ ] **Die Messfahrt braucht ein Toleranzband.** `fahrt.beste()` nimmt
   schlicht das höchste 1-%-Tief und erklärt damit einen Sieger, auch wenn
