@@ -542,3 +542,100 @@ def test_befund_warnt_nicht_wegen_eines_alten_laufs(anwendung, tmp_path,
     ])                                           # 3,2 Punkte Unterschied
     assert "CPU-Last unterscheidet sich" not in text
     assert "82" in text, "der auffällige Lauf soll in der Tabelle stehen"
+
+
+# --- Die Stelle der Anzeige umschalten -------------------------------------
+
+
+def _profil_datei(ordner, app_id=4242, ecke=None):
+    inhalt = f'[spiel]\nname = "Testspiel"\nsteam_app_id = {app_id}\n\n'
+    inhalt += "# Ein Kommentar, der überleben muss.\n[messen]\nmangohud = true\n"
+    if ecke:
+        inhalt += f'ecke = "{ecke}"  # mit Kommentar am Zeilenende\n'
+    datei = ordner / f"{app_id}-test.toml"
+    datei.write_text(inhalt, encoding="utf-8")
+    return datei
+
+
+def _fenster_mit_profil(tmp_path, monkeypatch, ecke=None):
+    from spielraum import profil as profil_modul
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    verzeichnis = tmp_path / "spiele"
+    verzeichnis.mkdir()
+    datei = _profil_datei(verzeichnis, ecke=ecke)
+    monkeypatch.setattr(profil_modul, "profil_verzeichnis", lambda: verzeichnis)
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 0)
+
+    spiel = steam.Spiel(app_id=4242, name="Testspiel", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    f = Fenster()
+    f.spiele = [spiel]
+    f.liste.clear()
+    f.liste.addItem("Testspiel")
+    f.liste.setCurrentRow(0)
+    f._gewaehlt(0)
+    return f, datei
+
+
+def test_spielwechsel_schreibt_nicht_ins_profil(anwendung, tmp_path, monkeypatch):
+    """Die gefährliche Stelle.
+
+    ``currentIndexChanged`` feuert auch, wenn das Feld BEFÜLLT wird. Ohne
+    Sperre schreibt jeder Blick auf ein Spiel in dessen Profildatei --
+    dieselbe Falle wie bei ``currentRowChanged`` am 09.11.2026, nur in die
+    andere Richtung.
+    """
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch, ecke="bottom-right")
+    vorher = datei.read_bytes()
+
+    for _ in range(3):
+        f._gewaehlt(0)   # mehrfach wählen, wie beim Hin- und Herklicken
+
+    assert datei.read_bytes() == vorher, "das Profil wurde ungefragt geändert"
+    assert f.anzeige_ecke.currentData() == "bottom-right"
+
+
+def test_auswahl_schreibt_die_stelle_ins_profil(anwendung, tmp_path, monkeypatch):
+    from spielraum import profil as profil_modul
+
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch, ecke="top-left")
+    zeile = f.anzeige_ecke.findData("middle-right")
+    f.anzeige_ecke.setCurrentIndex(zeile)
+
+    assert profil_modul.laden(datei).overlay_ecke == "middle-right"
+    assert "Ein Kommentar, der überleben muss." in datei.read_text(encoding="utf-8")
+    assert "mit Kommentar am Zeilenende" in datei.read_text(encoding="utf-8"), \
+        "der Kommentar hinter dem Wert ist verschwunden"
+    assert "Mitte rechts" in f.unterzeile.text()
+    assert "nächsten Start" in f.unterzeile.text(), \
+        "es muss dastehen, dass es erst beim nächsten Start wirkt"
+
+
+def test_ohne_ecke_im_profil_wird_sie_angelegt(anwendung, tmp_path, monkeypatch):
+    from spielraum import profil as profil_modul
+
+    f, datei = _fenster_mit_profil(tmp_path, monkeypatch, ecke=None)
+    assert f.anzeige_ecke.currentData() == "top-left", "die Vorgabe soll stehen"
+
+    f.anzeige_ecke.setCurrentIndex(f.anzeige_ecke.findData("bottom-left"))
+    assert profil_modul.laden(datei).overlay_ecke == "bottom-left"
+    assert "mangohud = true" in datei.read_text(encoding="utf-8")
+
+
+def test_ohne_profil_bleibt_das_feld_grau(anwendung, tmp_path, monkeypatch):
+    from spielraum import steam
+    from spielraum.ui import fenster as fenster_modul
+    from spielraum.ui.fenster import Fenster
+
+    monkeypatch.setattr(fenster_modul.profil, "finden", lambda **k: None)
+    monkeypatch.setattr(fenster_modul.steam, "bilder_zaehlen", lambda app: 0)
+    spiel = steam.Spiel(app_id=99, name="Ohne Profil", ordner=tmp_path,
+                        groesse=1, bibliothek=tmp_path)
+    f = Fenster()
+    f.spiele = [spiel]
+    f.liste.clear(); f.liste.addItem("Ohne Profil"); f.liste.setCurrentRow(0)
+    f._gewaehlt(0)
+    assert f.anzeige_ecke.isEnabled() is False

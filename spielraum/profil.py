@@ -364,6 +364,110 @@ def laden(pfad: Path) -> Profil:
     return profil
 
 
+def ecke_setzen(pfad: Path, ecke: str) -> str:
+    """``messen.ecke`` in einer Profildatei ändern und den alten Wert melden.
+
+    **Warum von Hand im Text und nicht über einen TOML-Schreiber.** Die
+    Profile dieses Projekts bestehen zu neun Zehnteln aus Kommentaren -- das
+    Vostok-Profil hat über dreihundert Zeilen Begründung zu knapp dreißig
+    Zeilen Werten. Kein TOML-Schreiber in der Standardbibliothek erhält
+    Kommentare; ``tomllib`` kann ohnehin nur lesen. Wer hier neu serialisiert,
+    löscht die Begründungen und merkt es nicht, weil die Datei danach gültig
+    aussieht -- dieselbe Falle wie bei der Vollsicherung am 03.11.2026.
+
+    Deshalb wird genau eine Zeile angefasst. Drei Fälle:
+
+    * ``ecke = "..."`` steht schon da -> Wert ersetzen, Kommentar daneben
+      bleibt stehen.
+    * ``[messen]`` gibt es, ``ecke`` nicht -> Zeile direkt unter die
+      Abschnittsüberschrift.
+    * ``[messen]`` gibt es nicht -> Abschnitt am Ende anlegen.
+
+    Gibt den vorherigen Wert zurück, oder ``""``, wenn keiner dastand.
+    Geschrieben wird atomar; ein halb geschriebenes Profil wäre schlimmer
+    als keines, weil SPIELRaum es beim nächsten Start nicht mehr lädt.
+    """
+    if ecke not in OVERLAY_ECKEN:
+        raise ProfilFehler(
+            f"»{ecke}« ist keine Stelle, die MangoHud kennt. Möglich: "
+            + ", ".join(OVERLAY_ECKEN)
+        )
+
+    # ``newline=""`` ist hier Bedingung, nicht Vorsicht: ``read_text``
+    # wandelt CRLF beim LESEN in LF, und dann steht in ``text`` nie ein
+    # ``\r`` -- die Erkennung darunter liefe immer auf LF, und die Datei
+    # käme mit gewandelten Zeilenenden zurück. Am 09.11.2026 hat genau das
+    # an Enshroudeds Einstellungsdatei 68 CRLF zerstört; damals beim
+    # Schreiben, hier beim Lesen. Der Test test_crlf_bleibt_crlf hält es.
+    with pfad.open(encoding="utf-8", newline="") as datei:
+        text = datei.read()
+    umbruch = "\r\n" if "\r\n" in text else "\n"
+    zeilen = text.split(umbruch)
+
+    in_messen = False
+    messen_zeile = None
+    for nummer, zeile in enumerate(zeilen):
+        blank = zeile.strip()
+        if blank.startswith("[") and blank.endswith("]"):
+            in_messen = blank == "[messen]"
+            if in_messen:
+                messen_zeile = nummer
+            continue
+        if not in_messen or not blank or blank.startswith("#"):
+            continue
+        schluessel = blank.split("=", 1)[0].strip()
+        if schluessel == "ecke":
+            # Nur den Wert tauschen, alles rechts davon bleibt -- auch ein
+            # Kommentar am Zeilenende.
+            vorne, _, hinten = zeile.partition("=")
+            rest = hinten.split("#", 1)
+            kommentar = f"  #{rest[1]}" if len(rest) > 1 else ""
+            # Erst den Kommentar abschneiden, DANN die Anführungszeichen.
+            # Umgekehrt stand im Rückgabewert einmal
+            # »top-left"  # und ein Kommentar am Zeilenende« -- ein
+            # .strip('"') an einer Zeichenkette, die hinten keines mehr hat,
+            # weil der Kommentar dahinter steht.
+            vorher = rest[0].strip().strip('"').strip("'")
+            zeilen[nummer] = f'{vorne}= "{ecke}"{kommentar}'
+            _atomar(pfad, umbruch.join(zeilen))
+            return vorher
+
+    neue_zeile = f'ecke = "{ecke}"'
+    if messen_zeile is not None:
+        zeilen.insert(messen_zeile + 1, neue_zeile)
+    else:
+        # Leerzeile davor, damit der Abschnitt nicht an den letzten Wert
+        # klebt. Dass sie von uns stammt, ist hier unkritisch -- anders als
+        # bei den Spieldateien nimmt niemand diese Änderung zurück.
+        if zeilen and zeilen[-1].strip():
+            zeilen.append("")
+        zeilen.extend(["[messen]", neue_zeile])
+    _atomar(pfad, umbruch.join(zeilen))
+    return ""
+
+
+def _atomar(ziel: Path, text: str) -> None:
+    """Daneben schreiben, dann umbenennen -- wie überall in diesem Programm.
+
+    Nicht ``stellschrauben.atomar_schreiben`` aufgerufen, obwohl es dasselbe
+    tut: ``stellschrauben`` lädt ``profil``, und umgekehrt gäbe das einen
+    Ringschluss beim Importieren.
+    """
+    import os
+    import tempfile
+
+    griff, zwischendatei = tempfile.mkstemp(dir=ziel.parent, suffix=".tmp")
+    try:
+        with os.fdopen(griff, "w", encoding="utf-8", newline="") as datei:
+            datei.write(text)
+            datei.flush()
+            os.fsync(datei.fileno())
+        os.replace(zwischendatei, ziel)
+    except BaseException:
+        Path(zwischendatei).unlink(missing_ok=True)
+        raise
+
+
 def profil_verzeichnis() -> Path:
     return umgebung.konfig_verzeichnis() / "spiele"
 

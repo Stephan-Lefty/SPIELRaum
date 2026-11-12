@@ -20,13 +20,27 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices, QFont, QIcon
 from PySide6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
+    QApplication, QComboBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QMainWindow, QMessageBox, QPushButton, QSplitter, QTextBrowser,
     QVBoxLayout, QWidget,
 )
 
 from .. import (__version__, fahrt, farben, messen, profil, stellschrauben,
                 steam, tasten, umgebung, varianten, zustand)
+
+
+# Die sechs Stellen, an denen MangoHud die Anzeige hinlegen kann, in der
+# Reihenfolge, in der man sie im Bild sucht: oben, Mitte, unten -- und darin
+# links vor rechts. Nicht die Reihenfolge aus profil.OVERLAY_ECKEN: Die ist
+# nach MangoHuds Schreibweise sortiert, nicht danach, wie jemand hinsieht.
+OVERLAY_NAMEN = (
+    ("top-left", "oben links"),
+    ("top-right", "oben rechts"),
+    ("middle-left", "Mitte links"),
+    ("middle-right", "Mitte rechts"),
+    ("bottom-left", "unten links"),
+    ("bottom-right", "unten rechts"),
+)
 
 
 # Wie keyd die Tasten nennt und wie sie auf einer deutschen Tastatur
@@ -138,8 +152,11 @@ class Fenster(QMainWindow):
         kopf = QLabel("SPIELRaum")
         kopf.setObjectName("ueberschrift")
         umg = umgebung.ermitteln()
-        unter = QLabel(f"{umg.name} · Spiel wählen, dann steht rechts, was gemessen ist")
+        self.unterzeile_ruhe = (f"{umg.name} · Spiel wählen, dann steht "
+                                f"rechts, was gemessen ist")
+        unter = QLabel(self.unterzeile_ruhe)
         unter.setObjectName("unterzeile")
+        self.unterzeile = unter
 
         self.liste = QListWidget()
         self.liste.currentRowChanged.connect(self._gewaehlt)
@@ -215,6 +232,27 @@ class Fenster(QMainWindow):
         self.knopf_bilder.clicked.connect(self._bilder_oeffnen)
         self.knopf_bilder.setEnabled(False)
 
+        # Wo die MangoHud-Anzeige im Bild sitzt. Angefordert am 12.11.2026,
+        # nachdem sich zeigte, dass MangoHuds eigene Tastenkürzel hier nicht
+        # wirken -- siehe den offenen Punkt in TODO.md. Das Feld schreibt
+        # »ecke« ins Profil; wirksam wird es beim nächsten Spielstart, und
+        # genau das steht auch daneben, damit niemand im laufenden Spiel
+        # darauf wartet.
+        self.anzeige_ecke = QComboBox()
+        for kennung, beschriftung in OVERLAY_NAMEN:
+            self.anzeige_ecke.addItem(beschriftung, kennung)
+        self.anzeige_ecke.setEnabled(False)
+        self.anzeige_ecke.setToolTip(
+            "Wo die Mess-Anzeige im Bild sitzt.\n"
+            "Wird ins Profil geschrieben und gilt ab dem nächsten Start.")
+        self.anzeige_ecke.currentIndexChanged.connect(self._ecke_gewaehlt)
+        # Während des Befüllens darf das Feld nicht melden, der Anwender
+        # habe etwas gewählt -- sonst schreibt jeder Spielwechsel ins
+        # Profil. Dieselbe Falle wie bei currentRowChanged am 09.11.2026,
+        # nur in die andere Richtung.
+        self._ecke_wird_gesetzt = False
+        self.beschriftung_ecke = QLabel("Anzeige:")
+
         knoepfe = QHBoxLayout()
         knoepfe.addWidget(self.knopf_neu)
         knoepfe.addWidget(self.knopf_tasten)
@@ -222,6 +260,8 @@ class Fenster(QMainWindow):
         knoepfe.addWidget(self.knopf_modloader)
         knoepfe.addWidget(self.knopf_bilder)
         knoepfe.addStretch()
+        knoepfe.addWidget(self.beschriftung_ecke)
+        knoepfe.addWidget(self.anzeige_ecke)
         knoepfe.addWidget(self.knopf_start)
 
         links = QVBoxLayout()
@@ -284,6 +324,7 @@ class Fenster(QMainWindow):
             self.knopf_start.setEnabled(False)
             self.knopf_tasten.setEnabled(False)
             self.knopf_bilder.setEnabled(False)
+            self.anzeige_ecke.setEnabled(False)
             return
         spiel = self.spiele[zeile]
         self.knopf_start.setEnabled(True)
@@ -295,6 +336,18 @@ class Fenster(QMainWindow):
         # Eine Messfahrt braucht mindestens zwei Varianten -- sonst gäbe es
         # nichts zu vergleichen.
         self.knopf_fahrt.setEnabled(bool(p and len(p.varianten) >= 2))
+
+        # Die Stelle der Anzeige lässt sich nur verstellen, wenn es ein
+        # Profil gibt, in das sie geschrieben werden kann -- und nur, wenn
+        # MangoHud für dieses Spiel überhaupt eingeschaltet ist.
+        # Eine Meldung zum vorigen Spiel darf hier nicht stehenbleiben.
+        self.melden(self.unterzeile_ruhe)
+
+        self._ecke_wird_gesetzt = True
+        self.anzeige_ecke.setEnabled(bool(p and p.mangohud))
+        gesucht = self.anzeige_ecke.findData(p.overlay_ecke if p else "top-left")
+        self.anzeige_ecke.setCurrentIndex(max(0, gesucht))
+        self._ecke_wird_gesetzt = False
 
         # Die Anzahl gehört auf den Knopf: Ein Knopf, der ein leeres Fenster
         # öffnet, ist schlimmer als ein grauer. Steam legt den Ordner schon
@@ -318,6 +371,55 @@ class Fenster(QMainWindow):
             f"Mod Loader {stand.neueste} einbauen" if bereit
             else "Mod Loader einbauen")
 
+        self.befund.setHtml(self._bericht(spiel))
+
+    def melden(self, satz: str) -> None:
+        """Eine Rückmeldung in die Unterzeile, nicht in einen Dialog.
+
+        Ein Hinweis, den man wegklicken muss, unterbricht -- und wer die
+        Stelle der Anzeige durchprobiert, klickt sechsmal. Die Unterzeile
+        steht ohnehin im Blick und kostet keinen Klick.
+        """
+        self.unterzeile.setText(satz)
+
+    # --- Die Stelle der Anzeige -------------------------------------------
+
+    def _ecke_gewaehlt(self, zeile: int) -> None:
+        """Die gewählte Stelle ins Profil schreiben.
+
+        Geschrieben wird in die Profildatei und nicht nur im Arbeitsspeicher
+        gemerkt: Das Spiel startet in einem eigenen Prozess, der das Profil
+        neu liest. Eine Einstellung, die das Fenster nur für sich behält,
+        käme beim Spiel nicht an.
+        """
+        if self._ecke_wird_gesetzt:
+            return  # Wir befüllen gerade, der Anwender hat nichts gewählt.
+        spiel_zeile = self.liste.currentRow()
+        if not 0 <= spiel_zeile < len(self.spiele):
+            return
+        spiel = self.spiele[spiel_zeile]
+        p = profil.finden(steam_app_id=spiel.app_id)
+        if p is None:
+            return
+        ecke = self.anzeige_ecke.itemData(zeile)
+        beschriftung = self.anzeige_ecke.itemText(zeile)
+        try:
+            profil.ecke_setzen(p.quelle, ecke)
+        except (profil.ProfilFehler, OSError) as fehler:
+            QMessageBox.warning(
+                self, "Geht nicht",
+                f"Die Stelle konnte nicht ins Profil geschrieben werden.\n\n"
+                f"{fehler}")
+            # Zurück auf den Wert, der in der Datei steht -- sonst zeigt das
+            # Feld etwas an, was nirgends steht.
+            self._ecke_wird_gesetzt = True
+            self.anzeige_ecke.setCurrentIndex(
+                max(0, self.anzeige_ecke.findData(p.overlay_ecke)))
+            self._ecke_wird_gesetzt = False
+            return
+
+        self.melden(f"Anzeige steht künftig {beschriftung} – wirkt beim "
+                    f"nächsten Start von {spiel.name}.")
         self.befund.setHtml(self._bericht(spiel))
 
     # --- Aufnahmen --------------------------------------------------------
@@ -683,7 +785,12 @@ class Fenster(QMainWindow):
             if p.variablen:
                 was.append(f"{len(p.variablen)} Umgebungsvariable(n)")
             if p.mangohud and umg.hat("mangohud"):
-                was.append("jeder Lauf wird gemessen")
+                # Die Stelle gehört dazu: Sie ist die eine Zeile, die das
+                # Auswahlfeld unten verstellt, und ohne sie sieht man nach
+                # dem Umschalten nicht, dass etwas passiert ist.
+                stelle = dict(OVERLAY_NAMEN).get(p.overlay_ecke, p.overlay_ecke)
+                was.append(f"jeder Lauf wird gemessen – Anzeige {stelle}, "
+                           f"Deckkraft {p.overlay_deckkraft:.0%}")
             teile.append("<ul>" + "".join(f"<li>{z}</li>" for z in was) + "</ul>")
             for warnung in p.warnungen():
                 teile.append(f"<p style='color:#b4690e'>{warnung}</p>")

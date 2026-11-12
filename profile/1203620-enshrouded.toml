@@ -38,6 +38,9 @@ gamemode      = true
 nicht_stoeren = true
 
 [messen]
+# Wo die Anzeige im Bild sitzt. In der Oberflaeche umstellbar
+# (Feld "Anzeige:" unten rechts); wirkt beim naechsten Start.
+ecke = "top-left"
 mangohud = true
 
 # Von selbst eine Messfahrt beginnen, sobald für dieses Spiel noch keine

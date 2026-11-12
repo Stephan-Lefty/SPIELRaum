@@ -51,6 +51,9 @@ gamemode      = true
 nicht_stoeren = true
 
 [messen]
+# Wo die Anzeige im Bild sitzt. In der Oberflaeche umstellbar
+# (Feld "Anzeige:" unten rechts); wirkt beim naechsten Start.
+ecke = "top-left"
 # MangoHud laeuft mit, damit es ueberhaupt Zahlen gibt, wenn spaeter
 # einmal gemessen werden soll. Eine Messfahrt gibt es hier nicht --
 # dafuer braeuchte es Varianten, und die braeuchten eine

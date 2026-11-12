@@ -220,6 +220,11 @@ argumente = ["--rendering-driver", "vulkan"]
 [messen]
 mangohud = true
 
+# Wo die Anzeige im Bild sitzt. In der Oberflaeche umstellbar
+# (Feld "Anzeige:" unten rechts); wirkt beim naechsten Start.
+# Moeglich: top/middle/bottom je -left oder -right.
+ecke = "top-left"
+
 # Die Anzeige im Bild: ein Viertel deckend statt MangoHuds halber Vorgabe.
 # Angefordert am 12.11.2026 -- der Kasten verdeckte oben links zu viel.
 #
