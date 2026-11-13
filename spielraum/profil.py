@@ -49,8 +49,6 @@ class ProfilFehler(Exception):
 # nicht neu auf.
 ARTEN = ("godot-cfg", "godot-tres")
 
-# Wo MangoHud sein Overlay zeichnet. Die Liste stammt nicht aus dem
-# Gedächtnis, sondern aus der Bibliothek selbst (`strings libMangoHud.so`).
 # Wie viel von der Anzeige im Bild steht.
 #
 # »aus« ist kein Schönheitswert, sondern schaltet die MESSUNG mit ab --
@@ -86,9 +84,20 @@ ARTEN = ("godot-cfg", "godot-tres")
 # selben Tag.
 OVERLAY_UMFAENGE = ("voll", "klein", "fahrt", "aus")
 
+# Wo MangoHud sein Overlay zeichnet. Die Schreibweisen stammen nicht aus
+# dem Gedächtnis, sondern aus der Bibliothek selbst (`strings
+# libMangoHud.so`).
+#
+# Nur die vier Ecken. MangoHud kennt zusätzlich "middle-left" und
+# "middle-right" -- die standen bis zum 12.11.2026 mit zur Auswahl und
+# flogen nach dem ersten Durchprobieren wieder raus: Auf halber Höhe sitzt
+# die Anzeige mitten im Blickfeld, und genau das soll sie nicht.
+#
+# Ein Profil mit einer der beiden Stellen wird damit abgewiesen. Das ist
+# gewollt: Lieber eine Fehlermeldung als ein Wert, den die Oberfläche nicht
+# anzeigen kann und beim nächsten Umschalten stillschweigend überschreibt.
 OVERLAY_ECKEN = (
-    "top-left", "top-right", "middle-left", "middle-right",
-    "bottom-left", "bottom-right",
+    "top-left", "top-right", "bottom-left", "bottom-right",
 )
 
 
@@ -139,9 +148,8 @@ class Profil:
     varianten: dict[str, Variante] = field(default_factory=dict)
 
     mangohud: bool = True
-    # Wo das Overlay im Bild sitzt. MangoHud kennt sechs Stellen; die
-    # Vorgabe oben links deckt sich bei manchen Spielen mit deren eigener
-    # Anzeige.
+    # Wo das Overlay im Bild sitzt, siehe OVERLAY_ECKEN. Die Vorgabe oben
+    # links deckt sich bei manchen Spielen mit deren eigener Anzeige.
     overlay_ecke: str = "top-left"
     # Wie deckend der Kasten hinter der Anzeige ist, 0,0 bis 1,0.
     #

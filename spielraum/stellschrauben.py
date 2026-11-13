@@ -133,14 +133,19 @@ def umgebung_bauen(profil: Profil, messen_in: Path | None = None,
                 "text_outline=0",
             ]
         elif umfang == "klein":
-            # fps_only verträgt sich laut MangoHud.conf.example
-            # ausdrücklich nicht mit anderen Anzeigewerten. Deshalb steht
-            # hier nur, wo es sitzt und wie deckend der Kasten ist.
+            # Hier standen bis zum 12.11.2026 auch background_alpha und
+            # alpha daneben. Das Ergebnis sah im Spiel »gequetscht« aus --
+            # und es stand vorher in MangoHuds eigener Beispieldatei:
+            #
+            #   ### Show FPS only. ***Not meant to be used with other
+            #   ### display params***
+            #
+            # Gelesen hatte ich die Zeile, ernst genommen nicht. Jetzt
+            # steht nur noch dabei, WO die Zahl sitzt; das ist keine
+            # Anzeigeeinstellung, sondern eine Platzierung.
             anzeige = [
                 "fps_only=1",
                 f"position={profil.overlay_ecke}",
-                f"background_alpha={profil.overlay_deckkraft}",
-                "alpha=1.0",
             ]
         else:
             # Die Auswahl folgt dem, was am 23.10.2026 bei Enshrouded

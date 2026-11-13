@@ -9,6 +9,24 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [0.9.0] – 2026-11-12
 
+### Nach dem ersten Durchprobieren am Gerät berichtigt
+
+- **Nur noch vier Ecken statt sechs.** MangoHud kennt zusätzlich »Mitte
+  links« und »Mitte rechts«; die standen kurz mit zur Auswahl und flogen
+  nach dem ersten Ausprobieren wieder raus – auf halber Höhe sitzt die
+  Anzeige mitten im Blickfeld. Ein Profil mit einer der beiden Stellen wird
+  jetzt abgewiesen: lieber eine Fehlermeldung als ein Wert, den die
+  Oberfläche nicht anzeigen kann und beim nächsten Umschalten
+  stillschweigend überschreibt.
+
+- **»nur Bilder/s« sah im Spiel gequetscht aus.** Die Ursache stand vorher
+  in MangoHuds eigener Beispieldatei: *Show FPS only. **Not meant to be used
+  with other display params***. SPIELRaum setzte daneben trotzdem
+  `background_alpha` und `alpha`. Gelesen hatte ich die Zeile, ernst
+  genommen nicht – derselbe halbe Schritt wie bei den Tastenkürzeln am
+  selben Tag. Jetzt steht nur noch die Platzierung dabei, und die ist keine
+  Anzeigeeinstellung.
+
 ### Hinzugefügt
 
 - **Die CPU-Last jedes Laufs wird mitgeführt – und gemeldet, wenn zwei
@@ -102,7 +120,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Wirkung geraten.
 
   Die Rückmeldung steht in der Unterzeile, nicht in einem Dialog. Wer die
-  sechs Stellen durchprobiert, klickt sonst sechsmal etwas weg.
+  vier Stellen durchprobiert, klickt sonst viermal etwas weg.
 
   Drei Fehler dabei gefunden und behoben, alle von Tests: Mit einem
   Kommentar hinter dem Wert gab die Schreibfunktion den falschen alten Wert

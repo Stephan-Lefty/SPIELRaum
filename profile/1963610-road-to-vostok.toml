@@ -259,7 +259,7 @@ mangohud = true
 
 # Wo die Anzeige im Bild sitzt. In der Oberflaeche umstellbar
 # (Feld "Anzeige:" unten rechts); wirkt beim naechsten Start.
-# Moeglich: top/middle/bottom je -left oder -right.
+# Moeglich: top-left, top-right, bottom-left, bottom-right.
 ecke = "top-left"
 
 # Die Anzeige im Bild: ein Viertel deckend statt MangoHuds halber Vorgabe.

@@ -29,15 +29,13 @@ from .. import (__version__, fahrt, farben, messen, profil, stellschrauben,
                 steam, tasten, umgebung, varianten, zustand)
 
 
-# Die sechs Stellen, an denen MangoHud die Anzeige hinlegen kann, in der
-# Reihenfolge, in der man sie im Bild sucht: oben, Mitte, unten -- und darin
-# links vor rechts. Nicht die Reihenfolge aus profil.OVERLAY_ECKEN: Die ist
-# nach MangoHuds Schreibweise sortiert, nicht danach, wie jemand hinsieht.
+# Die vier Ecken, in der Reihenfolge, in der man sie im Bild sucht: oben
+# vor unten, links vor rechts. Die beiden Mittelstellen, die MangoHud
+# zusätzlich kennt, sind am 12.11.2026 wieder herausgeflogen -- auf halber
+# Höhe sitzt die Anzeige mitten im Blickfeld.
 OVERLAY_NAMEN = (
     ("top-left", "oben links"),
     ("top-right", "oben rechts"),
-    ("middle-left", "Mitte links"),
-    ("middle-right", "Mitte rechts"),
     ("bottom-left", "unten links"),
     ("bottom-right", "unten rechts"),
 )

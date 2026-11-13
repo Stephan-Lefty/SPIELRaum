@@ -203,7 +203,7 @@ einem Viertel deckend:
 
 ```toml
 [messen]
-ecke      = "top-right"   # top/middle/bottom je links oder rechts
+ecke      = "top-right"   # top oder bottom, je -left oder -right
 deckkraft = 0.25          # 0 = kein Kasten, 1 = voll deckend
 umfang    = "fahrt"       # "voll", "klein", "fahrt" oder "aus"
 ```

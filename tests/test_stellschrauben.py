@@ -422,8 +422,14 @@ def test_umfang_aus_schaltet_die_anzeige_ab(tmp_path, monkeypatch):
 
 
 def test_umfang_klein_zeigt_nur_die_bildrate(tmp_path, monkeypatch):
-    """fps_only verträgt sich laut MangoHud.conf.example ausdrücklich nicht
-    mit anderen Anzeigewerten -- die dürfen also nicht danebenstehen."""
+    """fps_only steht allein.
+
+    MangoHuds Beispieldatei sagt dazu: »Show FPS only. ***Not meant to be
+    used with other display params***«. Bis zum 12.11.2026 standen hier
+    trotzdem background_alpha und alpha daneben -- im Spiel sah die Anzeige
+    dann »gequetscht« aus. Gelesen hatte ich die Zeile, ernst genommen
+    nicht. Dieser Test hält fest, dass nur noch die PLATZIERUNG dabeisteht.
+    """
     monkeypatch.setattr(stellschrauben.umgebung, "ermitteln",
                         lambda: _umgebung_mit_mangohud())
     p = Profil(quelle=tmp_path / "p.toml", name="Test", steam_app_id=1,
@@ -433,9 +439,11 @@ def test_umfang_klein_zeigt_nur_die_bildrate(tmp_path, monkeypatch):
     assert "gpu_temp" not in konf
     assert "throttling_status" not in konf
     assert "frame_timing" not in konf
-    # Stelle und Kasten gelten weiter.
+    # Die Platzierung bleibt -- sie ist keine Anzeigeeinstellung.
     assert "position=top-left" in konf
-    assert "background_alpha=0.25" in konf
+    # Der Kasten dagegen nicht: Er war die Ursache des Gequetschten.
+    assert "background_alpha" not in konf
+    assert "alpha=" not in konf
 
 
 def test_umfang_klein_misst_weiter(tmp_path, monkeypatch):

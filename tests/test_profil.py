@@ -158,8 +158,8 @@ def test_ecke_anlegen_wenn_sie_fehlt(tmp_path):
     datei.write_text('[spiel]\nname = "T"\nsteam_app_id = 1\n\n'
                      '[messen]\nmangohud = true\n', encoding="utf-8")
 
-    assert profil.ecke_setzen(datei, "middle-left") == ""
-    assert profil.laden(datei).overlay_ecke == "middle-left"
+    assert profil.ecke_setzen(datei, "bottom-left") == ""
+    assert profil.laden(datei).overlay_ecke == "bottom-left"
     assert "mangohud = true" in datei.read_text(encoding="utf-8")
 
 
@@ -204,7 +204,7 @@ def test_crlf_bleibt_crlf(tmp_path):
     datei = tmp_path / "p.toml"
     datei.write_bytes(MIT_KOMMENTAREN.replace("\n", "\r\n").encode("utf-8"))
 
-    profil.ecke_setzen(datei, "middle-right")
+    profil.ecke_setzen(datei, "bottom-right")
     roh = datei.read_bytes()
     assert b"\r\n" in roh
     assert roh.count(b"\n") == roh.count(b"\r\n"), "ein Zeilenende wurde gewandelt"
@@ -238,3 +238,30 @@ def test_pruefen_warnt_nicht_bei_klein(tmp_path, capsys):
     ausgabe = capsys.readouterr().out
     assert "nur Bilder/s" in ausgabe
     assert "nicht gemessen" not in ausgabe
+
+
+def test_die_mittelstellen_werden_abgewiesen(tmp_path):
+    """MangoHud kennt sie, SPIELRaum bietet sie nicht mehr an.
+
+    Herausgenommen am 12.11.2026 nach dem ersten Durchprobieren: Auf halber
+    Höhe sitzt die Anzeige mitten im Blickfeld. Der Test hält fest, dass die
+    Entscheidung auch für Profildateien gilt -- sonst stünde dort ein Wert,
+    den die Oberfläche nicht anzeigen kann und beim nächsten Umschalten
+    stillschweigend überschreibt.
+    """
+    datei = tmp_path / "p.toml"
+    for stelle in ("middle-left", "middle-right"):
+        datei.write_text(KOPF + f'\n[messen]\necke = "{stelle}"\n',
+                         encoding="utf-8")
+        with pytest.raises(profil.ProfilFehler, match="MangoHud kennt"):
+            profil.laden(datei)
+
+    datei.write_text(KOPF + "\n[messen]\nmangohud = true\n", encoding="utf-8")
+    for stelle in ("middle-left", "middle-right"):
+        with pytest.raises(profil.ProfilFehler):
+            profil.ecke_setzen(datei, stelle)
+
+    # Und die vier, die bleiben, gehen weiterhin.
+    for stelle in profil.OVERLAY_ECKEN:
+        profil.ecke_setzen(datei, stelle)
+        assert profil.laden(datei).overlay_ecke == stelle

@@ -602,14 +602,14 @@ def test_auswahl_schreibt_die_stelle_ins_profil(anwendung, tmp_path, monkeypatch
     from spielraum import profil as profil_modul
 
     f, datei = _fenster_mit_profil(tmp_path, monkeypatch, ecke="top-left")
-    zeile = f.anzeige_ecke.findData("middle-right")
+    zeile = f.anzeige_ecke.findData("bottom-right")
     f.anzeige_ecke.setCurrentIndex(zeile)
 
-    assert profil_modul.laden(datei).overlay_ecke == "middle-right"
+    assert profil_modul.laden(datei).overlay_ecke == "bottom-right"
     assert "Ein Kommentar, der überleben muss." in datei.read_text(encoding="utf-8")
     assert "mit Kommentar am Zeilenende" in datei.read_text(encoding="utf-8"), \
         "der Kommentar hinter dem Wert ist verschwunden"
-    assert "Mitte rechts" in f.unterzeile.text()
+    assert "unten rechts" in f.unterzeile.text()
     assert "nächsten Start" in f.unterzeile.text(), \
         "es muss dastehen, dass es erst beim nächsten Start wirkt"
 
